@@ -1,6 +1,8 @@
 import time
+import json
 import struct
 import uasyncio as asyncio
+from machine import Pin
 
 from plasma import plasma_stick, COLOR_ORDER_RGB
 from mqtt_as import MQTTClient
@@ -32,8 +34,8 @@ async def receive(client):
     async for topic, msg, retained in client.queue:
         if anim_task is not None:
             anim_task.cancel()
-        # XXX Decode?
-        anim_task = asyncio.create_task(animate(msg))
+        anim_task = asyncio.create_task(
+            animate(json.loads(msg.decode('utf-8'))))
     if anim_task is not None:
         anim_task.cancel()
 

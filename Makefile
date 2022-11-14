@@ -1,0 +1,2 @@
+all:
+	mpremote cp *.py :

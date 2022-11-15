@@ -10,6 +10,7 @@ to the blinkenlights on the tree.
 
 import os
 import sys
+from queue import Queue
 from pathlib import Path
 from string import Template
 from argparse import ArgumentParser
@@ -17,7 +18,7 @@ from configparser import ConfigParser
 
 from pkg_resources import require
 
-from .httpd import server, get_port
+from . import httpd, mqtt
 
 
 XDG_CONFIG_HOME = os.environ.get('XDG_CONFIG_HOME', '~/.config')
@@ -28,7 +29,7 @@ def get_config(args, section='blinkenxmas'):
         defaults={
             'db': '/var/blinkenxmas/blinkenxmas.db',
             'broker-address': 'localhost',
-            'broker-port': '1833',
+            'broker-port': '1883',
             'topic': 'blinkenxmas',
             'httpd-bind': '0.0.0.0',
             'httpd-port': '80',
@@ -36,7 +37,6 @@ def get_config(args, section='blinkenxmas'):
         delimiters=('=',), default_section=section,
         empty_lines_in_values=False, interpolation=None,
         converters={'list': lambda s: s.strip().splitlines()})
-    #config.read(PROJECT_ROOT / 'setup.cfg')
     for filename in (
         '/etc/blinkenxmas.conf',
         '$XDG_CONFIG_HOME/blinkenxmas.conf',
@@ -62,16 +62,20 @@ def get_config(args, section='blinkenxmas'):
         help="The address on which to find the MQTT broker. Default: "
         "%(default)s")
     parser.add_argument(
-        '--broker-port', metavar='ADDR', type=get_port,
+        '--broker-port', metavar='ADDR', type=httpd.get_port,
         default=config[section]['broker-port'],
         help="The address on which to find the MQTT broker. Default: "
         "%(default)s")
+    parser.add_argument(
+        '--topic', default=config[section]['topic'],
+        help="The topic on which the Pico W is listening for messages. "
+        "Default: %(default)s")
     parser.add_argument(
         '--httpd-bind', metavar='ADDR', default=config[section]['httpd-bind'],
         help="The address on which to listen for HTTP requests. Default: "
         "%(default)s")
     parser.add_argument(
-        '--httpd-port', metavar='PORT', type=get_port,
+        '--httpd-port', metavar='PORT', type=httpd.get_port,
         default=config[section]['httpd-port'],
         help="The port to listen for HTTP requests. Default: %(default)s")
     return parser.parse_args(args)
@@ -79,10 +83,25 @@ def get_config(args, section='blinkenxmas'):
 
 def main(args=None):
     try:
+        queue = Queue()
         config = get_config(args)
-        server(config.httpd_bind, config.httpd_port)
-    except KeyboardInterrupt as e:
-        print("Interrupted", file=sys.stderr)
+        with (
+            mqtt.MessageThread(
+                queue, config.broker_address, config.broker_port,
+                config.topic) as message_task,
+            httpd.HTTPThread(
+                queue, config.httpd_bind, config.httpd_port,
+                config.db) as httpd_task,
+        ):
+            while True:
+                httpd_task.join(1)
+                if not httpd_task.is_alive():
+                    break
+                message_task.join(1)
+                if not message_task.is_alive():
+                    break
+    except KeyboardInterrupt:
+        print('Interrupted', file=sys.stderr)
         return 2
     except Exception as e:
         debug = int(os.environ.get('DEBUG', '0'))

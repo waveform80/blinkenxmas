@@ -1,20 +1,24 @@
 import io
 import re
+import random
 import socket
 import mimetypes
 import datetime as dt
 from http import HTTPStatus
+from threading import Thread
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from shutil import copyfileobj
 
 from pkg_resources import resource_stream
 
+from .store import Storage
 
-class TreeServer(ThreadingHTTPServer):
+
+class HTTPServer(ThreadingHTTPServer):
     allow_reuse_address = True
 
 
-class TreeRequestHandler(BaseHTTPRequestHandler):
+class HTTPRequestHandler(BaseHTTPRequestHandler):
     server_version = 'BlinkenXmas/1.0'
     static_paths = {
         '/index.html': 'text/html',
@@ -25,21 +29,27 @@ class TreeRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == '/':
-            resp = TreeResponse(
+            resp = HTTPResponse(
                 self, status_code=301, headers={'Location': '/index.html'})
         elif self.path.startswith('/preset/'):
-            resp = TreeResponse(self, body='Preset!')
+            resp = HTTPResponse(self, body='Random lights!')
+            self.server.queue.put([
+                [
+                    (i, random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+                    for i in range(50)
+                ]
+            ])
         elif self.path in self.static_paths:
-            resp = TreeResponse(
+            resp = HTTPResponse(
                 self, body=resource_stream(__name__, self.path.lstrip()),
                 last_modified=self.static_modified,
                 mime_type=self.static_paths[self.path])
         else:
-            resp = TreeResponse(self, status_code=404)
+            resp = HTTPResponse(self, status_code=404)
         resp.send()
 
 
-class TreeResponse:
+class HTTPResponse:
     def __init__(self, request, body=None, *, status_code=200,
                  content_length=None, filename=None, mime_type=None,
                  encoding=None, last_modified=None, headers=None):
@@ -108,12 +118,34 @@ def get_port(service):
             raise ValueError('invalid service name or port number')
 
 
-def server(bind, port):
-    mimetypes.init()
-    TreeServer.address_family, addr = get_best_family(bind, port)
-    with TreeServer(addr[:2], TreeRequestHandler) as httpd:
-        host, port = httpd.socket.getsockname()[:2]
-        hostname = socket.gethostname()
-        print(f'Serving on {host} port {port}')
-        print(f'http://{hostname}:{port}/ ...')
-        httpd.serve_forever()
+class HTTPThread(Thread):
+    def __init__(self, queue, bind, port, db):
+        super().__init__(target=self.serve, daemon=True)
+        mimetypes.init()
+        HTTPServer.address_family, addr = get_best_family(bind, port)
+        HTTPServer.queue = queue
+        HTTPServer.store = Storage(db)
+        self.httpd = HTTPServer(addr[:2], HTTPRequestHandler)
+        self.exception = None
+
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, *exc_info):
+        if self.exception:
+            raise self.exception
+        self.stop()
+
+    def stop(self):
+        self.httpd.shutdown()
+
+    def serve(self):
+        try:
+            host, port = self.httpd.socket.getsockname()[:2]
+            hostname = socket.gethostname()
+            print(f'Serving on {host} port {port}')
+            print(f'http://{hostname}:{port}/ ...')
+            self.httpd.serve_forever()
+        except Exception as e:
+            self.exception = e

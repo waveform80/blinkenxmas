@@ -9,9 +9,38 @@ from threading import Thread
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from shutil import copyfileobj
 
+# The fallback comes first here as Python 3.7 incorporates importlib.resources
+# but at a version incompatible with our requirements. Ultimately the try
+# clause should be removed in favour of the except clause once compatibility
+# moves beyond Python 3.9
+try:
+    import importlib_resources as resources
+except ImportError:
+    from importlib import resources
+
 from pkg_resources import resource_stream
+from chameleon import PageTemplate
 
 from .store import Storage
+
+
+def get_best_family(host, port):
+    infos = socket.getaddrinfo(
+        host, port,
+        type=socket.SOCK_STREAM,
+        flags=socket.AI_PASSIVE)
+    for family, type, proto, canonname, sockaddr in infos:
+        return family, sockaddr
+
+
+def get_port(service):
+    try:
+        return int(service)
+    except ValueError:
+        try:
+            return socket.getservbyname(service)
+        except OSError:
+            raise ValueError('invalid service name or port number')
 
 
 class HTTPServer(ThreadingHTTPServer):
@@ -20,33 +49,41 @@ class HTTPServer(ThreadingHTTPServer):
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
     server_version = 'BlinkenXmas/1.0'
-    static_paths = {
-        '/index.html': 'text/html',
-        '/style.css': 'text/css',
-        '/favicon.opt.svg': 'image/svg+xml',
-    }
+    static_path = resources.files('blinkenxmas')
     static_modified = dt.datetime.now()
+    template_cache = {}
+
+    def get_response(self):
+        path = self.path.lstrip('/')
+        template_key = path + '.pt'
+        if not path:
+            return HTTPResponse(
+                self, status_code=301, headers={'Location': '/index.html'})
+        elif (self.static_path / path).exists():
+            return HTTPResponse(
+                self, body=(self.static_path / path).open('rb'),
+                last_modified=self.static_modified, filename=path)
+        elif (self.static_path / template_key).exists():
+            try:
+                template = self.template_cache[template_key]
+            except KeyError:
+                template = PageTemplate(
+                    (self.static_path / template_key).read_text())
+                self.template_cache[template_key] = template
+            now = dt.datetime.now()
+            return HTTPResponse(
+                self, body=template.render(
+                    queue=self.server.queue, store=self.server.store,
+                    now=now),
+                last_modified=now, filename=path)
+        else:
+            return HTTPResponse(self, status_code=404)
+
+    def do_HEAD(self):
+        self.get_response().send(head=True)
 
     def do_GET(self):
-        if self.path == '/':
-            resp = HTTPResponse(
-                self, status_code=301, headers={'Location': '/index.html'})
-        elif self.path.startswith('/preset/'):
-            resp = HTTPResponse(self, body='Random lights!')
-            self.server.queue.put([
-                [
-                    (i, random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-                    for i in range(50)
-                ]
-            ])
-        elif self.path in self.static_paths:
-            resp = HTTPResponse(
-                self, body=resource_stream(__name__, self.path.lstrip()),
-                last_modified=self.static_modified,
-                mime_type=self.static_paths[self.path])
-        else:
-            resp = HTTPResponse(self, status_code=404)
-        resp.send()
+        self.get_response().send(head=False)
 
 
 class HTTPResponse:
@@ -90,32 +127,15 @@ class HTTPResponse:
             f'{self.status_code.phrase}\n{headers}\n\n'
         )
 
-    def send(self, head=False):
+    def send(self, *, head=False):
         self.request.send_response(self.status_code.value)
         for key, value in self.headers.items():
             self.request.send_header(key, value)
         self.request.end_headers()
-        if not head and self.stream is not None:
-            copyfileobj(self.stream, self.request.wfile)
-
-
-def get_best_family(host, port):
-    infos = socket.getaddrinfo(
-        host, port,
-        type=socket.SOCK_STREAM,
-        flags=socket.AI_PASSIVE)
-    family, type, proto, canonname, sockaddr = next(iter(infos))
-    return family, sockaddr
-
-
-def get_port(service):
-    try:
-        return int(service)
-    except ValueError:
-        try:
-            return socket.getservbyname(service)
-        except OSError:
-            raise ValueError('invalid service name or port number')
+        if self.stream is not None:
+            if not head:
+                copyfileobj(self.stream, self.request.wfile)
+            self.stream.close()
 
 
 class HTTPThread(Thread):

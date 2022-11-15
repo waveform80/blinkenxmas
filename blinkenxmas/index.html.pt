@@ -1,0 +1,15 @@
+<html>
+  <head>
+    <title>Blinken' Xmas</title>
+    <link rel="stylesheet" href="/style.css" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.opt.svg" />
+  </head>
+  <body>
+    <h1>Blinken' Xmas</h1>
+    <p tal:condition="not store">No presets defined yet!</p>
+    <p tal:condition="store">Select from one of the following presets:</p>
+    <ul tal:condition="store">
+      <li tal:repeat="preset store">${preset}</li>
+    </ul>
+  </body>
+</html>

@@ -10,58 +10,30 @@ to the blinkenlights on the tree.
 
 import os
 import sys
-import sqlite3
 from pathlib import Path
 from string import Template
-from functools import partial
 from argparse import ArgumentParser
 from configparser import ConfigParser
-from http.server import ThreadingHTTPServer
 
 from pkg_resources import require
+
+from .httpd import server, get_port
 
 
 XDG_CONFIG_HOME = os.environ.get('XDG_CONFIG_HOME', '~/.config')
 
 
-class TreeServer(ThreadingHTTPServer):
-    allow_reuse_address = True
-
-
-class TreeRequestHandler(BaseHTTPRequestHandler):
-    server_version = 'BlinkenXmas/1.0'
-
-    def do_GET(self):
-        pass
-
-
-def get_best_family(host, port):
-    infos = socket.getaddrinfo(
-        host, port,
-        type=socket.SOCK_STREAM,
-        flags=socket.AI_PASSIVE)
-    family, type, proto, canonname, sockaddr = next(iter(infos))
-    return family, sockaddr
-
-
-def server(config):
-    TreeServer.address_family, addr = get_best_family(config.bind, config.port)
-    with DevServer(addr[:2], TreeRequestHandler) as httpd:
-        host, port = httpd.socket.getsockname()[:2]
-        hostname = socket.gethostname()
-        print(f'Serving {config.html} HTTP on {host} port {port}')
-        print(f'http://{hostname}:{port}/ ...')
-        httpd.serve_forever()
-
-
 def get_config(args, section='blinkenxmas'):
     config = ConfigParser(
         defaults={
-            'db': 'blinkenxmas.db',
-            'bind': '0.0.0.0',
-            'port': '8000',
+            'db': '/var/blinkenxmas/blinkenxmas.db',
+            'broker-address': 'localhost',
+            'broker-port': '1833',
+            'topic': 'blinkenxmas',
+            'httpd-bind': '0.0.0.0',
+            'httpd-port': '80',
         },
-        delimiters=('=',), default_section=SETUP_SECTION,
+        delimiters=('=',), default_section=section,
         empty_lines_in_values=False, interpolation=None,
         converters={'list': lambda s: s.strip().splitlines()})
     #config.read(PROJECT_ROOT / 'setup.cfg')
@@ -85,18 +57,30 @@ def get_config(args, section='blinkenxmas'):
         '--db', metavar='FILE', default=config[section]['db'],
         help="The SQLite database to store presets in. Default: %(default)s")
     parser.add_argument(
-        '--bind', metavar='ADDR', default=config[section]['bind'],
-        help="The address to listen on. Default: %(default)s")
+        '--broker-address', metavar='ADDR',
+        default=config[section]['broker-address'],
+        help="The address on which to find the MQTT broker. Default: "
+        "%(default)s")
     parser.add_argument(
-        '--port', metavar='PORT', default=config[section]['port'],
-        help="The port to listen on. Default: %(default)s")
+        '--broker-port', metavar='ADDR', type=get_port,
+        default=config[section]['broker-port'],
+        help="The address on which to find the MQTT broker. Default: "
+        "%(default)s")
+    parser.add_argument(
+        '--httpd-bind', metavar='ADDR', default=config[section]['httpd-bind'],
+        help="The address on which to listen for HTTP requests. Default: "
+        "%(default)s")
+    parser.add_argument(
+        '--httpd-port', metavar='PORT', type=get_port,
+        default=config[section]['httpd-port'],
+        help="The port to listen for HTTP requests. Default: %(default)s")
     return parser.parse_args(args)
 
 
 def main(args=None):
     try:
         config = get_config(args)
-        server(parser.parse_args(args))
+        server(config.httpd_bind, config.httpd_port)
     except KeyboardInterrupt as e:
         print("Interrupted", file=sys.stderr)
         return 2

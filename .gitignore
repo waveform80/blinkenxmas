@@ -1,2 +1,6 @@
+# Usual Python stuff
 *.egg-info/
 __pycache__/
+
+# Ignore the actual configuration
+pico/config.py

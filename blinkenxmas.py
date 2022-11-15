@@ -4,16 +4,12 @@ import struct
 import uasyncio as asyncio
 from machine import Pin
 
-from plasma import plasma_stick, COLOR_ORDER_RGB
+from plasma import plasma_stick, WS2812, COLOR_ORDER_RGB
 from mqtt_as import MQTTClient
 from config import config
 
 
 async def animate(frames):
-    leds = plasma.WS2812(
-        config.get('led_count', 50), 0, 0, plasma_stick.DAT,
-        color_order=COLOR_ORDER_RGB)
-    leds.start()
     try:
         frame_time = 1000 // config.get('fps', 60)
         while True:
@@ -32,6 +28,8 @@ async def animate(frames):
 async def receive(client):
     anim_task = None
     async for topic, msg, retained in client.queue:
+        print(f'Received message for {topic}')
+        print(f'Payload: {repr(msg)}')
         if anim_task is not None:
             anim_task.cancel()
         anim_task = asyncio.create_task(
@@ -40,37 +38,40 @@ async def receive(client):
         anim_task.cancel()
 
 
-async def blinkie():
+async def blinkie(delay):
     led = Pin('LED', Pin.OUT)
     try:
         while True:
             led.value(1)
-            await asyncio.sleep_ms(500)
+            await asyncio.sleep_ms(delay)
             led.value(0)
-            await asyncio.sleep_ms(500)
+            await asyncio.sleep_ms(delay)
     except asyncio.CancelledError:
         led.value(1)
 
 
 async def connection(client):
+    print(f'Awaiting connection to SSID {config["ssid"]}')
+    task = asyncio.create_task(blinkie(250))
+    await client.connect()
     while True:
-        print(f'Awaiting connection to {config["ssid"]}')
-        task = asyncio.create_task(blinkie())
+        print(f'Awaiting connection to broker {config["server"]}')
+        task.cancel()
+        task = asyncio.create_task(blinkie(500))
         await client.up.wait()
         client.up.clear()
-        print(f'Connection established; subscribing to config["topic"]')
-        client.subscribe(config['topic'], 1)
+        print(f'Connection established; subscribing to {config["topic"]}')
+        await client.subscribe(config['topic'], 1)
         task.cancel()
         await client.down.wait()
         client.down.clear()
-        print(f'Connection failed')
+        print('Connection failed')
 
 
 async def main(client):
     asyncio.create_task(connection(client))
     asyncio.create_task(receive(client))
     while True:
-        print(f'Main loop')
         await asyncio.sleep(5)
 
 
@@ -78,6 +79,12 @@ async def main(client):
 config['queue_len'] = 1
 config['clean'] = True
 config['keepalive'] = 120
+
+# The LEDs must be initialized once at the top-level
+leds = WS2812(
+    config.get('led_count', 50), 0, 0, plasma_stick.DAT,
+    color_order=COLOR_ORDER_RGB)
+leds.start()
 
 client = MQTTClient(config)
 try:

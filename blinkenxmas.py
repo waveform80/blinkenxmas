@@ -28,12 +28,17 @@ async def animate(frames):
 async def receive(client):
     anim_task = None
     async for topic, msg, retained in client.queue:
-        print(f'Received message for {topic}')
-        print(f'Payload: {repr(msg)}')
+        print(f'Received new message for {topic}')
+        try:
+            frames = json.loads(msg.decode('utf-8'))
+        except ValueError:
+            print('Failed to decode animation; ignoring')
+            continue
+        else:
+            print(f'New animation contains {len(frames)} frames')
         if anim_task is not None:
             anim_task.cancel()
-        anim_task = asyncio.create_task(
-            animate(json.loads(msg.decode('utf-8'))))
+        anim_task = asyncio.create_task(animate(frames))
     if anim_task is not None:
         anim_task.cancel()
 

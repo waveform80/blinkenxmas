@@ -10,19 +10,29 @@ from config import config
 
 
 async def animate(frames):
-    try:
-        frame_time = 1000 // config.get('fps', 60)
-        while True:
-            for frame in frames:
-                frame_start = time.ticks_ms()
-                for led in frame:
-                    leds.set_rgb(*led)
-                frame_end = time.ticks_ms()
-                await asyncio.sleep_ms(frame_time - (frame_end - frame_start))
-    except asyncio.CancelledError:
-        pass
-    finally:
+    def set_frame(frame):
+        for led in frame:
+            leds.set_rgb(*led)
+
+    if not frames:
         leds.clear()
+    else:
+        try:
+            if len(frames) > 1:
+                frame_time = 1000 // config.get('fps', 60)
+            else:
+                # If the animation is static, use an absurdly long frame time
+                # so we're not doing too much work...
+                frame_time = 5000
+            while True:
+                for frame in frames:
+                    start = time.ticks_ms()
+                    set_frame(frame)
+                    await asyncio.sleep_ms(frame_time - (time.ticks_ms() - start))
+        except asyncio.CancelledError:
+            pass
+        finally:
+            leds.clear()
 
 
 async def receive(client):

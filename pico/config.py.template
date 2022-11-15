@@ -1,5 +1,7 @@
 from mqtt_as import config
 
+# Fill out the configuration below, then copy/rename this file to "config.py"
+
 # WiFi configuration
 config['ssid'] = 'your-ssid-here'
 config['wifi_pw'] = 'your-ssid-password'

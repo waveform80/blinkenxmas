@@ -28,7 +28,8 @@ async def animate(frames):
 async def receive(client):
     anim_task = None
     async for topic, msg, retained in client.queue:
-        print(f'Received new message for {topic}')
+        topic = topic.decode('utf-8')
+        print(f'Received new animation for {topic}')
         try:
             frames = json.loads(msg.decode('utf-8'))
         except ValueError:

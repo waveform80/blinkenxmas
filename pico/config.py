@@ -1,11 +1,11 @@
 from mqtt_as import config
 
 # WiFi configuration
-config['ssid'] = 'your_network_name'
-config['wifi_pw'] = 'your_password'
+config['ssid'] = 'your-ssid-here'
+config['wifi_pw'] = 'your-ssid-password'
 
 # MQTT broker configuration
-config['server'] = '192.168.0.10'
+config['server'] = 'broker'
 config['topic'] = 'blinkenxmas'
 
 # Configuration of the WS2812 strip

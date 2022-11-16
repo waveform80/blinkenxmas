@@ -1,13 +1,9 @@
-import io
 import re
-import random
 import socket
 import mimetypes
 import datetime as dt
-from http import HTTPStatus
 from threading import Thread
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
-from shutil import copyfileobj
 
 # The fallback comes first here as Python 3.7 incorporates importlib.resources
 # but at a version incompatible with our requirements. Ultimately the try
@@ -22,6 +18,7 @@ from pkg_resources import resource_stream
 from chameleon import PageTemplate
 
 from .store import Storage
+from .http import HTTPResponse
 
 
 def get_best_family(host, port):
@@ -43,6 +40,23 @@ def get_port(service):
             raise ValueError('invalid service name or port number')
 
 
+def route(pattern, method='GET'):
+    def decorator(f):
+        pattern_re = re.compile(
+            '^' +
+            re.sub(r':([A-Za-z_][A-Za-z0-9_]*)', r'(?P<\1>[^/]+)' +
+            '$', re.escape(route))
+        )
+        assert pattern_re not in HTTPRequestHandler.routes
+        HTTPRequestHandler.routes[(pattern_re, method)] = f
+        if method == 'GET':
+            # Anything registered for GET gets automatically assocaited with
+            # HEAD as well
+            HTTPRequestHandler.routes[(pattern_re, 'HEAD')] = f
+        return f
+    return decorator
+
+
 class HTTPServer(ThreadingHTTPServer):
     allow_reuse_address = True
 
@@ -52,14 +66,29 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     static_path = resources.files('blinkenxmas')
     static_modified = dt.datetime.now()
     template_cache = {}
+    routes = {}
 
     def get_response(self):
+        # Search for a match in the routes table and call the appropriate
+        # method if any is found; if the method returns None, keep searching
+        for (pattern, method), handler in self.routes.items():
+            m = pattern.match(self.path)
+            if m and method == self.method:
+                resp = handler(self, **m.groupdict())
+                if resp is not None:
+                    return resp
+        # Nothing found in the routes table; attempt to either find a literal
+        # match in the static path (and check if-modified-since) or find a
+        # template in the static path, load and render it
         path = self.path.lstrip('/')
         template_key = path + '.pt'
-        if not path:
-            return HTTPResponse(
-                self, status_code=301, headers={'Location': '/index.html'})
-        elif (self.static_path / path).exists():
+        if (self.static_path / path).exists():
+            if self.headers.get('If-Modified-Since'):
+                limit = eut.parsedate_to_datetime(
+                    self.headers['If-Modified-Since'])
+                if self.static_modified <= limit:
+                    return HTTPResponse(
+                        self, status_code=HTTPStatus.NOT_MODIFIED)
             return HTTPResponse(
                 self, body=(self.static_path / path).open('rb'),
                 last_modified=self.static_modified, filename=path)
@@ -69,73 +98,44 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             except KeyError:
                 template = PageTemplate(
                     (self.static_path / template_key).read_text())
-                self.template_cache[template_key] = template
+                type(self).template_cache[template_key] = template
             now = dt.datetime.now()
             return HTTPResponse(
                 self, body=template.render(
-                    queue=self.server.queue, store=self.server.store,
+                    queue=self.server.queue,
+                    store=self.server.store,
                     now=now),
                 last_modified=now, filename=path)
-        else:
-            return HTTPResponse(self, status_code=404)
+        return HTTPResponse(self, status_code=HTTPStatus.NOT_FOUND)
 
     def do_HEAD(self):
-        self.get_response().send(head=True)
+        self.method = 'HEAD'
+        resp = self.get_response()
+        resp.send_headers()
 
     def do_GET(self):
-        self.get_response().send(head=False)
+        self.method = 'GET'
+        resp = self.get_response()
+        resp.send_headers()
+        resp.send_body()
 
+    def do_DELETE(self):
+        self.method = 'DELETE'
+        resp = self.get_response()
+        resp.send_headers()
+        resp.send_body()
 
-class HTTPResponse:
-    def __init__(self, request, body=None, *, status_code=200,
-                 content_length=None, filename=None, mime_type=None,
-                 encoding=None, last_modified=None, headers=None):
-        self.request = request
-        self.status_code = HTTPStatus(status_code)
-        if headers is None:
-            self.headers = {}
-        else:
-            self.headers = headers.copy()
-        if isinstance(body, str):
-            self.stream = io.BytesIO(body.encode('utf-8'))
-        elif isinstance(body, bytes):
-            self.stream = io.BytesIO(body)
-        else:
-            self.stream = body
-        if (
-            content_length is None and self.stream is not None and
-            self.stream.seekable()
-        ):
-            content_length = self.stream.seek(0, io.SEEK_END)
-            self.stream.seek(0)
-        if content_length is not None:
-            self.headers['Content-Length'] = content_length
-        if mime_type is None and filename is not None:
-            mime_type, encoding = mimetypes.guess_type(filename)
-        if mime_type is not None:
-            self.headers['Content-Type'] = mime_type
-        if encoding is not None:
-            self.headers['Content-Encoding'] = encoding
-        if last_modified is not None:
-            self.headers['Last-Modified'] = request.date_time_string(
-                last_modified.timestamp())
+    def do_PUT(self):
+        self.method = 'PUT'
+        resp = self.get_response()
+        resp.send_headers()
+        resp.send_body()
 
-    def __repr__(self):
-        headers = '\n'.join(f'{key}: {value}' for key, value in self.headers)
-        return (
-            f'{self.request.protocol_version} {self.status_code.value} '
-            f'{self.status_code.phrase}\n{headers}\n\n'
-        )
-
-    def send(self, *, head=False):
-        self.request.send_response(self.status_code.value)
-        for key, value in self.headers.items():
-            self.request.send_header(key, value)
-        self.request.end_headers()
-        if self.stream is not None:
-            if not head:
-                copyfileobj(self.stream, self.request.wfile)
-            self.stream.close()
+    def do_POST(self):
+        self.method = 'POST'
+        resp = self.get_response()
+        resp.send_headers()
+        resp.send_body()
 
 
 class HTTPThread(Thread):

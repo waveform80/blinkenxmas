@@ -2,6 +2,7 @@ import re
 import socket
 import mimetypes
 import datetime as dt
+import email.utils as eut
 from threading import Thread
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
@@ -64,7 +65,7 @@ class HTTPServer(ThreadingHTTPServer):
 class HTTPRequestHandler(BaseHTTPRequestHandler):
     server_version = 'BlinkenXmas/1.0'
     static_path = resources.files('blinkenxmas')
-    static_modified = dt.datetime.now()
+    static_modified = dt.datetime.now(dt.timezone.utc)
     template_cache = {}
     routes = {}
 
@@ -99,7 +100,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                 template = PageTemplate(
                     (self.static_path / template_key).read_text())
                 type(self).template_cache[template_key] = template
-            now = dt.datetime.now()
+            now = dt.datetime.now(dt.timezone.utc)
             return HTTPResponse(
                 self, body=template.render(
                     queue=self.server.queue,

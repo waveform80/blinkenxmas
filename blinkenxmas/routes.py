@@ -52,17 +52,17 @@ def set_preset(request, name):
 @route('/preview', 'POST')
 @route('/preview/:name', 'POST')
 def preview(request, name=None):
-    if name is not None:
-        try:
-            data = request.server.store[name]
-        except KeyError:
-            return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
-    else:
+    if name is None:
         try:
             with io.TextIOWrapper(request.rfile) as f:
                 data = json.load(f)
             # TODO Assert that the structure is correct (voluptuous?)
         except ValueError:
             return HTTPResponse(self, status_code=HTTPStatus.BAD_REQUEST)
+    else:
+        try:
+            data = request.server.store[name]
+        except KeyError:
+            return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
     request.server.queue.put(data)
     return HTTPResponse(request, status_code=HTTPStatus.NO_CONTENT)

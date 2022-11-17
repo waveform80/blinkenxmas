@@ -1,11 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,600;1,400;1,600&family=Roboto+Slab:wght@200&family=Ubuntu:wght@300&display=swap');
-
 /* Use border-box sizing for easier calculation */
 html { box-sizing: border-box; }
 *, *:before, *:after { box-sizing: inherit; }
 
 body {
-    font: 1em/1.5 "Montserrat", sans-serif;
+    font: 1em/1.5 sans-serif;
     font-weight: 400;
     min-height: 100vh;
     display: flex;
@@ -42,7 +40,7 @@ dl dd > :first-child { margin-top: 0; }
 
 h1, h2, h3, h4, h5, h6 {
     color: #c51a4a;
-    font-family: 'Roboto Slab', serif;
+    font-family: serif;
     font-weight: normal;
 }
 

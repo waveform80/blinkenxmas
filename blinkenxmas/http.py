@@ -54,6 +54,5 @@ class HTTPResponse:
 
     def send_body(self):
         if self.stream is not None:
-            if not head:
-                copyfileobj(self.stream, self.request.wfile)
+            copyfileobj(self.stream, self.request.wfile)
             self.stream.close()

@@ -139,6 +139,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                 self, body=template.render(
                     layout=self.template_cache['layout.pt']['layout'],
                     led_count=self.server.config.led_count,
+                    # "Sanitize" animations to make it JSON serializable
                     animations={
                         name: Function(anim.name, None, anim.params)
                         for name, anim in self.animations.items()

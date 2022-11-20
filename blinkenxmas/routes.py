@@ -2,6 +2,8 @@ import io
 import json
 from http import HTTPStatus
 
+from colorzero import Color
+
 from .httpd import route
 from .http import HTTPResponse
 
@@ -75,7 +77,14 @@ def preview_preset(request, name):
 def generate_animation(request, name):
     try:
         anim = request.animations[name]
-        params = request.json()
+        params = {
+            name:
+                Color(value) if anim.params[name].input_type == 'color' else
+                int(value) if anim.params[name].input_type == 'range' else
+                float(value) if anim.params[name].input_type == 'number' else
+                str(value)
+            for name, value in request.json().items()
+        }
         data = anim.function(
             request.server.config.led_count,
             request.server.config.fps,

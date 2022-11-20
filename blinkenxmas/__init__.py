@@ -18,7 +18,7 @@ from configparser import ConfigParser
 
 from pkg_resources import require
 
-from . import httpd, mqtt
+from . import httpd, mqtt, routes
 
 
 XDG_CONFIG_HOME = os.environ.get('XDG_CONFIG_HOME', '~/.config')

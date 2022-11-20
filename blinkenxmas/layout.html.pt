@@ -1,0 +1,29 @@
+<foo tal:omit-tag="1" metal:define-macro="layout"><!doctype html>
+<html>
+  <head>
+    <title>Blinken' Xmas — <span tal:omit-tag="1" metal:define-slot="title" /></title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/style.css" />
+    <link rel="shortcut icon" href="/favicon.opt.svg" type="image/x-icon" />
+    <link rel="icon" href="/favicon.opt.svg" type="image/x-icon" />
+    <meta tal:omit-tag="1" metal:define-slot="head" />
+  </head>
+
+  <body>
+    <header>
+      <a class="logo" href="/"><div></div><h1>Blinken' Xmas</h1></a>
+    </header>
+
+    <section id="message">
+      <a href="" onclick="hideMessage()">x</a>
+      <p></p>
+    </section>
+
+    <article metal:define-slot="content">
+    </article>
+    <div tal:omit-tag="1" metal:define-slot="scripts" />
+    <script src="/presets.js"></script>
+  </body>
+</html>
+</foo>

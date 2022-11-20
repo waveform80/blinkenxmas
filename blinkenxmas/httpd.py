@@ -1,10 +1,13 @@
 import re
+import json
 import socket
 import mimetypes
 import datetime as dt
 import email.utils as eut
-from threading import Thread
+import urllib.parse
+from http import HTTPStatus
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
+from threading import Thread
 
 # The fallback comes first here as Python 3.7 incorporates importlib.resources
 # but at a version incompatible with our requirements. Ultimately the try
@@ -41,16 +44,15 @@ def get_port(service):
             raise ValueError('invalid service name or port number')
 
 
-def route(pattern, method='GET'):
+def route(pattern, command='GET'):
     def decorator(f):
-        pattern_re = re.compile(
-            '^' +
-            re.sub(r':([A-Za-z_][A-Za-z0-9_]*)', r'(?P<\1>[^/]+)' +
-            '$', re.escape(route))
-        )
+        s = re.escape(pattern)
+        s = re.sub(r'\*\*:([A-Za-z_][A-Za-z0-9_]*)', r'(?P<\1>.+)', s)
+        s = re.sub(r'\*?:([A-Za-z_][A-Za-z0-9_]*)', r'(?P<\1>[^/]+)', s)
+        pattern_re = re.compile(f'^{s}$')
         assert pattern_re not in HTTPRequestHandler.routes
-        HTTPRequestHandler.routes[(pattern_re, method)] = f
-        if method == 'GET':
+        HTTPRequestHandler.routes[(pattern_re, command)] = f
+        if command == 'GET':
             # Anything registered for GET gets automatically assocaited with
             # HEAD as well
             HTTPRequestHandler.routes[(pattern_re, 'HEAD')] = f
@@ -66,15 +68,31 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     server_version = 'BlinkenXmas/1.0'
     static_path = resources.files('blinkenxmas')
     static_modified = dt.datetime.now(dt.timezone.utc)
-    template_cache = {}
+    template_cache = {
+        'layout.pt': PageTemplate((static_path / 'layout.html.pt').read_text())
+    }
     routes = {}
 
+    def get_template(self, name):
+        try:
+            template = self.template_cache[name]
+        except KeyError:
+            template = PageTemplate((self.static_path / name).read_text())
+            type(self).template_cache[name] = template
+        return template
+
     def get_response(self):
+        # Parse the path into its components
+        self.uri = self.path
+        parts = urllib.parse.urlsplit(self.uri)
+        self.path = parts.path
+        self.query = urllib.parse.parse_qs(parts.query)
+        self.fragment = parts.fragment
         # Search for a match in the routes table and call the appropriate
         # method if any is found; if the method returns None, keep searching
-        for (pattern, method), handler in self.routes.items():
+        for (pattern, command), handler in self.routes.items():
             m = pattern.match(self.path)
-            if m and method == self.method:
+            if m and command == self.command:
                 resp = handler(self, **m.groupdict())
                 if resp is not None:
                     return resp
@@ -94,46 +112,48 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                 self, body=(self.static_path / path).open('rb'),
                 last_modified=self.static_modified, filename=path)
         elif (self.static_path / template_key).exists():
-            try:
-                template = self.template_cache[template_key]
-            except KeyError:
-                template = PageTemplate(
-                    (self.static_path / template_key).read_text())
-                type(self).template_cache[template_key] = template
+            template = self.get_template(template_key)
             now = dt.datetime.now(dt.timezone.utc)
+            # TODO Handle errors in rendering
             return HTTPResponse(
                 self, body=template.render(
-                    queue=self.server.queue,
+                    layout=self.template_cache['layout.pt']['layout'],
+                    json=json.dumps,
+                    request=self,
                     store=self.server.store,
                     now=now),
                 last_modified=now, filename=path)
         return HTTPResponse(self, status_code=HTTPStatus.NOT_FOUND)
 
+    def json(self):
+        try:
+            body_len = int(self.headers['Content-Length'])
+        except KeyError:
+            body = self.rfile.read()
+        else:
+            body = self.rfile.read(body_len)
+        return json.loads(body)
+
     def do_HEAD(self):
-        self.method = 'HEAD'
         resp = self.get_response()
         resp.send_headers()
 
     def do_GET(self):
-        self.method = 'GET'
         resp = self.get_response()
         resp.send_headers()
         resp.send_body()
 
     def do_DELETE(self):
-        self.method = 'DELETE'
         resp = self.get_response()
         resp.send_headers()
         resp.send_body()
 
     def do_PUT(self):
-        self.method = 'PUT'
         resp = self.get_response()
         resp.send_headers()
         resp.send_body()
 
     def do_POST(self):
-        self.method = 'POST'
         resp = self.get_response()
         resp.send_headers()
         resp.send_body()

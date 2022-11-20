@@ -8,6 +8,37 @@ from .httpd import route
 from .http import HTTPResponse
 
 
+def compress(frames):
+    """
+    Given a list of lists of :class:`~colorzero.Color` instances representing
+    the color of each LED in each frame, return a list of lists of ``(index, r,
+    g, b)`` tuples containing only those color positions that actually change
+    each frame.
+    """
+    def convert(frames):
+        for frame in frames:
+            yield [color.rgb_bytes for color in frame]
+
+    def diff(frames):
+        last = None
+        for frame in frames:
+            if last is None:
+                yield [
+                    (index,) + color
+                    for index, color in enumerate(frame)
+                    if any(color)
+                ]
+            else:
+                yield [
+                    (index,) + color
+                    for index, color in enumerate(frame)
+                    if last[index] != color
+                ]
+            last = frame
+
+    return list(diff(convert(frames)))
+
+
 @route('/')
 def home(request):
     return HTTPResponse(
@@ -79,9 +110,9 @@ def generate_animation(request, name):
         anim = request.animations[name]
         params = {
             name:
-                Color(value) if anim.params[name].input_type == 'color' else
                 int(value) if anim.params[name].input_type == 'range' else
                 float(value) if anim.params[name].input_type == 'number' else
+                Color(value) if anim.params[name].input_type == 'color' else
                 str(value)
             for name, value in request.json().items()
         }
@@ -90,7 +121,8 @@ def generate_animation(request, name):
             request.server.config.fps,
             **params)
     except (ValueError, TypeError) as e:
+        raise
         return HTTPResponse(
             request, body=str(e), status_code=HTTPStatus.BAD_REQUEST)
     else:
-        return HTTPResponse(request, body=json.dumps(data))
+        return HTTPResponse(request, body=json.dumps(compress(data)))

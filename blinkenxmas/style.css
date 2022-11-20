@@ -21,6 +21,7 @@ ul, ol, li, dl, dt, p, pre, table, hr, form {
 
 input, select, textarea, label {
   margin-top: 0;
+  width: 100%;
 }
 
 a {
@@ -141,4 +142,3 @@ form input[type=button]:hover { color: white; background-color: #c95777; }
 label {
   color: #333;
 }
-

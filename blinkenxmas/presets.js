@@ -7,16 +7,6 @@ function hideMessage() {
   document.querySelector("#message").style.display = "none";
 }
 
-function doPreview(form) {
-  let req = new Request("/preview", {
-    method: "POST",
-    body: form.data.value,
-    cache: "no-store",
-  });
-  fetch(req)
-    .catch((e) => showMessage(e));
-}
-
 function doCreate(form) {
   if (form.reportValidity()) {
     let req = new Request(`/preset/${form.name.value}`, {

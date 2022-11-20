@@ -1,5 +1,5 @@
 <div metal:use-macro="layout">
-  <div metal:fill-slot="title">Home</div>
+  <div tal:omit-tag="1" metal:fill-slot="title">Home</div>
   <div metal:fill-slot="head">
     <meta name="description" content="The homepage of the Blinken' Xmas server" />
   </div>

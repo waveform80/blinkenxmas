@@ -7,6 +7,7 @@ import email.utils as eut
 import urllib.parse
 from http import HTTPStatus
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
+from collections import namedtuple
 from threading import Thread
 
 # The fallback comes first here as Python 3.7 incorporates importlib.resources
@@ -60,6 +61,21 @@ def route(pattern, command='GET'):
     return decorator
 
 
+Function = namedtuple('Function', ('name', 'function', 'params'))
+class Param(namedtuple('Param', ('label', 'input_type', 'default', 'min', 'max'))):
+    __slots__ = () # workaround python issue #24931
+    def __new__(cls, label, input_type, *, default=None, min=None, max=None):
+        return super(Param, cls).__new__(
+            cls, label, input_type, default, min, max)
+
+
+def animation(name, **params):
+    def decorator(f):
+        HTTPRequestHandler.animations[f.__name__] = Function(name, f, params)
+        return f
+    return decorator
+
+
 class HTTPServer(ThreadingHTTPServer):
     allow_reuse_address = True
 
@@ -72,6 +88,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         'layout.pt': PageTemplate((static_path / 'layout.html.pt').read_text())
     }
     routes = {}
+    animations = {}
 
     def get_template(self, name):
         try:
@@ -93,7 +110,10 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         for (pattern, command), handler in self.routes.items():
             m = pattern.match(self.path)
             if m and command == self.command:
-                resp = handler(self, **m.groupdict())
+                resp = handler(self, **{
+                    param: urllib.parse.unquote(value)
+                    for param, value in m.groupdict().items()
+                })
                 if resp is not None:
                     return resp
         # Nothing found in the routes table; attempt to either find a literal
@@ -118,6 +138,11 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             return HTTPResponse(
                 self, body=template.render(
                     layout=self.template_cache['layout.pt']['layout'],
+                    led_count=self.server.config.led_count,
+                    animations={
+                        name: Function(anim.name, None, anim.params)
+                        for name, anim in self.animations.items()
+                    },
                     json=json.dumps,
                     request=self,
                     store=self.server.store,
@@ -160,12 +185,14 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
 
 class HTTPThread(Thread):
-    def __init__(self, queue, bind, port, db):
+    def __init__(self, queue, config):
         super().__init__(target=self.serve, daemon=True)
         mimetypes.init()
-        HTTPServer.address_family, addr = get_best_family(bind, port)
+        HTTPServer.address_family, addr = get_best_family(
+            config.httpd_bind, config.httpd_port)
         HTTPServer.queue = queue
-        HTTPServer.store = Storage(db)
+        HTTPServer.config = config
+        HTTPServer.store = Storage(config.db)
         self.httpd = HTTPServer(addr[:2], HTTPRequestHandler)
         self.exception = None
 

@@ -6,12 +6,12 @@ import paho.mqtt.client as mqtt
 
 
 class MessageThread(Thread):
-    def __init__(self, queue, host, port, topic):
+    def __init__(self, queue, config):
         super().__init__(target=self.listen, daemon=True)
         self.queue = queue
-        self.host = host
-        self.port = port
-        self.topic = topic
+        self.host = config.broker_address
+        self.port = config.broker_port
+        self.topic = config.topic
         self.exception = None
         self._stopping = Event()
 

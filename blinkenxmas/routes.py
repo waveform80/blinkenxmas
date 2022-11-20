@@ -54,7 +54,7 @@ def preview(request, name=None):
         data = request.json()
         # TODO Assert that the structure is correct (voluptuous?)
     except ValueError:
-        return HTTPResponse(self, status_code=HTTPStatus.BAD_REQUEST)
+        return HTTPResponse(request, status_code=HTTPStatus.BAD_REQUEST)
     else:
         request.server.queue.put(data)
         return HTTPResponse(request, status_code=HTTPStatus.NO_CONTENT)
@@ -69,3 +69,19 @@ def preview_preset(request, name):
     else:
         request.server.queue.put(data)
         return HTTPResponse(request, status_code=HTTPStatus.NO_CONTENT)
+
+
+@route('/animation/:name', 'POST')
+def generate_animation(request, name):
+    try:
+        anim = request.animations[name]
+        params = request.json()
+        data = anim.function(
+            request.server.config.led_count,
+            request.server.config.fps,
+            **params)
+    except (ValueError, TypeError) as e:
+        return HTTPResponse(
+            request, body=str(e), status_code=HTTPStatus.BAD_REQUEST)
+    else:
+        return HTTPResponse(request, body=json.dumps(data))

@@ -18,7 +18,7 @@ from configparser import ConfigParser
 
 from pkg_resources import require
 
-from . import httpd, mqtt, routes
+from . import httpd, mqtt, routes, animations
 
 
 XDG_CONFIG_HOME = os.environ.get('XDG_CONFIG_HOME', '~/.config')
@@ -78,6 +78,12 @@ def get_config(args, section='blinkenxmas'):
         '--httpd-port', metavar='PORT', type=httpd.get_port,
         default=config[section]['httpd-port'],
         help="The port to listen for HTTP requests. Default: %(default)s")
+    parser.add_argument(
+        '--led-count', metavar='NUM', type=int, default=50,
+        help="The number of LEDs controlled by the Pico")
+    parser.add_argument(
+        '--fps', metavar='NUM', type=int, default=60,
+        help="The number of frames per second that the Pico will show")
     return parser.parse_args(args)
 
 
@@ -86,12 +92,8 @@ def main(args=None):
         queue = Queue()
         config = get_config(args)
         with (
-            mqtt.MessageThread(
-                queue, config.broker_address, config.broker_port,
-                config.topic) as message_task,
-            httpd.HTTPThread(
-                queue, config.httpd_bind, config.httpd_port,
-                config.db) as httpd_task,
+            mqtt.MessageThread(queue, config) as message_task,
+            httpd.HTTPThread(queue, config) as httpd_task,
         ):
             while True:
                 httpd_task.join(1)

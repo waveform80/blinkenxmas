@@ -1,5 +1,5 @@
 <div metal:use-macro="layout">
-  <div metal:fill-slot="title">Home</div>
+  <div tal:omit-tag="1" metal:fill-slot="title">Home</div>
   <div metal:fill-slot="head">
     <meta name="description" content="Create a new Blinken' Xmas preset" />
   </div>
@@ -8,6 +8,11 @@
     <form>
       <label for="name">Name</label>
       <input type="text" name="name" id="name" required />
+      <label for="animation">Animation</label>
+      <select name="animation" id="animation" onchange="setupForm(this.form)">
+        <option value="">Custom</option>
+        <option tal:repeat="anim animations" value="${anim}">${animations[anim].name}</option>
+      </select>
       <label for="data">Data</label>
       <textarea name="data" id="data" rows="5">[]</textarea>
       <div class="buttons">
@@ -16,4 +21,12 @@
       </div>
     </form>
   </article>
+
+  <div metal:fill-slot="scripts">
+    <script>
+      var animations=${json(animations)};
+    </script>
+    <script src="/presets.js"></script>
+    <script src="/animations.js"></script>
+  </div>
 </div>

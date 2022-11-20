@@ -29,8 +29,6 @@ async def animate(frames):
                     start = time.ticks_ms()
                     set_frame(frame)
                     await asyncio.sleep_ms(frame_time - (time.ticks_ms() - start))
-        except asyncio.CancelledError:
-            pass
         finally:
             leds.clear()
 

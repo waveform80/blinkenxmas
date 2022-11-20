@@ -1,2 +1,2 @@
 all:
-	mpremote cp *.mpy *.py :
+	mpremote cp *.py :

@@ -1,5 +1,5 @@
+import gc
 import time
-import json
 import struct
 import uasyncio as asyncio
 from machine import Pin
@@ -9,25 +9,35 @@ from mqtt_as import MQTTClient
 from config import config
 
 
-async def animate(frames):
-    def set_frame(frame):
-        for led in frame:
-            leds.set_rgb(*led)
+async def animate(data):
+    anim_fmt = '!BH'
+    anim_size = struct.calcsize(anim_fmt)
+    frame_fmt = '!B'
+    frame_size = struct.calcsize(frame_fmt)
+    led_fmt = '!BBBB'
+    led_size = struct.calcsize(led_fmt)
 
+    fps, frames = struct.unpack(anim_fmt, data[:anim_size])
+    print(f'New animation contains {frames} frames at {fps}fps')
     if not frames:
         leds.clear()
     else:
         try:
-            if len(frames) > 1:
-                frame_time = 1000 // config.get('fps', 60)
+            if frames > 1:
+                frame_time = 1000 // fps
             else:
                 # If the animation is static, use an absurdly long frame time
                 # so we're not doing too much work...
                 frame_time = 5000
             while True:
-                for frame in frames:
+                off = anim_size
+                for frame in range(frames):
                     start = time.ticks_ms()
-                    set_frame(frame)
+                    count, = struct.unpack(frame_fmt, data[off:off + frame_size])
+                    off += frame_size
+                    for led in range(count):
+                        leds.set_rgb(*struct.unpack(led_fmt, data[off:off + led_size]))
+                        off += led_size
                     await asyncio.sleep_ms(frame_time - (time.ticks_ms() - start))
         finally:
             leds.clear()
@@ -36,18 +46,13 @@ async def animate(frames):
 async def receive(client):
     anim_task = None
     async for topic, msg, retained in client.queue:
+        gc.collect()
+        print(gc.mem_free(), 'bytes free RAM')
         topic = topic.decode('utf-8')
         print(f'Received new animation for {topic}')
-        try:
-            frames = json.loads(msg.decode('utf-8'))
-        except ValueError:
-            print('Failed to decode animation; ignoring')
-            continue
-        else:
-            print(f'New animation contains {len(frames)} frames')
         if anim_task is not None:
             anim_task.cancel()
-        anim_task = asyncio.create_task(animate(frames))
+        anim_task = asyncio.create_task(animate(msg))
     if anim_task is not None:
         anim_task.cancel()
 

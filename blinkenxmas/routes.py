@@ -26,7 +26,6 @@ def compress(frames):
                 yield [
                     (index,) + color
                     for index, color in enumerate(frame)
-                    if any(color)
                 ]
             else:
                 yield [

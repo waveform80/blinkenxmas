@@ -9,12 +9,22 @@ from mqtt_as import MQTTClient
 from config import config
 
 
+def rgb565_to_rgb(c):
+    r = (c & 0xf800) >> 8
+    g = (c & 0x07e0) >> 3
+    b = (c & 0x001f) << 3
+    r |= r >> 5
+    g |= g >> 6
+    b |= b >> 5
+    return r, g, b
+
+
 async def animate(data):
     anim_fmt = '!BH'
     anim_size = struct.calcsize(anim_fmt)
     frame_fmt = '!B'
     frame_size = struct.calcsize(frame_fmt)
-    led_fmt = '!BBBB'
+    led_fmt = '!BH'
     led_size = struct.calcsize(led_fmt)
 
     fps, frames = struct.unpack(anim_fmt, data[:anim_size])
@@ -36,7 +46,8 @@ async def animate(data):
                     count, = struct.unpack(frame_fmt, data[off:off + frame_size])
                     off += frame_size
                     for led in range(count):
-                        leds.set_rgb(*struct.unpack(led_fmt, data[off:off + led_size]))
+                        index, color = struct.unpack(led_fmt, data[off:off + led_size])
+                        leds.set_rgb(index, *rgb565_to_rgb(color))
                         off += led_size
                     await asyncio.sleep_ms(frame_time - (time.ticks_ms() - start))
         finally:

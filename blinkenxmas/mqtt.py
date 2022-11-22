@@ -3,26 +3,69 @@ from queue import Empty
 from threading import Thread, Event
 
 import paho.mqtt.client as mqtt
+from colorzero import Color
 
 
 def render(animation, fps):
     """
-    Given an *animation* (which is a list of lists of (index, r, g, b) tuples),
-    and an *fps* speed, returns a byte-string representation of the animation.
+    Given an *animation* (which is a list of lists of strings of HTML color
+    specifications), and an *fps* speed, returns a byte-string representation
+    of the animation.
 
-    The byte-string returned leads with a single unsigned byte containing the
-    *fps* value. This is followed by an unsigned short (2-bytes) containing the
-    number of frames. Then follows, for each frame, a single unsigned byte
-    containing the number of following LED changes, then for each LED change
-    four unsigned bytes comprising the LED index, red, green, and blue values.
+    The byte-string returned consists of:
+
+    * An unsigned byte containing the *fps* value
+
+    * An unsigned short (2 bytes in network order) containing the number of
+      frames following
+
+    * For each frame:
+
+      * An unsigned byte containing the number of LED changes following
+
+      * For each LED change:
+
+        * An unsigned byte with the zero-based index of the LED
+
+        * An unsigned short (2 bytes in network order) containing the color
+          of the LED in RGB565 format
+
+    For example, an animation that switches the first and second LEDs between
+    red and blue at 1fps would be rendered as::
+
+        b"\x01\x02\x02\x00\xF8\x00\x01\x00\x00\x02\x00\x00\x00\x01\x00\x1F"
     """
-    def chunks():
+    def convert(frames):
+        # Convert HTML color codes into RGB565 representation
+        for frame in frames:
+            yield [Color(html).rgb565 for html in frame]
+
+    def diff(frames):
+        # Determine which LEDs actually changed from each frame to the next
+        last = None
+        for frame in frames:
+            if last is None:
+                yield [
+                    (index, color)
+                    for index, color in enumerate(frame)
+                ]
+            else:
+                yield [
+                    (index, color)
+                    for index, color in enumerate(frame)
+                    if last[index] != color
+                ]
+            last = frame
+
+    def chunks(frames):
+        # Convert list of lists into an unambiguous byte-string representation
         yield struct.pack('!BH', fps, len(animation))
-        for frame in animation:
+        for frame in frames:
             yield struct.pack('!B', len(frame))
-            for index, r, g, b in frame:
-                yield struct.pack('!BBBB', index, r, g, b)
-    return b''.join(chunks())
+            for index, color in frame:
+                yield struct.pack('!BH', index, color)
+
+    return b''.join(chunks(diff(convert(animation))))
 
 
 class MessageThread(Thread):

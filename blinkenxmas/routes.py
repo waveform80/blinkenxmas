@@ -8,36 +8,6 @@ from .httpd import route
 from .http import HTTPResponse
 
 
-def compress(frames):
-    """
-    Given a list of lists of :class:`~colorzero.Color` instances representing
-    the color of each LED in each frame, return a list of lists of ``(index, r,
-    g, b)`` tuples containing only those color positions that actually change
-    each frame.
-    """
-    def convert(frames):
-        for frame in frames:
-            yield [color.rgb_bytes for color in frame]
-
-    def diff(frames):
-        last = None
-        for frame in frames:
-            if last is None:
-                yield [
-                    (index,) + color
-                    for index, color in enumerate(frame)
-                ]
-            else:
-                yield [
-                    (index,) + color
-                    for index, color in enumerate(frame)
-                    if last[index] != color
-                ]
-            last = frame
-
-    return list(diff(convert(frames)))
-
-
 @route('/')
 def home(request):
     return HTTPResponse(
@@ -84,10 +54,10 @@ def set_preset(request, name):
 def preview(request, name=None):
     try:
         data = request.json()
-        # TODO Assert that the structure is correct (voluptuous?)
     except ValueError:
         return HTTPResponse(request, status_code=HTTPStatus.BAD_REQUEST)
     else:
+        # TODO Assert that the structure is correct (voluptuous?)
         request.server.queue.put(data)
         return HTTPResponse(request, status_code=HTTPStatus.NO_CONTENT)
 
@@ -99,6 +69,7 @@ def preview_preset(request, name):
     except KeyError:
         return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
     else:
+        # TODO Assert that the structure is correct (voluptuous?)
         request.server.queue.put(data)
         return HTTPResponse(request, status_code=HTTPStatus.NO_CONTENT)
 
@@ -120,8 +91,9 @@ def generate_animation(request, name):
             request.server.config.fps,
             **params)
     except (ValueError, TypeError) as e:
-        raise
         return HTTPResponse(
             request, body=str(e), status_code=HTTPStatus.BAD_REQUEST)
     else:
-        return HTTPResponse(request, body=json.dumps(compress(data)))
+        # TODO Assert that the structure is correct (voluptuous?)
+        data = [[led.html for led in frame] for frame in data]
+        return HTTPResponse(request, body=json.dumps(data))

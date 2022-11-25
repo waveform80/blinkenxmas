@@ -3,6 +3,7 @@ import time
 import struct
 import uasyncio as asyncio
 from machine import Pin
+from micropython import const
 
 from plasma import plasma_stick, WS2812, COLOR_ORDER_RGB
 from mqtt_as import MQTTClient
@@ -19,15 +20,16 @@ def rgb565_to_rgb(c):
     return r, g, b
 
 
-async def animate(data):
-    anim_fmt = '!BH'
-    anim_size = struct.calcsize(anim_fmt)
-    frame_fmt = '!B'
-    frame_size = struct.calcsize(frame_fmt)
-    led_fmt = '!BH'
-    led_size = struct.calcsize(led_fmt)
+_anim_fmt  = const('!BH')
+_frame_fmt = const('!B')
+_led_fmt   = const('!BH')
 
-    fps, frames = struct.unpack(anim_fmt, data[:anim_size])
+_anim_size  = struct.calcsize(_anim_fmt)
+_frame_size = struct.calcsize(_frame_fmt)
+_led_size   = struct.calcsize(_led_fmt)
+
+async def animate(data):
+    fps, frames = struct.unpack(_anim_fmt, data[:_anim_size])
     print(f'New animation contains {frames} frames at {fps}fps')
     if not frames:
         leds.clear()
@@ -40,16 +42,19 @@ async def animate(data):
                 # so we're not doing too much work...
                 frame_time = 5000
             while True:
-                off = anim_size
+                off = _anim_size
                 for frame in range(frames):
                     start = time.ticks_ms()
-                    count, = struct.unpack(frame_fmt, data[off:off + frame_size])
-                    off += frame_size
+                    count, = struct.unpack(
+                        _frame_fmt, data[off:off + _frame_size])
+                    off += _frame_size
                     for led in range(count):
-                        index, color = struct.unpack(led_fmt, data[off:off + led_size])
+                        index, color = struct.unpack(
+                            _led_fmt, data[off:off + _led_size])
                         leds.set_rgb(index, *rgb565_to_rgb(color))
-                        off += led_size
-                    await asyncio.sleep_ms(frame_time - (time.ticks_ms() - start))
+                        off += _led_size
+                    await asyncio.sleep_ms(
+                        max(0, frame_time - (time.ticks_ms() - start)))
         finally:
             leds.clear()
 

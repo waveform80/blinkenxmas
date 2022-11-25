@@ -1,8 +1,8 @@
 import gc
 import time
 import struct
+import machine
 import uasyncio as asyncio
-from machine import Pin
 from micropython import const
 
 from plasma import plasma_stick, WS2812, COLOR_ORDER_RGB
@@ -63,36 +63,37 @@ async def receive(client):
     anim_task = None
     async for topic, msg, retained in client.queue:
         topic = topic.decode('utf-8')
-        print(f'Received new animation for {topic}')
+        print(f'Received new animation ({len(msg)//1024}KB) for {topic}')
         if anim_task is not None:
             anim_task.cancel()
-        gc.collect()
         print(gc.mem_free(), 'bytes free RAM')
         anim_task = asyncio.create_task(animate(msg))
     if anim_task is not None:
         anim_task.cancel()
 
 
-async def blinkie(delay):
-    led = Pin('LED', Pin.OUT)
+async def blinkie(count):
+    led = machine.Pin('LED', machine.Pin.OUT)
     try:
         while True:
-            led.value(1)
-            await asyncio.sleep_ms(delay)
-            led.value(0)
-            await asyncio.sleep_ms(delay)
+            for i in range(count):
+                led.value(1)
+                await asyncio.sleep_ms(200)
+                led.value(0)
+                await asyncio.sleep_ms(200)
+            await asyncio.sleep_ms(1000)
     except asyncio.CancelledError:
         led.value(1)
 
 
 async def connection(client):
     print(f'Awaiting connection to SSID {config["ssid"]}')
-    task = asyncio.create_task(blinkie(250))
+    task = asyncio.create_task(blinkie(2))
     await client.connect()
     while True:
         print(f'Awaiting connection to broker {config["server"]}')
         task.cancel()
-        task = asyncio.create_task(blinkie(500))
+        task = asyncio.create_task(blinkie(3))
         await client.up.wait()
         client.up.clear()
         print(f'Connection established; subscribing to {config["topic"]}')
@@ -104,10 +105,16 @@ async def connection(client):
 
 
 async def main(client):
-    asyncio.create_task(connection(client))
-    asyncio.create_task(receive(client))
-    while True:
-        await asyncio.sleep(5)
+    tasks = []
+    def error(loop, context):
+        print(repr(context))
+        for task in tasks:
+            task.cancel()
+
+    asyncio.get_event_loop().set_exception_handler(error)
+    tasks.append(asyncio.create_task(connection(client)))
+    tasks.append(asyncio.create_task(receive(client)))
+    await tasks[-1]
 
 
 # We use queue_len 1 to discard duplicate messages which can be sent at QoS 1
@@ -127,3 +134,4 @@ try:
 finally:
     client.close()
     asyncio.new_event_loop()
+    asyncio.run(blinkie(5))

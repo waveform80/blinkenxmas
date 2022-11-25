@@ -62,12 +62,12 @@ async def animate(data):
 async def receive(client):
     anim_task = None
     async for topic, msg, retained in client.queue:
-        gc.collect()
-        print(gc.mem_free(), 'bytes free RAM')
         topic = topic.decode('utf-8')
         print(f'Received new animation for {topic}')
         if anim_task is not None:
             anim_task.cancel()
+        gc.collect()
+        print(gc.mem_free(), 'bytes free RAM')
         anim_task = asyncio.create_task(animate(msg))
     if anim_task is not None:
         anim_task.cancel()

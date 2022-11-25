@@ -99,9 +99,10 @@ def bounce(led_count, fps, color, duration):
 @animation('Flash',
            color1=Param('Color 1', 'color', default='#000000'),
            color2=Param('Color 2', 'color', default='#ffffff'),
-           duration=Param('Duration', 'range', default=1, min=1, max=10))
-def flash(led_count, fps, color1, color2, duration):
-    frame_count = int(fps * duration / 2)
+           speed=Param('Speed', 'range', default=5, min=1, max=10))
+def flash(led_count, fps, color1, color2, speed):
+    duration = 11 - speed
+    frame_count = fps * duration // 2
     return (
         [[color1 for index in range(led_count)]] * frame_count +
         [[color2 for index in range(led_count)]] * frame_count
@@ -111,8 +112,8 @@ def flash(led_count, fps, color1, color2, duration):
 @animation('Twinkle',
            color=Param('Color', 'color', default='#ffffff'),
            lit=Param('Lit %', 'range', default=1, min=1, max=10),
-           duration=Param('Duration', 'range', default=1, min=1, max=5))
-def twinkle(led_count, fps, color, lit, duration):
+           speed=Param('Speed', 'range', default=1, min=1, max=10))
+def twinkle(led_count, fps, color, lit, speed, duration=5):
     frame_count = int(fps * duration)
     lit = led_count * lit // 50
     black = Color('black')
@@ -133,7 +134,8 @@ def twinkle(led_count, fps, color, lit, duration):
             led[frame] = color * Lightness(0.5 + random.random() / 2)
 
     # Calculate a weighted average color for each led in turn
-    weights = tuple(i / (fps // 2) for i in range(1, (fps // 2)))
+    window = fps * (11 - speed) // 10
+    weights = tuple(i / (window // 2) for i in range(1, (window // 2)))
     weights = weights + (1,) + weights[::-1]
     leds = [
         [

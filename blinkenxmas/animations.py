@@ -155,3 +155,32 @@ def twinkle(led_count, fps, color, lit, speed, duration=5):
     # Transpose to list of lists where outer list is the frames, and the inner
     # list is the frame of LEDs
     return zip(*leds)
+
+
+@animation('Rainbow',
+           count=Param('# Rainbows', 'range', default=1, min=1, max=5),
+           saturation=Param('Saturation', 'range', default=10, min=1, max=10),
+           value=Param('Brightness', 'range', default=10, min=1, max=10))
+def rainbow(led_count, fps, count, saturation, value):
+    return [[
+        Color(h=led * count / led_count, s=(saturation / 10), v=(value / 10))
+        for led in range(led_count)
+    ]]
+
+
+@animation('Rolling Rainbow',
+           count=Param('# Rainbows', 'range', default=1, min=1, max=5),
+           saturation=Param('Saturation', 'range', default=10, min=1, max=10),
+           value=Param('Brightness', 'range', default=10, min=1, max=10),
+           duration=Param('Duration', 'range', default=1, min=1, max=5))
+def rolling_rainbow(led_count, fps, count, saturation, value, duration):
+    frame_count = int(fps * duration)
+    return [
+        [
+            Color(
+                h=((led * count / led_count) + (frame / frame_count)) % 1.0,
+                s=(saturation / 10), v=(value / 10))
+            for led in range(led_count)
+        ]
+        for frame in range(frame_count)
+    ]

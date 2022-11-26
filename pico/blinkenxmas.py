@@ -133,5 +133,8 @@ try:
     asyncio.run(main(client))
 finally:
     client.close()
-    asyncio.new_event_loop()
-    asyncio.run(blinkie(5))
+    if config.get('error', 'reset') == 'reset':
+        machine.soft_reset()
+    else:
+        asyncio.new_event_loop()
+        asyncio.run(blinkie(5))

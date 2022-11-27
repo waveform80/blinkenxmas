@@ -1,5 +1,7 @@
 import gc
+import os
 import time
+import math
 import struct
 import machine
 import uasyncio as asyncio
@@ -20,56 +22,121 @@ def rgb565_to_rgb(c):
     return r, g, b
 
 
-_anim_fmt  = const('!BH')
-_frame_fmt = const('!B')
-_led_fmt   = const('!BH')
+_chunk_size = const(1024)
+_packet_fmt = const('!LLL')
+_anim_fmt   = const('!BH')
+_frame_fmt  = const('!B')
+_led_fmt    = const('!BH')
 
-_anim_size  = struct.calcsize(_anim_fmt)
-_frame_size = struct.calcsize(_frame_fmt)
-_led_size   = struct.calcsize(_led_fmt)
+_packet_size = struct.calcsize(_packet_fmt)
+_anim_size   = struct.calcsize(_anim_fmt)
+_frame_size  = struct.calcsize(_frame_fmt)
+_led_size    = struct.calcsize(_led_fmt)
 
-async def animate(data):
-    fps, frames = struct.unpack(_anim_fmt, data[:_anim_size])
-    print(f'New animation contains {frames} frames at {fps}fps')
-    if not frames:
+
+class Animation:
+    def __init__(self, initial_msg):
+        self.ident, offset, size = struct.unpack(_packet_fmt, initial_msg)
+        print(f'Receiving new animation {self.ident} (size {size//1024}KB)')
+        self._fps = None
+        self._len = None
+        self._buf = open(f'{self.ident}.dat', 'w+b')
+        self._buf.seek(size - 1)
+        self._buf.write(b'\x00')
+        self._chunks = 2 ** math.ceil(size / _chunk_size) - 1
+        self.write(initial_msg)
+
+    def close(self):
+        self._buf.close()
+        os.remove(f'{self.ident}.dat')
+
+    def write(self, msg):
+        ident, offset, size = struct.unpack(_packet_fmt, msg)
+        if ident != self.ident:
+            raise ValueError('new ident')
+        chunk = 2 ** (offset // _chunk_size)
+        if self._chunks & chunk:
+            self._buf.seek(offset)
+            self._buf.write(msg[_packet_size:])
+            self._chunks &= ~chunk
+            if chunk == 1:
+                self._fps, self._len = struct.unpack(
+                    _anim_fmt, msg[_packet_size:_packet_size + _anim_size])
+        # TODO If we're complete, re-open in read-only mode?
+
+    @property
+    def complete(self):
+        return not self._chunks
+
+    @property
+    def fps(self):
+        return self._fps
+
+    def __len__(self):
+        return self._len
+
+    def __iter__(self):
+        self._buf.seek(_anim_size)
+        frame_buf = bytearray(_frame_size)
+        led_buf = bytearray(_led_size)
+        for frame in range(len(self)):
+            assert self._buf.readinto(frame_buf) == len(frame_buf)
+            count, = struct.unpack(_frame_fmt, frame_buf)
+            frame = [None] * count
+            for led in range(count):
+                assert self._buf.readinto(led_buf) == len(led_buf)
+                frame[led] = struct.unpack(_led_fmt, led_buf)
+            yield frame
+
+
+async def animate(anim):
+    print(f'New animation contains {len(anim)} frames at {anim.fps}fps')
+    if not len(anim):
         leds.clear()
     else:
         try:
-            if frames > 1:
-                frame_time = 1000 // fps
+            if len(anim) > 1:
+                frame_time = 1000 // anim.fps
             else:
                 # If the animation is static, use an absurdly long frame time
                 # so we're not doing too much work...
                 frame_time = 5000
             while True:
-                off = _anim_size
-                for frame in range(frames):
+                for frame in anim:
                     start = time.ticks_ms()
-                    count, = struct.unpack(
-                        _frame_fmt, data[off:off + _frame_size])
-                    off += _frame_size
-                    for led in range(count):
-                        index, color = struct.unpack(
-                            _led_fmt, data[off:off + _led_size])
+                    for index, color in frame:
                         leds.set_rgb(index, *rgb565_to_rgb(color))
-                        off += _led_size
                     await asyncio.sleep_ms(
                         max(0, frame_time - (time.ticks_ms() - start)))
         finally:
             leds.clear()
+            anim.close()
 
 
 async def receive(client):
     anim_task = None
+    anim = None
     async for topic, msg, retained in client.queue:
         topic = topic.decode('utf-8')
-        print(f'Received new animation ({len(msg)//1024}KB) for {topic}')
-        if anim_task is not None:
-            anim_task.cancel()
-        print(gc.mem_free(), 'bytes free RAM')
-        anim_task = asyncio.create_task(animate(msg))
+        if anim is None:
+            anim = Animation(msg)
+        else:
+            try:
+                anim.write(msg)
+            except ValueError:
+                print(f'Discarding incomplete animation {anim.ident}')
+                anim.close()
+                anim = Animation(msg)
+        if anim.complete:
+            if anim_task is not None:
+                anim_task.cancel()
+            print(gc.mem_free(), 'bytes free RAM')
+            anim_task = asyncio.create_task(animate(anim))
+            anim = None
     if anim_task is not None:
         anim_task.cancel()
+    if anim is not None:
+        anim.close()
 
 
 async def blinkie(count):

@@ -1,3 +1,5 @@
+import io
+import time
 import struct
 from queue import Empty
 from threading import Thread, Event
@@ -57,15 +59,22 @@ def render(animation, fps):
                 ]
             last = frame
 
-    def chunks(frames):
-        # Convert list of lists into an unambiguous byte-string representation
+    def serialize(frames):
+        # Convert list of lists into a simple byte-string representation
         yield struct.pack('!BH', fps, len(animation))
         for frame in frames:
             yield struct.pack('!B', len(frame))
             for index, color in frame:
                 yield struct.pack('!BH', index, color)
 
-    return b''.join(chunks(diff(convert(animation))))
+    def chunkify(stream, chunk_size=1024):
+        # Split into 1KB chunks with headers
+        s = b''.join(stream)
+        ident = time.monotonic_ns() % (2 ** 32)
+        for i in range(0, len(s), chunk_size):
+            yield struct.pack('!LLL', ident, i, len(s)) + s[i:i + chunk_size]
+
+    return chunkify(serialize(diff(convert(animation))))
 
 
 class MessageThread(Thread):
@@ -102,6 +111,7 @@ class MessageThread(Thread):
                 except Empty:
                     pass
                 else:
-                    client.publish(self.topic, render(frames, self.fps), qos=1)
+                    for chunk in render(frames, self.fps):
+                        client.publish(self.topic, chunk, qos=1)
         except Exception as e:
             self.exception = e

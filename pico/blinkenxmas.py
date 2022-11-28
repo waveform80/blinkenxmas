@@ -7,7 +7,7 @@ import machine
 import uasyncio as asyncio
 from micropython import const
 
-from plasma import plasma_stick, WS2812, COLOR_ORDER_RGB
+import plasma
 from mqtt_as import MQTTClient
 from config import config
 
@@ -189,10 +189,19 @@ config['queue_len'] = 1
 config['clean'] = True
 config['keepalive'] = 120
 
+_order_map = {
+    'RGB': plasma.COLOR_ORDER_RGB,
+    'RBG': plasma.COLOR_ORDER_RBG,
+    'GRB': plasma.COLOR_ORDER_GRB,
+    'GBR': plasma.COLOR_ORDER_GBR,
+    'BGR': plasma.COLOR_ORDER_BGR,
+    'BRG': plasma.COLOR_ORDER_BRG,
+}
+
 # The LEDs must be initialized once at the top-level
-leds = WS2812(
-    config.get('led_count', 50), 0, 0, plasma_stick.DAT,
-    color_order=COLOR_ORDER_RGB)
+leds = plasma.WS2812(
+    config.get('led_count', 50), 0, 0, plasma.plasma_stick.DAT,
+    color_order=_order_map[config.get('led_order', 'RGB').strip().upper()])
 leds.start()
 
 client = MQTTClient(config)

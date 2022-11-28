@@ -1,92 +1,12 @@
 import gc
-import os
 import time
-import math
-import struct
 import machine
 import uasyncio as asyncio
-from micropython import const
 
-import plasma
+from animation import Animation
+from leds import LEDStrips
 from mqtt_as import MQTTClient
 from config import config
-
-
-def rgb565_to_rgb(c):
-    r = (c & 0xf800) >> 8
-    g = (c & 0x07e0) >> 3
-    b = (c & 0x001f) << 3
-    r |= r >> 5
-    g |= g >> 6
-    b |= b >> 5
-    return r, g, b
-
-
-_chunk_size = const(1024)
-_packet_fmt = const('!LLL')
-_anim_fmt   = const('!BH')
-_frame_fmt  = const('!B')
-_led_fmt    = const('!BH')
-
-_packet_size = struct.calcsize(_packet_fmt)
-_anim_size   = struct.calcsize(_anim_fmt)
-_frame_size  = struct.calcsize(_frame_fmt)
-_led_size    = struct.calcsize(_led_fmt)
-
-
-class Animation:
-    def __init__(self, initial_msg):
-        self.ident, offset, size = struct.unpack(_packet_fmt, initial_msg)
-        print(f'Receiving new animation {self.ident} (size {size//1024}KB)')
-        self._fps = None
-        self._len = None
-        self._buf = open(f'{self.ident}.dat', 'w+b')
-        self._buf.seek(size - 1)
-        self._buf.write(b'\x00')
-        self._chunks = 2 ** math.ceil(size / _chunk_size) - 1
-        self.write(initial_msg)
-
-    def close(self):
-        self._buf.close()
-        os.remove(f'{self.ident}.dat')
-
-    def write(self, msg):
-        ident, offset, size = struct.unpack(_packet_fmt, msg)
-        if ident != self.ident:
-            raise ValueError('new ident')
-        chunk = 2 ** (offset // _chunk_size)
-        if self._chunks & chunk:
-            self._buf.seek(offset)
-            self._buf.write(msg[_packet_size:])
-            self._chunks &= ~chunk
-            if chunk == 1:
-                self._fps, self._len = struct.unpack(
-                    _anim_fmt, msg[_packet_size:_packet_size + _anim_size])
-        # TODO If we're complete, re-open in read-only mode?
-
-    @property
-    def complete(self):
-        return not self._chunks
-
-    @property
-    def fps(self):
-        return self._fps
-
-    def __len__(self):
-        return self._len
-
-    def __iter__(self):
-        self._buf.seek(_anim_size)
-        frame_buf = bytearray(_frame_size)
-        led_buf = bytearray(_led_size)
-        for frame in range(len(self)):
-            assert self._buf.readinto(frame_buf) == len(frame_buf)
-            count, = struct.unpack(_frame_fmt, frame_buf)
-            frame = [None] * count
-            for led in range(count):
-                assert self._buf.readinto(led_buf) == len(led_buf)
-                frame[led] = struct.unpack(_led_fmt, led_buf)
-            yield frame
 
 
 async def animate(anim):
@@ -105,38 +25,40 @@ async def animate(anim):
                 for frame in anim:
                     start = time.ticks_ms()
                     for index, color in frame:
-                        leds.set_rgb(index, *rgb565_to_rgb(color))
+                        leds[index] = color
                     await asyncio.sleep_ms(
                         max(0, frame_time - (time.ticks_ms() - start)))
         finally:
-            leds.clear()
             anim.close()
+            leds.clear()
 
 
 async def receive(client):
     anim_task = None
     anim = None
-    async for topic, msg, retained in client.queue:
-        topic = topic.decode('utf-8')
-        if anim is None:
-            anim = Animation(msg)
-        else:
-            try:
-                anim.write(msg)
-            except ValueError:
-                print(f'Discarding incomplete animation {anim.ident}')
-                anim.close()
+    try:
+        async for topic, msg, retained in client.queue:
+            topic = topic.decode('utf-8')
+            if anim is None:
                 anim = Animation(msg)
-        if anim.complete:
-            if anim_task is not None:
-                anim_task.cancel()
-            print(gc.mem_free(), 'bytes free RAM')
-            anim_task = asyncio.create_task(animate(anim))
-            anim = None
-    if anim_task is not None:
-        anim_task.cancel()
-    if anim is not None:
-        anim.close()
+            else:
+                try:
+                    anim.write(msg)
+                except ValueError:
+                    print(f'Discarding incomplete animation {anim.ident}')
+                    anim.close()
+                    anim = Animation(msg)
+            if anim.complete:
+                if anim_task is not None:
+                    anim_task.cancel()
+                print(gc.mem_free(), 'bytes free RAM')
+                anim_task = asyncio.create_task(animate(anim))
+                anim = None
+    finally:
+        if anim_task is not None:
+            anim_task.cancel()
+        if anim is not None:
+            anim.close()
 
 
 async def blinkie(count):
@@ -189,21 +111,8 @@ config['queue_len'] = 1
 config['clean'] = True
 config['keepalive'] = 120
 
-_order_map = {
-    'RGB': plasma.COLOR_ORDER_RGB,
-    'RBG': plasma.COLOR_ORDER_RBG,
-    'GRB': plasma.COLOR_ORDER_GRB,
-    'GBR': plasma.COLOR_ORDER_GBR,
-    'BGR': plasma.COLOR_ORDER_BGR,
-    'BRG': plasma.COLOR_ORDER_BRG,
-}
-
 # The LEDs must be initialized once at the top-level
-leds = plasma.WS2812(
-    config.get('led_count', 50), 0, 0, plasma.plasma_stick.DAT,
-    color_order=_order_map[config.get('led_order', 'RGB').strip().upper()])
-leds.start()
-
+leds = LEDStrips(config['leds'])
 client = MQTTClient(config)
 try:
     asyncio.run(main(client))

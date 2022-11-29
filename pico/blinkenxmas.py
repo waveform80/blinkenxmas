@@ -62,7 +62,7 @@ async def receive(client):
 
 
 async def blinkie(count):
-    led = machine.Pin('LED', machine.Pin.OUT)
+    led = machine.Pin(config.get('status-led', 'LED'), machine.Pin.OUT)
     try:
         while True:
             for i in range(count):

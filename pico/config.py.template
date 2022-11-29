@@ -35,5 +35,10 @@ config['leds'] = [
     ('APA102', 25,   0,   'RGB', 12, 13),
 ]
 
-# Error handling; either 'reset' (the default) or 'blink'
+# The identifier of the LED to use when reporting status and errors (defaults
+# to 'LED' which is the built-in LED on the Pico W, but can be any GPIO number
+# too. The "error" setting must be either 'reset' (the default, which will
+# soft-reset the board upon error)) or 'blink' (which will blink the status LED
+# 5 times repeatedly on error)
+config['status'] = 'LED'
 config['error'] = 'reset'

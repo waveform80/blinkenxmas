@@ -32,6 +32,20 @@ class Animation:
         self._buf.close()
         os.remove(f'{self.ident}.dat')
 
+    @classmethod
+    def cleanup(cls):
+        # TODO Make a specific directory for animation caching (so we can just
+        # burn everything in there)
+        to_remove = [
+            filename
+            for filename in os.listdir()
+            if filename.endswith('.dat')
+            and filename[:-len('.dat')].isdigit()
+        ]
+        print(f'Removing {len(to_remove)} left over animation files')
+        for filename in to_remove:
+            os.remove(filename)
+
     def write(self, msg):
         ident, offset, size = struct.unpack(_packet_fmt, msg)
         if ident != self.ident:

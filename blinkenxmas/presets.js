@@ -20,10 +20,8 @@ function doCreate(form) {
   }
 }
 
-doUpdate = doCreate;
-
 function doDelete(form) {
-  let req = new Request(`/preset/${name}`, {
+  let req = new Request(`/preset/${form.name.value}`, {
     method: "DELETE",
     cache: "no-store",
   });

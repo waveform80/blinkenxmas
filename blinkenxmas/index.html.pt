@@ -6,15 +6,24 @@
 
   <article metal:fill-slot="content">
     <p tal:condition="not store">No presets defined yet!</p>
-    <p tal:condition="store">Select from one of the following presets:
-    <ul id="presets">
-      <li tal:repeat="preset store"><a href="#" onclick="doShow(${json(preset)})">${preset}</a></li>
-    </ul>
-    </p>
-    <p><a class="button" href="create.html">Create</a></p>
+    <form tal:condition="store">
+      <p>Select from one of the following presets:</p>
+      <ul id="presets">
+        <li tal:repeat="preset store"><a href="#" data-preset="${preset}">${preset}</a></li>
+      </ul>
+      <p class="buttons">
+        <a class="button" href="create.html">Create</a>
+        <a class="button" href="manage.html">Manage</a>
+      </p>
+    </form>
   </article>
 
   <div metal:fill-slot="scripts">
-    <script src="/presets.js"></script>
+    <script src="/messages.js"></script>
+    <script>
+      document.querySelectorAll("ul#presets li a").forEach(
+        (link) => link.addEventListener('click',
+          (evt) => doShow(link.dataset.preset)));
+    </script>
   </div>
 </div>

@@ -14,7 +14,7 @@ body {
 strong { font-weight: 600; }
 
 h1, h2, h3, h4, h5, h6,
-ul, ol, li, dl, dt, p, pre, table, hr, form {
+ul, ol, dl, dt, p, pre, table, hr, form {
     margin-top: 1.5rem;
     margin-bottom: 0;
 }
@@ -92,14 +92,6 @@ section#message {
   align-self: center;
 }
 
-@media screen and (max-width: 52rem) {
-  article,
-  section#message {
-    align-self: stretch;
-    width: auto;
-  }
-}
-
 section#message {
   border: 1px solid #88f;
   background: #ccf;
@@ -119,20 +111,49 @@ section#message > a:first-child:hover {
 
 section#message > * { margin-top: 0; }
 
-form {
+ul#presets {
+  display: grid;
+  grid-gap: 1rem;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  padding: 0;
+}
+
+ul#presets li {
+  list-style-type: none;
+  background: #ddd;
+  border-radius: 5px;
+  padding: 0.5rem;
+}
+
+ul#presets li a { display: block; }
+
+@media screen and (max-width: 52rem) {
+  article,
+  section#message {
+    align-self: stretch;
+    width: auto;
+    margin: 0 1rem;
+  }
+
+  ul#presets {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+form.grid {
   display: grid;
   grid-gap: 1rem;
   grid-template-columns: auto 1fr;
 }
 
-form .buttons {
+.buttons {
   display: flex;
   justify-content: space-between;
-  grid-column: 1 / span 2;
 }
 
-.button,
-form input[type=button] {
+form.grid .buttons { grid-column: 1 / span 2; }
+
+.buttons input, .buttons a {
   flex: 1;
   cursor: pointer;
   color: white;
@@ -142,18 +163,20 @@ form input[type=button] {
   transition: background-color 0.25s;
   padding: 0.5rem;
   text-decoration: none;
+  text-align: center;
 }
 
-.button + .button,
-form input[type=button] + input[type=button] {
-  margin-left: 0.5rem;
-}
+.buttons * + * { margin-left: 0.5rem; }
 
 .button a,
 form input[type=button] a { text-decoration: none; }
 
 .button:hover,
-form input[type=button]:hover { color: white; background-color: #c95777; }
+form input[type=button]:hover {
+  color: white;
+  background-color: #c95777;
+  text-decoration: none;
+}
 
 label {
   color: #333;

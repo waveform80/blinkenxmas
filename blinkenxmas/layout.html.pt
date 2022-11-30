@@ -23,8 +23,6 @@
     <article metal:define-slot="content">
     </article>
     <div tal:omit-tag="1" metal:define-slot="scripts" />
-    <script src="/presets.js"></script>
-    <script src="/animations.js"></script>
   </body>
 </html>
 </foo>

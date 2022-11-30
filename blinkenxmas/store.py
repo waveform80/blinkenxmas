@@ -60,7 +60,7 @@ class Storage(MutableMapping):
         return 0
 
     def __iter__(self):
-        sql = "SELECT name FROM presets"
+        sql = "SELECT name FROM presets ORDER BY name"
         for row in self._conn.execute(sql):
             yield row['name']
 

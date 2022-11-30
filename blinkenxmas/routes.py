@@ -18,7 +18,7 @@ def home(request):
 @route('/preset/:name', 'GET')
 def get_preset(request, name):
     try:
-        data = request.server.store[name]
+        data = request.store[name]
     except KeyError:
         return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
     return HTTPResponse(request, body=json.dumps(data))
@@ -27,7 +27,7 @@ def get_preset(request, name):
 @route('/preset/:name', 'DELETE')
 def del_preset(request, name):
     try:
-        del request.server.store[name]
+        del request.store[name]
     except KeyError:
         return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
     return HTTPResponse(request, status_code=HTTPStatus.NO_CONTENT)
@@ -40,13 +40,13 @@ def set_preset(request, name):
         # TODO Assert that the structure is correct (voluptuous?)
     except ValueError:
         return HTTPResponse(request, status_code=HTTPStatus.BAD_REQUEST)
-    if name in request.server.store:
+    if name in request.store:
         code = HTTPStatus.CREATED
         headers= {'Location': '/preset/' + name}
     else:
         code = HTTPStatus.NO_CONTENT
         headers = {}
-    request.server.store[name] = data
+    request.store[name] = data
     return HTTPResponse(request, status_code=code, headers=headers)
 
 
@@ -65,7 +65,7 @@ def preview(request, name=None):
 @route('/preview/:name', 'POST')
 def preview_preset(request, name):
     try:
-        data = request.server.store[name]
+        data = request.store[name]
     except KeyError:
         return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
     else:

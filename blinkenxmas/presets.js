@@ -31,3 +31,12 @@ function doDelete(form) {
     .then(() => { window.location = "/"; })
     .catch((e) => showMessage(e));
 }
+
+function doShow(name) {
+  let req = new Request(`/preview/${name}`, {
+    method: "POST",
+    cache: "no-store",
+  });
+  fetch(req)
+    .catch((e) => showMessage(e));
+}

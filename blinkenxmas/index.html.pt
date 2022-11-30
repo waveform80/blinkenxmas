@@ -8,9 +8,13 @@
     <p tal:condition="not store">No presets defined yet!</p>
     <p tal:condition="store">Select from one of the following presets:
     <ul id="presets">
-      <li tal:repeat="preset store"><a href="update.html?preset=${preset}">${preset}</a></li>
+      <li tal:repeat="preset store"><a href="#" onclick="doShow(${json(preset)})">${preset}</a></li>
     </ul>
     </p>
     <p><a class="button" href="create.html">Create</a></p>
   </article>
+
+  <div metal:fill-slot="scripts">
+    <script src="/presets.js"></script>
+  </div>
 </div>

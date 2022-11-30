@@ -86,22 +86,38 @@ header {
 
 header h1 { margin: 0.5rem 1rem; }
 
-article {
-  margin: 1rem;
+article,
+section#message {
   width: 50rem;
   align-self: center;
 }
 
 @media screen and (max-width: 52rem) {
-  article {
+  article,
+  section#message {
     align-self: stretch;
     width: auto;
   }
 }
 
 section#message {
+  border: 1px solid #88f;
+  background: #ccf;
+  border-radius: 5px;
+  margin-top: 1.5rem;
+  padding: 1rem;
   display: none;
 }
+
+section#message > a:first-child {
+  color: #88f;
+  float: right;
+}
+section#message > a:first-child:hover {
+  text-decoration: none;
+}
+
+section#message > * { margin-top: 0; }
 
 form {
   display: grid;

@@ -6,6 +6,9 @@
 
   <article metal:fill-slot="content">
     <p tal:condition="not store">No presets defined yet!</p>
+    <p tal:condition="not store" class="buttons">
+      <a class="button" href="create.html">Create</a>
+    </p>
     <form tal:condition="store">
       <p>Select from one of the following presets:</p>
       <ul id="presets">

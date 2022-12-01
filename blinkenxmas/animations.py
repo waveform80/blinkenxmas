@@ -2,6 +2,7 @@ import random
 from itertools import tee
 from collections import deque
 
+import numpy as np
 from colorzero import Color, Lightness
 
 from .httpd import animation, Param
@@ -113,7 +114,7 @@ def flash(led_count, fps, color1, color2, speed):
            color=Param('Color', 'color', default='#ffffff'),
            lit=Param('Lit %', 'range', default=1, min=1, max=10),
            speed=Param('Speed', 'range', default=1, min=1, max=10))
-def twinkle(led_count, fps, color, lit, speed, duration=5):
+def twinkle(led_count, fps, color, lit, speed, duration=10):
     frame_count = int(fps * duration)
     lit = led_count * lit // 50
     black = Color('black')
@@ -172,7 +173,7 @@ def rainbow(led_count, fps, count, saturation, value):
            count=Param('# Rainbows', 'range', default=1, min=1, max=5),
            saturation=Param('Saturation', 'range', default=10, min=1, max=10),
            value=Param('Brightness', 'range', default=10, min=1, max=10),
-           duration=Param('Duration', 'range', default=1, min=1, max=5))
+           duration=Param('Duration', 'range', default=1, min=1, max=10))
 def rolling_rainbow(led_count, fps, count, saturation, value, duration):
     frame_count = int(fps * duration)
     return [

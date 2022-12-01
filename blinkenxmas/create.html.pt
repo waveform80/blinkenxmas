@@ -9,7 +9,7 @@
       <label for="name">Name</label>
       <input type="text" name="name" required />
       <label for="animation">Animation</label>
-      <select name="animation" onchange="setupForm(this.form)">
+      <select name="animation">
         <option value="">Custom</option>
         <option tal:repeat="anim animations" value="${anim}">${animations[anim].name}</option>
       </select>
@@ -27,6 +27,6 @@
     <script>var animations=${json(animations)};</script>
     <script src="/messages.js"></script>
     <script src="/forms.js"></script>
-    <script>initForm(document.forms[0]);</script>
+    <script>initCreateForm(document.forms[0]);</script>
   </div>
 </div>

@@ -4,3 +4,6 @@ __pycache__/
 
 # Ignore the actual configuration
 pico/config.py
+
+# Ignore test databases
+*.db

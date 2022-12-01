@@ -51,7 +51,7 @@ def set_preset(request, name):
 
 
 @route('/preview', 'POST')
-def preview(request, name=None):
+def preview(request):
     try:
         data = request.json()
     except ValueError:

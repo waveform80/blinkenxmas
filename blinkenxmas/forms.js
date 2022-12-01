@@ -1,14 +1,21 @@
-function initForm(form) {
+function initIndexForm(form) {
+  form.querySelectorAll("ul#presets li a").forEach(
+    (link) => link.addEventListener('click',
+      (evt) => doShow(link.dataset.preset)));
+}
+
+function initCreateForm(form) {
   form.addEventListener('change', (evt) => {
     dataArea = form.elements['data'];
     if ((evt.target.nodeName != 'BUTTON') && (evt.target !== dataArea))
       form.dataset.changed = 1;
   });
+  form.elements['animation'].addEventListener('change', (evt) => setupCreateForm(form));
   form.elements['preview'].addEventListener('click', (evt) => doPreview(form));
   form.elements['create'].addEventListener('click', (evt) => doCreate(form));
 }
 
-function setupForm(form) {
+function setupCreateForm(form) {
   let animation = form.elements['animation'].value;
   let dataArea = form.elements['data'];
 
@@ -157,5 +164,14 @@ function doDelete(form) {
   });
   fetch(req)
     .then(() => { window.location = '/'; })
+    .catch((e) => showMessage(e));
+}
+
+function doShow(name) {
+  let req = new Request(`/preview/${name}`, {
+    method: "POST",
+    cache: "no-store",
+  });
+  fetch(req)
     .catch((e) => showMessage(e));
 }

@@ -13,17 +13,14 @@
       </ul>
       <p class="buttons">
         <a class="button" href="create.html">Create</a>
-        <a class="button" href="manage.html">Manage</a>
+        <input type="button" id="manage" value="Manage" />
       </p>
     </form>
   </article>
 
   <div metal:fill-slot="scripts">
     <script src="/messages.js"></script>
-    <script>
-      document.querySelectorAll("ul#presets li a").forEach(
-        (link) => link.addEventListener('click',
-          (evt) => doShow(link.dataset.preset)));
-    </script>
+    <script src="/forms.js"></script>
+    <script>initIndexForm(document.forms[0]);</script>
   </div>
 </div>

@@ -10,10 +10,10 @@ from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from collections import namedtuple
 from threading import Thread
 
-# The fallback comes first here as Python 3.7 incorporates importlib.resources
-# but at a version incompatible with our requirements. Ultimately the try
-# clause should be removed in favour of the except clause once compatibility
-# moves beyond Python 3.9
+# NOTE: The fallback comes first here as Python 3.7 incorporates
+# importlib.resources but at a version incompatible with our requirements.
+# Ultimately the try clause should be removed in favour of the except clause
+# once compatibility moves beyond Python 3.9
 try:
     import importlib_resources as resources
 except ImportError:
@@ -22,6 +22,7 @@ except ImportError:
 from pkg_resources import resource_stream
 from chameleon import PageTemplate
 
+from . import mqtt
 from .store import Storage
 from .http import HTTPResponse
 
@@ -33,16 +34,6 @@ def get_best_family(host, port):
         flags=socket.AI_PASSIVE)
     for family, type, proto, canonname, sockaddr in infos:
         return family, sockaddr
-
-
-def get_port(service):
-    try:
-        return int(service)
-    except ValueError:
-        try:
-            return socket.getservbyname(service)
-        except OSError:
-            raise ValueError('invalid service name or port number')
 
 
 def route(pattern, command='GET'):

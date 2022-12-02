@@ -14,8 +14,9 @@ from .config import get_parser
 
 def main(args=None):
     try:
+        parser = get_parser(description=__doc__)
+        config = parser.parse_args(args)
         queue = Queue()
-        config = get_parser(description=__doc__).parse_args(args)
         with (
             mqtt.MessageThread(queue, config) as message_task,
             httpd.HTTPThread(queue, config) as httpd_task,

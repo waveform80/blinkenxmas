@@ -8,7 +8,9 @@ import os
 import sys
 from queue import Queue
 
-from . import mqtt, httpd
+# NOTE: The routes and animations imports are performed solely to "register"
+# their definitions with the httpd module
+from . import mqtt, httpd, routes, animations
 from .config import get_parser
 
 

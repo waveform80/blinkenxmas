@@ -22,7 +22,6 @@ except ImportError:
 from pkg_resources import resource_stream
 from chameleon import PageTemplate
 
-from . import mqtt
 from .store import Storage
 from .http import HTTPResponse
 

@@ -105,13 +105,20 @@ class MessageThread(Thread):
             client = mqtt.Client(clean_session=True)
             client.connect(self.host, self.port, keepalive=120)
             while not self._stopping.wait(0):
-                client.loop(timeout=0.1)
                 try:
-                    frames = self.queue.get(timeout=1)
+                    frames = self.queue.get(timeout=0.9)
                 except Empty:
-                    pass
+                    client.loop(timeout=0.1)
                 else:
-                    for chunk in render(frames, self.fps):
-                        client.publish(self.topic, chunk, qos=1)
+                    try:
+                        messages = [
+                            client.publish(self.topic, chunk, qos=1)
+                            for chunk in render(frames, self.fps)
+                        ]
+                        # XXX Raise exception on timeout?
+                        while not all(m.is_published for m in messages):
+                            client.loop(timeout=1)
+                    finally:
+                        self.queue.task_done()
         except Exception as e:
             self.exception = e

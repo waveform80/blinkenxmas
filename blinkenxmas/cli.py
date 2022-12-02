@@ -59,6 +59,7 @@ def get_commands_parser(*, description):
         'color', type=Color,
         help="The color to set the LEDs to; may be given as a common CSS3 "
         "color name, or an HTML color code, i.e. #RRGGBB")
+    set_cmd.set_defaults(func=do_set)
 
     list_cmd = commands.add_parser(
         'list', aliases=['ls'],
@@ -121,6 +122,7 @@ def main(args=None):
         queue = Queue()
         with mqtt.MessageThread(queue, config) as message_task:
             config.func(config, queue)
+            queue.join()
     except KeyboardInterrupt:
         print('Interrupted', file=sys.stderr)
         return 2

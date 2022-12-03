@@ -63,7 +63,7 @@ def main(args=None):
                 queue.put([[]])
                 sleep(1)
                 filename = config.output / f'angle{config.angle:03d}_base.jpg'
-                camera.capture(filename)
+                camera.capture(str(filename))
                 print(f'Captured {filename}')
                 black = Color(0, 0, 0)
                 for led in range(config.led_count):

@@ -15,7 +15,7 @@ from queue import Queue
 from pathlib import Path
 from argparse import SUPPRESS
 
-import picamera
+from picamera import PiCamera
 from colorzero import Color
 
 from . import mqtt
@@ -49,12 +49,13 @@ def main(args=None):
         ]
         queue = Queue()
         with (
-                picamera.PiCamera() as camera,
+                PiCamera(resolution=PiCamera.MAX_RESOLUTION) as camera,
                 mqtt.MessageThread(queue, config) as message_task):
-            camera.start_preview()
             try:
                 if config.prompt:
+                    camera.start_preview(resolution='720p')
                     input("Press Enter to proceed with capture")
+                    camera.stop_preview()
                 else:
                     # Provide time for exposure and white-balance to settle
                     sleep(3)
@@ -77,7 +78,7 @@ def main(args=None):
                             f'angle{config.angle:03d}_'
                             f'led{led:03d}_'
                             f'color{color.html}.jpg')
-                        camera.capture(filename)
+                        camera.capture(str(filename))
                         print(f'Captured {filename}')
             finally:
                 queue.put([[]])

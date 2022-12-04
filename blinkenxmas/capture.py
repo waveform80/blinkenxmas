@@ -24,7 +24,7 @@ from .config import get_parser
 
 def main(args=None):
     try:
-        parser = get_parser(description=__doc__)
+        _, parser = get_config_and_parser(description=__doc__)
         parser.add_argument(
             '-o', '--output', type=Path, metavar='DIR', default='.',
             help="The path under which to store all the captured images")

@@ -16,7 +16,7 @@ from .config import get_parser
 
 
 def get_commands_parser(*, description):
-    parser = get_parser(description=description)
+    _, parser = get_config_and_parser(description=description)
     parser.set_defaults(func=do_help)
 
     commands = parser.add_subparsers(title='commands')

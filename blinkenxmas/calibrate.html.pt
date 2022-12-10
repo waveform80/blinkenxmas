@@ -1,0 +1,29 @@
+<div metal:use-macro="layout">
+  <div tal:omit-tag="1" metal:fill-slot="title">Calibration</div>
+  <div metal:fill-slot="head">
+    <meta name="description" content="Calibration of Blinken' Xmas LED positions" />
+  </div>
+
+  <article metal:fill-slot="content">
+    <p>Please select the current "angle" of the tree. This is a relative
+    measure. You should start by calibrating "angle zero", i.e. the natural
+    position of your tree. Then rotate your tree by a measured amount about its
+    trunk and calibrate the new angle.</p>
+    <p>You will likely need 4 or 5 calibration measurements to accurately plot
+    the position of all LEDs on your tree. Remember that not all LEDs will be
+    visible from each position and the algorithm requires at least two
+    different views of each LED to calculate its 3-dimensional position. It may
+    help to mark "angle zero" on the floor by the tree so that you can measure
+    (or at least estimate to the nearest 10 degrees) the rotation of the tree
+    for each calibration.</p>
+    <img src="/calibrate/preview.mjpg" width="640" height="480" />
+    <form>
+      <label for="angle">Tree Angle</label>
+      <input type="number" default="0" min="0" max="350" step="5" />
+      <div class="buttons">
+        <input type="button" id="start" value="Start" />
+        <a class="button" href="/">Cancel</a>
+      </div>
+    </form>
+  </article>
+</div>

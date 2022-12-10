@@ -11,19 +11,11 @@ from queue import Queue
 # NOTE: The routes and animations imports are performed solely to "register"
 # their definitions with the httpd module
 from . import mqtt, httpd, routes, animations
-from .config import get_parser
+from .config import get_config_and_parser
 
 
 def main(args=None):
-    parser = get_config_and_parser(description=__doc__)
-    parser.add_argument(
-        '--httpd-bind', metavar='ADDR', default=config['web']['bind'],
-        help="the address on which to listen for HTTP requests. Default: "
-        "%(default)s")
-    parser.add_argument(
-        '--httpd-port', metavar='PORT', type=get_port,
-        default=config['web']['port'],
-        help="the port to listen for HTTP requests. Default: %(default)s")
+    _, parser = get_config_and_parser(description=__doc__)
     try:
         config = parser.parse_args(args)
         queue = Queue()

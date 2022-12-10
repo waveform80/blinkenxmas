@@ -61,6 +61,14 @@ def get_config_and_parser(*, description):
         '--topic', default=config['mqtt']['topic'],
         help="the topic on which the Pico W is listening for messages. "
         "Default: %(default)s")
+    parser.add_argument(
+        '--httpd-bind', metavar='ADDR', default=config['web']['bind'],
+        help="the address on which to listen for HTTP requests. Default: "
+        "%(default)s")
+    parser.add_argument(
+        '--httpd-port', metavar='PORT', type=get_port,
+        default=config['web']['port'],
+        help="the port to listen for HTTP requests. Default: %(default)s")
 
     # Internal use arguments
     parser.add_argument(

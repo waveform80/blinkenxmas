@@ -8,7 +8,7 @@ import paho.mqtt.client as mqtt
 from colorzero import Color
 
 
-def render(animation, fps):
+def render(animation, fps, chunk_size=1024):
     """
     Given an *animation* (which is a list of lists of strings of HTML color
     specifications), and an *fps* speed, returns a byte-string representation
@@ -67,14 +67,14 @@ def render(animation, fps):
             for index, color in frame:
                 yield struct.pack('!BH', index, color)
 
-    def chunkify(stream, chunk_size=1024):
+    def chunkify(stream, chunk_size):
         # Split into 1KB chunks with headers
         s = b''.join(stream)
         ident = time.monotonic_ns() % (2 ** 32)
         for i in range(0, len(s), chunk_size):
             yield struct.pack('!LLL', ident, i, len(s)) + s[i:i + chunk_size]
 
-    return chunkify(serialize(diff(convert(animation))))
+    return chunkify(serialize(diff(convert(animation))), chunk_size)
 
 
 class MessageThread(Thread):

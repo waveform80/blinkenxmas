@@ -12,7 +12,7 @@ from colorzero import Color
 
 from . import mqtt
 from .store import Storage
-from .config import get_parser
+from .config import get_config_and_parser
 
 
 def get_commands_parser(*, description):

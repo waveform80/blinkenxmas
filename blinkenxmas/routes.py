@@ -62,7 +62,8 @@ def preview(request):
         return HTTPResponse(request, status_code=HTTPStatus.NO_CONTENT)
 
 
-@route('/preview/:name', 'POST')
+@route('/show/:name', 'GET')
+@route('/show/:name', 'POST')
 def preview_preset(request, name):
     try:
         data = request.store.presets[name]
@@ -71,7 +72,12 @@ def preview_preset(request, name):
     else:
         # TODO Assert that the structure is correct (voluptuous?)
         request.server.queue.put(data)
-        return HTTPResponse(request, status_code=HTTPStatus.NO_CONTENT)
+        if request.command == 'POST':
+            return HTTPResponse(request, status_code=HTTPStatus.NO_CONTENT)
+        else:
+            return HTTPResponse(
+                request, status_code=HTTPStatus.SEE_OTHER,
+                headers={'Location': '/index.html'})
 
 
 @route('/animation/:name', 'POST')

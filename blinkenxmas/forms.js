@@ -1,7 +1,10 @@
 function initIndexForm(form) {
   form.querySelectorAll("ul#presets li a").forEach(
-    (link) => link.addEventListener('click',
-      (evt) => doShow(link.dataset.preset)));
+    (link) => {
+      link.href = '#';
+      link.addEventListener('click',
+        (evt) => doShow(link.dataset.preset));
+    });
 }
 
 function initCreateForm(form) {
@@ -168,7 +171,7 @@ function doDelete(form) {
 }
 
 function doShow(name) {
-  let req = new Request(`/preview/${name}`, {
+  let req = new Request(`/show/${name}`, {
     method: "POST",
     cache: "no-store",
   });

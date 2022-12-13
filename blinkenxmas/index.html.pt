@@ -13,7 +13,7 @@
     <form tal:condition="store.presets">
       <p>Select from one of the following presets:</p>
       <ul id="presets">
-        <li tal:repeat="preset store"><a href="#" data-preset="${preset}">${preset}</a></li>
+        <li tal:repeat="preset store.presets"><a href="/show/${url(preset)}" data-preset="${preset}">${preset}</a></li>
       </ul>
       <p class="buttons">
         <a class="button" href="create.html">Create</a>

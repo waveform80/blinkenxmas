@@ -136,6 +136,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                         name: Function(anim.name, None, anim.params)
                         for name, anim in self.animations.items()
                     },
+                    url=urllib.parse.quote,
                     json=json.dumps,
                     request=self,
                     store=self.store,

@@ -19,9 +19,20 @@ ul, ol, dl, dt, p, pre, table, hr, form {
     margin-bottom: 0;
 }
 
-input, select, textarea, label {
+input, select, textarea {
   margin-top: 0;
   width: 100%;
+  line-height: 1.5;
+}
+
+input[type=checkbox] {
+  width: auto;
+  vertical-align: middle;
+}
+
+label {
+  margin-top: 0;
+  color: #333;
 }
 
 a {
@@ -176,8 +187,4 @@ form input[type=button]:hover {
   color: white;
   background-color: #c95777;
   text-decoration: none;
-}
-
-label {
-  color: #333;
 }

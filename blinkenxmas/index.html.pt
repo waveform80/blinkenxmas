@@ -16,8 +16,9 @@
         <li tal:repeat="preset store.presets"><a href="/show/${url(preset)}" data-preset="${preset}">${preset}</a></li>
       </ul>
       <p class="buttons">
-        <a class="button" href="create.html">Create</a>
-        <input type="button" id="manage" value="Manage" />
+        <a class="button" id="create" href="create.html">Create</a>
+        <!-- TODO Implement manage.html -->
+        <a class="button" id="manage" href="manage.html">Manage</a>
       </p>
     </form>
   </article>

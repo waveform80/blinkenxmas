@@ -86,21 +86,21 @@ function setupCreateForm(form) {
     // the bottom of the form
     let buttons = form.querySelector('.buttons');
     for (let param in params) {
-      let labelElem = document.createElement('label');
-      labelElem.htmlFor = param;
-      labelElem.textContent = params[param][0];
-      form.insertBefore(labelElem, buttons);
-      let inputElem = document.createElement('input');
-      inputElem.name = param;
-      inputElem.id = param;
-      inputElem.type = params[param][1];
+      let input = document.createElement('input');
+      input.name = param;
+      input.id = escapeIdent(param);
+      input.type = params[param][1];
       if (param[2] !== null)
-        inputElem.defaultValue = params[param][2];
+        input.defaultValue = params[param][2];
       if (param[3] !== null)
-        inputElem.min = params[param][3];
+        input.min = params[param][3];
       if (param[4] !== null)
-        inputElem.max = params[param][4];
-      form.insertBefore(inputElem, buttons);
+        input.max = params[param][4];
+      let label = document.createElement('label');
+      label.htmlFor = input.id;
+      label.textContent = params[param][0];
+      form.insertBefore(label, buttons);
+      form.insertBefore(input, buttons);
     }
 
     for (let label of dataArea.labels)
@@ -143,7 +143,7 @@ function generateAnim(form) {
       params[elem.name] = elem.value;
     }
 
-    let req = new Request(`/animation/${animation}`, {
+    let req = new Request(`/animation/${encodeURIComponent(animation)}`, {
       method: 'POST',
       body: JSON.stringify(params),
       cache: 'no-store',
@@ -179,7 +179,7 @@ function doCreate(form) {
   generateAnim(form)
     .then((data) => {
       let name = form.elements['name'].value;
-      let req = new Request(`/preset/${name}`, {
+      let req = new Request(`/preset/${encodeURIComponent(name)}`, {
         method: 'PUT',
         body: data,
         cache: 'no-store',
@@ -270,7 +270,7 @@ function doRemove(form) {
 }
 
 function doShow(name) {
-  let req = new Request(`/show/${name}`, {
+  let req = new Request(`/show/${encodeURIComponent(name)}`, {
     method: "POST",
     cache: "no-store",
   });

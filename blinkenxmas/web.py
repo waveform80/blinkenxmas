@@ -35,7 +35,8 @@ def get_web_parser():
         '--camera-path', section='camera', key='path', type=Path,
         help=SUPPRESS)
     parser.add_argument(
-        '--camera-device', section='camera', key='device', type=Path,
+        '--camera-device', section='camera', key='device',
+        default='/dev/video0', type=Path,
         help=SUPPRESS)
 
     parser.set_defaults_from(config)

@@ -12,11 +12,12 @@ from colorzero import Color
 
 from . import mqtt
 from .store import Storage
-from .config import get_config_and_parser
+from .config import get_config, get_parser
 
 
-def get_commands_parser(*, description):
-    _, parser = get_config_and_parser(description=description)
+def get_cli_parser():
+    config = get_config()
+    parser = get_parser(config, description=__doc__)
     parser.set_defaults(func=do_help)
 
     commands = parser.add_subparsers(title='commands')
@@ -77,11 +78,12 @@ def get_commands_parser(*, description):
         "it will need quoting on the command line")
     show_cmd.set_defaults(func=do_show)
 
+    parser.set_defaults_from(config)
     return parser
 
 
 def do_help(config, queue):
-    parser = get_commands_parser(description=__doc__)
+    parser = get_commands_parser()
     if 'cmd' in config and config.cmd is not None:
         parser.parse_args([config.cmd, '-h'])
     else:
@@ -116,7 +118,7 @@ def do_show(config, queue):
 
 
 def main(args=None):
-    parser = get_commands_parser(description=__doc__)
+    parser = get_cli_parser()
     try:
         config = parser.parse_args(args)
         queue = Queue()

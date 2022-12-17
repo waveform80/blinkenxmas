@@ -7,15 +7,43 @@ to the blinkenlights on the tree.
 import os
 import sys
 from queue import Queue
+from pathlib import Path
 
 # NOTE: The routes and animations imports are performed solely to "register"
 # their definitions with the httpd module
 from . import mqtt, httpd, routes, animations
-from .config import get_config_and_parser
+from .config import get_config, get_parser, get_port, SUPPRESS
+
+
+def get_web_parser():
+    config = get_config()
+    parser = get_parser(config, description=__doc__)
+
+    parser.add_argument(
+        '--httpd-bind', section='web', key='bind', metavar='ADDR',
+        help="the address on which to listen for HTTP requests. Default: "
+        "%(default)s")
+    parser.add_argument(
+        '--httpd-port', section='web', key='port',
+        type=get_port, metavar='PORT',
+        help="the port to listen for HTTP requests. Default: %(default)s")
+
+    parser.add_argument(
+        '--camera-type', section='camera', key='type', default='none',
+        choices={'none', 'files', 'picamera', 'gstreamer'}, help=SUPPRESS)
+    parser.add_argument(
+        '--camera-path', section='camera', key='path', type=Path,
+        help=SUPPRESS)
+    parser.add_argument(
+        '--camera-device', section='camera', key='device', type=Path,
+        help=SUPPRESS)
+
+    parser.set_defaults_from(config)
+    return parser
 
 
 def main(args=None):
-    _, parser = get_config_and_parser(description=__doc__)
+    parser = get_web_parser()
     try:
         config = parser.parse_args(args)
         queue = Queue()

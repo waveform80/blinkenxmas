@@ -5,7 +5,30 @@ from http import HTTPStatus
 from shutil import copyfileobj
 
 
+class DummyResponse:
+    """
+    An HTTP response that does nothing; useful for things that need to keep a
+    client connection for whatever reason.
+    """
+    def send_headers(self):
+        pass
+
+    def send_body(self):
+        pass
+
+
 class HTTPResponse:
+    """
+    An HTTP response.
+
+    The *request* is the :class:`http.server.BaseHTTPRequestHandler` instance
+    representing the original request. The *body* (which forms the body of the
+    response) may contain a :class:`str`, :class:`bytes`, or a file-like
+    object.
+
+    Other parameters represent typical HTTP headers and, if not given, will be
+    derived from the body where possible.
+    """
     def __init__(self, request, body=None, *, status_code=HTTPStatus.OK,
                  content_length=None, filename=None, mime_type=None,
                  encoding=None, last_modified=None, headers=None):

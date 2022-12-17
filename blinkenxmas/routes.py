@@ -5,7 +5,7 @@ from http import HTTPStatus
 from colorzero import Color
 
 from .httpd import route
-from .http import HTTPResponse
+from .http import HTTPResponse, DummyResponse
 
 
 @route('/')
@@ -107,4 +107,15 @@ def generate_animation(request, name):
 
 @route('/calibrate/preview.mjpg', 'GET')
 def calibration_preview(request):
-    pass
+    request.close_connection = False
+    request.send_response(200)
+    # Don't cache the response... no, really don't
+    request.send_header('Age', 0)
+    request.send_header('Cache-Control', 'no-cache, private')
+    request.send_header('Pragma', 'no-cache')
+    # Dreadful hack which tells the browser this resource contains several
+    # MIME "things" which should replace the original as each is received
+    request.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=--FRAME')
+    request.end_headers()
+    request.server.camera.add_client(request)
+    return DummyResponse()

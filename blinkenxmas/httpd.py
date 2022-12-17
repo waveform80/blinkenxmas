@@ -22,7 +22,7 @@ except ImportError:
 from pkg_resources import resource_stream
 from chameleon import PageTemplate
 
-from .store import Storage
+from . import cameras, store
 from .http import HTTPResponse
 
 
@@ -96,7 +96,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         self.path = parts.path
         self.query = urllib.parse.parse_qs(parts.query)
         self.fragment = parts.fragment
-        self.store = Storage(self.server.config.db)
+        self.store = store.Storage(self.server.config.db)
         # Search for a match in the routes table and call the appropriate
         # method if any is found; if the method returns None, keep searching
         for (pattern, command), handler in self.routes.items():
@@ -186,6 +186,12 @@ class HTTPThread(Thread):
             config.httpd_bind, config.httpd_port)
         HTTPServer.queue = queue
         HTTPServer.config = config
+        HTTPServer.camera = {
+            'none':      lambda config: None,
+            'files':     cameras.FilesSource,
+            'picamera':  cameras.PiCameraSource,
+            'gstreamer': cameras.GStreamerSource,
+        }[config.camera_type.strip().lower()](config)
         self.httpd = HTTPServer(addr[:2], HTTPRequestHandler)
         self.exception = None
 

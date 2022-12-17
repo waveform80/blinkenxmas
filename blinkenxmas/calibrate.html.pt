@@ -18,8 +18,8 @@
     enter the initial angle of the tree below and select "Capture". Otherwise,
     select "Cancel" to return to the main page</p>
 
-    <img src="/no-preview.png" width="640" height="480" />
-    <form>
+    <img id="preview" src="/no-preview.png" />
+    <form class="grid">
       <label for="angle">Tree Angle</label>
       <input type="number" default="0" min="0" max="350" step="5" />
       <div class="buttons">
@@ -40,4 +40,10 @@
     (or at least estimate to the nearest 10 degrees) the rotation of the tree
     for each calibration.</p>
   </article>
+
+  <div metal:fill-slot="scripts">
+    <script src="/messages.js"></script>
+    <script src="/forms.js"></script>
+    <script>initCalibrateForm(document.forms[0]);</script>
+  </div>
 </div>

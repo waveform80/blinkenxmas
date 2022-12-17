@@ -19,10 +19,20 @@ ul, ol, dl, dt, p, pre, table, hr, form {
     margin-bottom: 0;
 }
 
+img {
+    display: block;
+    margin: 0 auto;
+}
+
+img#preview {
+    max-width: 100%;
+}
+
 input, select, textarea {
-  margin-top: 0;
-  width: 100%;
-  line-height: 1.5;
+    font-size: 1rem;
+    margin-top: 0;
+    width: 100%;
+    line-height: 1.5;
 }
 
 input[type=checkbox] {
@@ -67,8 +77,6 @@ h4 { font-size: 1.25rem; }
 h5 { font-size: 1rem; }
 h6 { font-size: 1rem; }
 
-input { font-size: 1rem; }
-
 pre {
     font: 1rem monospace;
     line-height: 1.2rem;
@@ -86,95 +94,95 @@ abbr {
 }
 
 header {
-  background: #b3deb1;
-  background: linear-gradient(
-      90deg,
-      #b3deb1 0%,
-      #b3deb1 50%,
-      #c95777 100%
-  );
+    background: #b3deb1;
+    background: linear-gradient(
+        90deg,
+        #b3deb1 0%,
+        #b3deb1 50%,
+        #c95777 100%
+    );
 }
 
 header h1 { margin: 0.5rem 1rem; }
 
 article,
 section#message {
-  width: 50rem;
-  align-self: center;
+    width: 50rem;
+    align-self: center;
 }
 
 section#message {
-  border: 1px solid #88f;
-  background: #ccf;
-  border-radius: 5px;
-  margin-top: 1.5rem;
-  padding: 1rem;
-  display: none;
+    border: 1px solid #88f;
+    background: #ccf;
+    border-radius: 5px;
+    margin-top: 1.5rem;
+    padding: 1rem;
+    display: none;
 }
 
 section#message > a:first-child {
-  color: #88f;
-  float: right;
+    color: #88f;
+    float: right;
 }
 section#message > a:first-child:hover {
-  text-decoration: none;
+    text-decoration: none;
 }
 
 section#message > * { margin-top: 0; }
 
 ul#presets {
-  display: grid;
-  grid-gap: 1rem;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  padding: 0;
+    display: grid;
+    grid-gap: 1rem;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    padding: 0;
 }
 
 ul#presets li {
-  list-style-type: none;
-  background: #ddd;
-  border-radius: 5px;
-  padding: 0.5rem;
+    list-style-type: none;
+    background: #ddd;
+    border-radius: 5px;
+    padding: 0.5rem;
 }
 
 ul#presets li a { display: block; }
 
 @media screen and (max-width: 52rem) {
-  article,
-  section#message {
-    align-self: stretch;
-    width: auto;
-    margin: 0 1rem;
-  }
+    article,
+    section#message {
+        align-self: stretch;
+        width: auto;
+        margin: 0 1rem;
+    }
 
-  ul#presets {
-    grid-template-columns: 1fr 1fr;
-  }
+    ul#presets {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
 form.grid {
-  display: grid;
-  grid-gap: 1rem;
-  grid-template-columns: auto 1fr;
+    display: grid;
+    grid-gap: 1rem;
+    grid-template-columns: auto 1fr;
 }
 
 .buttons {
-  display: flex;
-  justify-content: space-between;
+    display: flex;
+    justify-content: space-between;
 }
 
 form.grid .buttons { grid-column: 1 / span 2; }
 
 .buttons input, .buttons a {
-  flex: 1;
-  cursor: pointer;
-  color: white;
-  background-color: #c51a4a;
-  border: 0 none;
-  border-radius: 5px;
-  transition: background-color 0.25s;
-  padding: 0.5rem;
-  text-decoration: none;
-  text-align: center;
+    flex: 1;
+    cursor: pointer;
+    color: white;
+    background-color: #c51a4a;
+    border: 0 none;
+    border-radius: 5px;
+    transition: background-color 0.25s;
+    padding: 0.5rem;
+    text-decoration: none;
+    text-align: center;
 }
 
 .buttons * + * { margin-left: 0.5rem; }
@@ -184,7 +192,7 @@ form input[type=button] a { text-decoration: none; }
 
 .button:hover,
 form input[type=button]:hover {
-  color: white;
-  background-color: #c95777;
-  text-decoration: none;
+    color: white;
+    background-color: #c95777;
+    text-decoration: none;
 }

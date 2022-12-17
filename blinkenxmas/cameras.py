@@ -64,7 +64,7 @@ class AbstractSource:
                     int(client.query.get('height', ['480'])[0]),
                 )
                 self.start_preview(angle, resolution)
-            self._clients.add(client)
+            self._clients.append(client)
 
     def remove_clients(self, clients):
         with self._lock:

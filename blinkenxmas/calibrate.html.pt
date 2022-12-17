@@ -16,8 +16,8 @@
     help to mark "angle zero" on the floor by the tree so that you can measure
     (or at least estimate to the nearest 10 degrees) the rotation of the tree
     for each calibration.</p>
-    <img src="/no-preview.png" width="640" height="480" />
-    <form>
+    <img id="preview" src="/no-preview.png" />
+    <form class="grid">
       <label for="angle">Tree Angle</label>
       <input type="number" default="0" min="0" max="350" step="5" />
       <div class="buttons">
@@ -26,4 +26,10 @@
       </div>
     </form>
   </article>
+
+  <div metal:fill-slot="scripts">
+    <script src="/messages.js"></script>
+    <script src="/forms.js"></script>
+    <script>initCalibrateForm(document.forms[0]);</script>
+  </div>
 </div>

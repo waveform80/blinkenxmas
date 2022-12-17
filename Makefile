@@ -8,6 +8,9 @@ TWINE ?= twine
 PYFLAGS ?=
 DEST_DIR ?= /
 
+# Find the location of GLib (only packaged for apt, not pip)
+GLIB_APT:=$(wildcard /usr/lib/python3/dist-packages/gi)
+
 # Calculate the base names of the distribution, the location of all source,
 # documentation, packaging, icon, and executable script files
 NAME:=$(shell $(PYTHON) $(PYFLAGS) setup.py --name)
@@ -79,6 +82,15 @@ develop:
 	$(PIP) install -U twine
 	$(PIP) install -U tox
 	$(PIP) install -e .[doc,test]
+ifeq ($(VIRTUAL_ENV),)
+	@echo "Virtualenv not detected! You may need to link python3-gi manually"
+else
+ifeq ($(GLIB_APT),)
+	@echo "WARNING: python3-gi not found. This is fine on non-Debian platforms"
+else
+	for lib in $(GLIB_APT); do ln -sf $$lib $(VIRTUAL_ENV)/lib/python*/site-packages/; done
+endif
+endif
 
 test:
 	$(PYTEST)

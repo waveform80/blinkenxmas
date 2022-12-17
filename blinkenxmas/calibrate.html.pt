@@ -43,7 +43,7 @@
 
   <div metal:fill-slot="scripts">
     <script src="/messages.js"></script>
-    <script src="/forms.js"></script>
+    <script src="/calibrate.js"></script>
     <script>initCalibrateForm(document.forms[0]);</script>
   </div>
 </div>

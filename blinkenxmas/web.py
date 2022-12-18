@@ -44,9 +44,8 @@ def get_web_parser():
 
 
 def main(args=None):
-    parser = get_web_parser()
     try:
-        config = parser.parse_args(args)
+        config = get_web_parser().parse_args(args)
         queue = Queue()
         with (
             mqtt.MessageThread(queue, config) as message_task,

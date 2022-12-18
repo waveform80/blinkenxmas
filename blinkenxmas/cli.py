@@ -118,9 +118,8 @@ def do_show(config, queue):
 
 
 def main(args=None):
-    parser = get_cli_parser()
     try:
-        config = parser.parse_args(args)
+        config = get_cli_parser().parse_args(args)
         queue = Queue()
         with mqtt.MessageThread(queue, config) as message_task:
             config.func(config, queue)

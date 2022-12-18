@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from string import Template
+from fnmatch import fnmatchcase
 from argparse import ArgumentParser, SUPPRESS
 from configparser import RawConfigParser, ConfigParser
 
@@ -145,9 +146,25 @@ def get_config():
         converters={'list': lambda s: s.strip().splitlines()})
     with resources.path('blinkenxmas', 'default.conf') as default_conf:
         config.read(default_conf)
+    valid = {config.default_section: set()}
+    for section, keys in config.items():
+        for key in keys:
+            valid.setdefault(
+                'leds:*' if section.startswith('leds:') else section,
+                set()
+            ).add(key)
     for path in CONFIG_LOCATIONS:
         path = path.expanduser()
         config.read(path)
+        for section, keys in config.items():
+            try:
+                section = {s for s in valid if fnmatchcase(section, s)}.pop()
+            except KeyError:
+                raise ValueError(
+                    f'{path}: invalid section [{section}]')
+            for key in set(keys) - valid[section]:
+                raise ValueError(
+                    f'{path}: invalid key {key} in [{section}]')
         for section, key in CONFIG_PATHS:
             if key in config[section]:
                 value = Path(config[section][key])

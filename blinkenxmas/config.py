@@ -175,4 +175,44 @@ def get_config():
 
 
 def get_pico_config(config):
-    pass
+    leds = [
+        (
+            config[section]['driver'],
+            int(config[section]['count']),
+            int(config[section].get('reversed', 'no') == 'yes'),
+            config[section]['order'],
+        ) + (
+            (config[section]['pin'],)
+            if config[section]['driver'] == 'WS2812' else
+            (config[section]['clk'], config[section]['dat'])
+        )
+        for section in config
+        if section.startswith('leds:')
+    ]
+    return f"""\
+from mqtt_as import config
+
+# WiFi configuration
+config['ssid'] = {config['wifi']['ssid']!r}
+config['wifi_pw'] = {config['wifi']['password']!r}
+
+# MQTT broker configuration
+config['server'] = {config['mqtt']['host']!r}
+config['topic'] = {config['mqtt']['topic']!r}
+
+# Configuration of the LEDs
+config['fps'] = {
+    min(int(config[section].get('fps', 60))
+    for section in config
+    if section.startswith('leds:'))
+}
+config['leds'] = {leds!r}
+
+# Error handling and status reporting
+config['status'] = {
+    int(config['pico']['status'])
+    if config['pico'].get('status', 'LED').isdigit() else
+    config['pico']['status']
+!r}
+config['error'] = {config['pico']['error']!r}
+"""

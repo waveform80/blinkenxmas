@@ -7,6 +7,13 @@ from threading import Thread, Event
 import paho.mqtt.client as mqtt
 from colorzero import Color
 
+from .pico.animation import (
+    packet_fmt,
+    anim_fmt,
+    frame_fmt,
+    led_fmt,
+)
+
 
 def render(animation, fps, chunk_size=1024):
     """
@@ -61,18 +68,18 @@ def render(animation, fps, chunk_size=1024):
 
     def serialize(frames):
         # Convert list of lists into a simple byte-string representation
-        yield struct.pack('!BH', fps, len(animation))
+        yield struct.pack(anim_fmt, fps, len(animation))
         for frame in frames:
-            yield struct.pack('!B', len(frame))
+            yield struct.pack(frame_fmt, len(frame))
             for index, color in frame:
-                yield struct.pack('!BH', index, color)
+                yield struct.pack(led_fmt, index, color)
 
     def chunkify(stream, chunk_size):
         # Split into 1KB chunks with headers
         s = b''.join(stream)
         ident = time.monotonic_ns() % (2 ** 32)
         for i in range(0, len(s), chunk_size):
-            yield struct.pack('!LLL', ident, i, len(s)) + s[i:i + chunk_size]
+            yield struct.pack(packet_fmt, ident, i, len(s)) + s[i:i + chunk_size]
 
     return chunkify(serialize(diff(convert(animation))), chunk_size)
 

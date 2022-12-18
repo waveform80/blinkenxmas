@@ -112,7 +112,7 @@ config['clean'] = True
 config['keepalive'] = 120
 
 # The LEDs must be initialized once at the top-level
-Animation.cleanup()
+Animation.setup()
 leds = LEDStrips(config['leds'])
 client = MQTTClient(config)
 try:

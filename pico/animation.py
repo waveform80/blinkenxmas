@@ -1,8 +1,11 @@
 import os
 import math
+import errno
 import struct
 from micropython import const
 
+
+_anim_path = 'animations'
 
 _chunk_size = const(1024)
 _packet_fmt = const('!LLL')
@@ -22,7 +25,7 @@ class Animation:
         print(f'Receiving new animation {self.ident} (size {size//1024}KB)')
         self._fps = None
         self._len = None
-        self._buf = open(f'{self.ident}.dat', 'w+b')
+        self._buf = open(f'{_anim_path}/{self.ident}.dat', 'w+b')
         self._buf.seek(size - 1)
         self._buf.write(b'\x00')
         self._chunks = 2 ** math.ceil(size / _chunk_size) - 1
@@ -30,21 +33,18 @@ class Animation:
 
     def close(self):
         self._buf.close()
-        os.remove(f'{self.ident}.dat')
+        os.remove(f'{_anim_path}/{self.ident}.dat')
 
     @classmethod
-    def cleanup(cls):
-        # TODO Make a specific directory for animation caching (so we can just
-        # burn everything in there)
-        to_remove = [
-            filename
-            for filename in os.listdir()
-            if filename.endswith('.dat')
-            and filename[:-len('.dat')].isdigit()
-        ]
-        print(f'Removing {len(to_remove)} left over animation files')
-        for filename in to_remove:
-            os.remove(filename)
+    def setup(cls):
+        try:
+            os.mkdir(_anim_path)
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
+        print(f'Removing {len(os.listdir(_anim_path))} cached animations')
+        for filename in os.listdir(_anim_path):
+            os.remove(f'{_anim_path}/{filename}')
 
     def write(self, msg):
         ident, offset, size = struct.unpack(_packet_fmt, msg)
@@ -58,7 +58,8 @@ class Animation:
             if chunk == 1:
                 self._fps, self._len = struct.unpack(
                     _anim_fmt, msg[_packet_size:_packet_size + _anim_size])
-        # TODO If we're complete, re-open in read-only mode?
+        self._buf.close()
+        self._buf = open(f'{_anim_path}/{self.ident}.dat', 'rb')
 
     @property
     def complete(self):

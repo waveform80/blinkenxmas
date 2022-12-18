@@ -1,7 +1,7 @@
 import plasma
 
 
-def rgb_to_rgb565(r, g, b):
+def rgb_to_rgb565(r, g, b, w=0):
     return (
         ((r & 0xF8) << 8) |
         ((g & 0xFC) << 3) |
@@ -34,12 +34,12 @@ class LEDStrips:
         self._strips = [
             (
                 plasma.WS2812(
-                    led_count, pio, sm, *pins,
-                    color_order=order_map[color_order.upper()])
+                    led_count, pio, sm, *pins, rgbw=color_order[-1] == 'W',
+                    color_order=order_map[color_order.rstrip('W')])
                 if led_type == 'WS2812' else
                 plasma.APA102(
-                    led_count, pio, sm, *pins,
-                    color_order=order_map[color_order.upper()])
+                    led_count, pio, sm, *pins, rgbw=color_order[-1] == 'W',
+                    color_order=order_map[color_order.rstrip('W')])
                 if led_type == 'APA102' else
                 None,
                 led_count,
@@ -71,7 +71,9 @@ class LEDStrips:
 
     def __setitem__(self, index, color):
         strip, index = self._find_strip(index)
-        strip.set_rgb(index, *rgb565_to_rgb(color))
+        if isinstance(color, int):
+            color = rgb565_to_rgb(color)
+        strip.set_rgb(index, *color)
 
     def clear(self):
         for strip, _, _ in self._strips:

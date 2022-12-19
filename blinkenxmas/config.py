@@ -141,6 +141,9 @@ def get_parser(config, **kwargs):
 
 
 def get_config():
+    # Load the default configuration from the project resources, defining the
+    # valid sections and keys from the default (amalgamating the example leds
+    # sections into a template "leds:*" section)
     config = ConfigParser(
         delimiters=('=',), empty_lines_in_values=False, interpolation=None,
         converters={'list': lambda s: s.strip().splitlines()})
@@ -153,6 +156,12 @@ def get_config():
                 'leds:*' if section.startswith('leds:') else section,
                 set()
             ).add(key)
+    for section in {s for s in config if s.startswith('leds:')}:
+        del config[section]
+
+    # Attempt to load each of the pre-defined locations for the "main"
+    # configuration, validating sections and keys against the default template
+    # loaded above
     for path in CONFIG_LOCATIONS:
         path = path.expanduser()
         config.read(path)
@@ -165,6 +174,7 @@ def get_config():
             for key in set(keys) - valid[section]:
                 raise ValueError(
                     f'{path}: invalid key {key} in [{section}]')
+        # Resolve paths relative to the configuration file just loaded
         for section, key in CONFIG_PATHS:
             if key in config[section]:
                 value = Path(config[section][key])
@@ -182,9 +192,9 @@ def get_pico_config(config):
             int(config[section].get('reversed', 'no') == 'yes'),
             config[section]['order'],
         ) + (
-            (config[section]['pin'],)
+            (int(config[section]['pin']),)
             if config[section]['driver'] == 'WS2812' else
-            (config[section]['clk'], config[section]['dat'])
+            (int(config[section]['clk']), int(config[section]['dat']))
         )
         for section in config
         if section.startswith('leds:')

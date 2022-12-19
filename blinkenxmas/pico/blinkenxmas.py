@@ -52,7 +52,7 @@ async def receive():
                 if anim_task is not None:
                     anim_task.cancel()
                 print(gc.mem_free(), 'bytes free RAM')
-                anim_task = asyncio.create_task(animate(leds, anim))
+                anim_task = asyncio.create_task(animate(anim))
                 anim = None
     finally:
         if anim_task is not None:

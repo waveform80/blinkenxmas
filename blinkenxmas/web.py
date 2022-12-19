@@ -46,6 +46,9 @@ def get_web_parser():
 def main(args=None):
     try:
         config = get_web_parser().parse_args(args)
+        if config.led_count == 0:
+            raise RuntimeError(
+                'No LED strips defined; please edit the configuration file')
         queue = Queue()
         with (
             mqtt.MessageThread(queue, config) as message_task,

@@ -123,18 +123,18 @@ def get_parser(config, **kwargs):
 
     # Internal use arguments
     parser.add_argument(
-        '--led-count', metavar='NUM', type=int, default=sum(
+        '--led-count', metavar='NUM', type=int, default=sum((
             int(config[section]['count'])
             for section in config
             if section.startswith('leds:')
-        ),
+        ), start=0),
         help=SUPPRESS)
     parser.add_argument(
-        '--fps', metavar='NUM', type=int, default=min(
+        '--fps', metavar='NUM', type=int, default=min((
             int(config[section].get('fps', 60))
             for section in config
             if section.startswith('leds:')
-        ),
+        ), default=60),
         help=SUPPRESS)
 
     return parser

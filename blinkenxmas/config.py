@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from string import Template
+from fnmatch import fnmatchcase
 from argparse import ArgumentParser, SUPPRESS
 from configparser import RawConfigParser, ConfigParser
 
@@ -140,14 +141,40 @@ def get_parser(config, **kwargs):
 
 
 def get_config():
+    # Load the default configuration from the project resources, defining the
+    # valid sections and keys from the default (amalgamating the example leds
+    # sections into a template "leds:*" section)
     config = ConfigParser(
         delimiters=('=',), empty_lines_in_values=False, interpolation=None,
         converters={'list': lambda s: s.strip().splitlines()})
     with resources.path('blinkenxmas', 'default.conf') as default_conf:
         config.read(default_conf)
+    valid = {config.default_section: set()}
+    for section, keys in config.items():
+        for key in keys:
+            valid.setdefault(
+                'leds:*' if section.startswith('leds:') else section,
+                set()
+            ).add(key)
+    for section in {s for s in config if s.startswith('leds:')}:
+        del config[section]
+
+    # Attempt to load each of the pre-defined locations for the "main"
+    # configuration, validating sections and keys against the default template
+    # loaded above
     for path in CONFIG_LOCATIONS:
         path = path.expanduser()
         config.read(path)
+        for section, keys in config.items():
+            try:
+                section = {s for s in valid if fnmatchcase(section, s)}.pop()
+            except KeyError:
+                raise ValueError(
+                    f'{path}: invalid section [{section}]')
+            for key in set(keys) - valid[section]:
+                raise ValueError(
+                    f'{path}: invalid key {key} in [{section}]')
+        # Resolve paths relative to the configuration file just loaded
         for section, key in CONFIG_PATHS:
             if key in config[section]:
                 value = Path(config[section][key])
@@ -158,4 +185,44 @@ def get_config():
 
 
 def get_pico_config(config):
-    pass
+    leds = [
+        (
+            config[section]['driver'],
+            int(config[section]['count']),
+            int(config[section].get('reversed', 'no') == 'yes'),
+            config[section]['order'],
+        ) + (
+            (int(config[section]['pin']),)
+            if config[section]['driver'] == 'WS2812' else
+            (int(config[section]['clk']), int(config[section]['dat']))
+        )
+        for section in config
+        if section.startswith('leds:')
+    ]
+    return f"""\
+from mqtt_as import config
+
+# WiFi configuration
+config['ssid'] = {config['wifi']['ssid']!r}
+config['wifi_pw'] = {config['wifi']['password']!r}
+
+# MQTT broker configuration
+config['server'] = {config['mqtt']['host']!r}
+config['topic'] = {config['mqtt']['topic']!r}
+
+# Configuration of the LEDs
+config['fps'] = {
+    min(int(config[section].get('fps', 60))
+    for section in config
+    if section.startswith('leds:'))
+}
+config['leds'] = {leds!r}
+
+# Error handling and status reporting
+config['status'] = {
+    int(config['pico']['status'])
+    if config['pico'].get('status', 'LED').isdigit() else
+    config['pico']['status']
+!r}
+config['error'] = {config['pico']['error']!r}
+"""

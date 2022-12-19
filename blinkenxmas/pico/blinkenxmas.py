@@ -33,7 +33,7 @@ async def animate(anim):
             leds.clear()
 
 
-async def receive(client):
+async def receive():
     anim_task = None
     anim = None
     try:
@@ -75,7 +75,7 @@ async def blinkie(count):
         led.value(1)
 
 
-async def connection(client):
+async def connection():
     print(f'Awaiting connection to SSID {config["ssid"]}')
     task = asyncio.create_task(blinkie(2))
     await client.connect()
@@ -93,7 +93,7 @@ async def connection(client):
         print('Connection failed')
 
 
-async def main(client):
+async def manager():
     tasks = []
     def error(loop, context):
         print(repr(context))
@@ -101,8 +101,8 @@ async def main(client):
             task.cancel()
 
     asyncio.get_event_loop().set_exception_handler(error)
-    tasks.append(asyncio.create_task(connection(client)))
-    tasks.append(asyncio.create_task(receive(client)))
+    tasks.append(asyncio.create_task(connection()))
+    tasks.append(asyncio.create_task(receive()))
     await tasks[-1]
 
 
@@ -112,15 +112,18 @@ config['clean'] = True
 config['keepalive'] = 120
 
 # The LEDs must be initialized once at the top-level
-Animation.cleanup()
 leds = LEDStrips(config['leds'])
 client = MQTTClient(config)
-try:
-    asyncio.run(main(client))
-finally:
-    client.close()
-    if config.get('error', 'reset') == 'reset':
-        machine.soft_reset()
-    else:
-        asyncio.new_event_loop()
-        asyncio.run(blinkie(5))
+
+
+def main():
+    Animation.setup()
+    try:
+        asyncio.run(manager())
+    finally:
+        client.close()
+        if config.get('error', 'reset') == 'reset':
+            machine.soft_reset()
+        else:
+            asyncio.new_event_loop()
+            asyncio.run(blinkie(5))

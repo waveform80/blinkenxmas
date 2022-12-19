@@ -146,7 +146,7 @@ def get_config():
     # sections into a template "leds:*" section)
     config = ConfigParser(
         delimiters=('=',), empty_lines_in_values=False, interpolation=None,
-        converters={'list': lambda s: s.strip().splitlines()})
+        converters={'list': lambda s: s.strip().splitlines()}, strict=False)
     with resources.path('blinkenxmas', 'default.conf') as default_conf:
         config.read(default_conf)
     valid = {config.default_section: set()}

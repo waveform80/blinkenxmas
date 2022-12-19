@@ -19,7 +19,6 @@ try:
 except ImportError:
     from importlib import resources
 
-from pkg_resources import resource_stream
 from chameleon import PageTemplate
 
 from . import cameras, store

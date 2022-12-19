@@ -25,7 +25,7 @@ class Animation:
         print(f'Receiving new animation {self.ident} (size {size//1024}KB)')
         self._fps = None
         self._len = None
-        self._buf = open(f'{_anim_path}/{self.ident}.dat', 'w+b')
+        self._buf = open(f'{anim_path}/{self.ident}.dat', 'wb')
         self._buf.seek(size - 1)
         self._buf.write(b'\x00')
         self._chunks = 2 ** math.ceil(size / chunk_size) - 1
@@ -46,7 +46,8 @@ class Animation:
         for filename in os.listdir(anim_path):
             os.remove(f'{anim_path}/{filename}')
 
-    def write(self, msg):
+    def write(self, buf):
+        msg = memoryview(buf)
         ident, offset, size = struct.unpack(packet_fmt, msg)
         if ident != self.ident:
             raise ValueError('new ident')

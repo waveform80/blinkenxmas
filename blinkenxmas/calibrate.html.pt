@@ -20,9 +20,10 @@
     <form class="grid">
       <img id="preview-image" src="/no-preview.png" />
       <label for="angle">Tree Angle</label>
-      <input type="number" default="0" min="0" max="350" step="5" />
+      <input type="number" id="angle" name="angle"
+        default="0" min="0" max="350" step="5" />
       <div class="buttons">
-        <input type="button" id="start" value="Start" />
+        <input type="button" id="calibrate" value="Calibrate" />
         <a class="button" href="/">Cancel</a>
       </div>
     </form>

@@ -1,4 +1,3 @@
-
 function initIndexForm(form) {
   form.querySelectorAll("ul#presets li a").forEach(
     (link) => {

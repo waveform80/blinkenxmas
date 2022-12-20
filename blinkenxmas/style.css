@@ -9,6 +9,7 @@ body {
     display: flex;
     flex-direction: column;
     margin: 0;
+    margin-bottom: 1.5rem;
 }
 
 strong { font-weight: 600; }
@@ -24,7 +25,7 @@ img {
     margin: 0 auto;
 }
 
-img#preview {
+img#preview-image {
     max-width: 100%;
 }
 

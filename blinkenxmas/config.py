@@ -177,10 +177,10 @@ def get_config():
         # Resolve paths relative to the configuration file just loaded
         for section, key in CONFIG_PATHS:
             if key in config[section]:
-                value = Path(config[section][key])
+                value = Path(config[section][key]).expanduser()
                 if not value.is_absolute():
-                    value = (path.parent / value).expanduser().resolve()
-                    config[section][key] = str(value)
+                    value = (path.parent / value).resolve()
+                config[section][key] = str(value)
     return config
 
 

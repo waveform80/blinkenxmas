@@ -14,12 +14,11 @@
     <span tal:condition="len(store.positions) < led_count">Calibration is
       required for certain animations to operate correctly. To start
       calibration,</span>
-
     enter the initial angle of the tree below and select "Capture". Otherwise,
     select "Cancel" to return to the main page</p>
 
-    <img id="preview" src="/no-preview.png" />
     <form class="grid">
+      <img id="preview-image" src="/no-preview.png" />
       <label for="angle">Tree Angle</label>
       <input type="number" default="0" min="0" max="350" step="5" />
       <div class="buttons">

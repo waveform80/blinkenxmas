@@ -170,6 +170,7 @@ form.grid {
     justify-content: space-between;
 }
 
+form.grid img { grid-column: 1 / span 2; }
 form.grid .buttons { grid-column: 1 / span 2; }
 
 .buttons input, .buttons a {

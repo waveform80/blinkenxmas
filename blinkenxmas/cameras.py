@@ -1,7 +1,7 @@
 import io
 import sys
 from pathlib import Path
-from threading import Lock
+from threading import Lock, Thread, Event
 
 from PIL import Image
 
@@ -51,6 +51,7 @@ class AbstractSource:
                     client.wfile.write(frame)
                     client.wfile.write(b'\r\n')
                 except Exception as e:
+                    client.wfile.close()
                     died.append(client)
         if died:
             self.remove_clients(died)
@@ -78,6 +79,10 @@ class AbstractSource:
 
 
 class FilesSource(AbstractSource):
+    thread = None
+    lock = Lock()
+    stop = Event()
+
     def __init__(self, config):
         assert config.camera_type == 'files'
         if not config.camera_path:
@@ -88,15 +93,28 @@ class FilesSource(AbstractSource):
         self._preview = None
 
     def start_preview(self, angle, resolution):
+        with FilesSource.lock:
+            if FilesSource.thread is None:
+                FilesSource.thread = Thread(
+                    target=self._preview_thread, args=(angle, resolution,),
+                    daemon=True)
+                FilesSource.stop.clear()
+                FilesSource.thread.start()
+
+    def stop_preview(self):
+        with FilesSource.lock:
+            if FilesSource.thread is not None:
+                FilesSource.stop.set()
+                FilesSource.thread = None
+
+    def _preview_thread(self, angle, resolution):
+        width, height = resolution
         base_path = self._path / f'angle{angle:03d}_base.jpg'
         image = Image.open(base_path).resize(resolution)
         preview = io.BytesIO()
-        image.save(preview, format='jpeg')
-        preview.seek(0)
-        self._preview = preview
-
-    def stop_preview(self):
-        self._preview = None
+        image.save(preview, 'jpeg')
+        while not FilesSource.stop.wait(timeout=0.1):
+            self._preview_frame(preview.getvalue())
 
     def capture(self, angle, led, color):
         if self._preview is not None:
@@ -104,10 +122,6 @@ class FilesSource(AbstractSource):
         return (
             self._path /
             f'angle{angle:03d}_led{led:03d}_color{color.html}.jpg').open('rb')
-
-    def add_client(self, client):
-        super().add_client(client)
-        self._preview_frame(self._preview.getvalue())
 
 
 class PiCameraOutput:
@@ -159,6 +173,10 @@ class GStreamerSource(AbstractSource):
     Gst = None
     GstVideo = None
 
+    thread = None
+    lock = Lock()
+    stop = Event()
+
     def __init__(self, config):
         if GStreamerSource.Gst is None:
             import gi
@@ -177,27 +195,44 @@ class GStreamerSource(AbstractSource):
 
         super().__init__(config)
         self._device = config.camera_device
-        self._pipeline = None
 
     def start_preview(self, angle, resolution):
-        self._pipeline = self.Gst.parse_launch(
-            f"""
-            v4l2src device={self._device} !
-            capsfilter caps=image/jpeg,width={resolution[0]},height={resolution[1]} !
-            queue leaky=upstream silent=true !
-            appsink emit-signals=true name=sink
-            """)
-        self._pipeline.set_state(self.Gst.State.PLAYING)
-        sink = self._pipeline.get_by_name('sink')
-        sink.connect('new-sample', self._new_sample, None)
+        with GStreamerSource.lock:
+            if GStreamerSource.thread is None:
+                GStreamerSource.thread = Thread(
+                    target=self._gst_thread, args=(resolution,), daemon=True)
+                GStreamerSource.stop.clear()
+                GStreamerSource.thread.start()
 
     def stop_preview(self):
-        self._pipeline.send_event(self.Gst.Event.new_eos())
-        self._pipeline.set_state(self.Gst.State.NULL)
-        self._pipeline = None
+        with GStreamerSource.lock:
+            if GStreamerSource.thread is not None:
+                GStreamerSource.stop.set()
+                # NOTE: You cannot attempt to join the thread because it's
+                # actually the current thread (but Python doesn't realize that
+                # presumably due to the roundabout way the thread's entered
+                # via a GStreamer callback)
+                GStreamerSource.thread = None
 
     def capture(self, angle, led, color):
         pass
+
+    def _gst_thread(self, resolution):
+        width, height = resolution
+        pipeline = self.Gst.parse_launch(
+            f"""
+            v4l2src device={self._device} !
+            capsfilter caps=image/jpeg,width={width},height={height} !
+            appsink drop=true emit-signals=true name=sink
+            """)
+        if pipeline.set_state(self.Gst.State.PLAYING) == self.Gst.StateChangeReturn.FAILURE:
+            raise RuntimeError('failed to start GStreamer pipeline')
+        try:
+            sink = pipeline.get_by_name('sink')
+            sink.connect('new-sample', self._new_sample, None)
+            self.stop.wait()
+        finally:
+            pipeline.set_state(self.Gst.State.NULL)
 
     def _new_sample(self, sink, user_data):
         sample = sink.emit('pull-sample')

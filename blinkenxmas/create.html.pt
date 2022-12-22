@@ -17,6 +17,7 @@
       <textarea name="data" id="data" rows="5">[]</textarea>
       <div class="buttons">
         <input type="button" id="preview" value="Preview" />
+        <!-- TODO Implement submit variant for no-js -->
         <input type="button" id="create" value="Create" />
         <a class="button" href="/">Cancel</a>
       </div>

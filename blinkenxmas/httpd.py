@@ -137,6 +137,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                     url=urllib.parse.quote,
                     json=json.dumps,
                     request=self,
+                    angles=self.server.angles,
                     store=self.store,
                     now=now),
                 last_modified=now, filename=path)
@@ -190,6 +191,7 @@ class HTTPThread(Thread):
             'picamera':  cameras.PiCameraSource,
             'gstreamer': cameras.GStreamerSource,
         }[config.camera_type.strip().lower()](config)
+        HTTPServer.angles = {}
         self.httpd = HTTPServer(addr[:2], HTTPRequestHandler)
         self.exception = None
 

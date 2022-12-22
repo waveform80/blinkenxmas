@@ -20,13 +20,14 @@ ul, ol, dl, dt, p, pre, table, hr, form {
     margin-bottom: 0;
 }
 
-img {
+img, canvas {
     display: block;
     margin: 0 auto;
 }
 
-img#preview-image {
-    max-width: 100%;
+img#preview-image,
+canvas#preview-image {
+    width: 100%;
 }
 
 input, select, textarea {
@@ -171,8 +172,11 @@ form.grid {
     justify-content: space-between;
 }
 
-form.grid img { grid-column: 1 / span 2; }
-form.grid .buttons { grid-column: 1 / span 2; }
+form.grid img,
+form.grid canvas,
+form.grid .buttons {
+    grid-column: 1 / span 2;
+}
 
 .buttons input, .buttons a {
     flex: 1;

@@ -5,7 +5,9 @@
   </div>
 
   <article metal:fill-slot="content">
-    <p>Calibrated positions: ${len(store.positions)}/${led_count}</p>
+    <p>3D positions: ${len(store.positions)}/${led_count}</p>
+    <p>Angles calibrated: ${len(angles)}</p>
+
     <p>
     <span tal:condition="len(store.positions) == led_count">Calibration is
       complete. If you wish to re-calibrate,</span>
@@ -17,13 +19,13 @@
     enter the initial angle of the tree below and select "Capture". Otherwise,
     select "Cancel" to return to the main page</p>
 
-    <form class="grid">
+    <form action="/mask.html" method="get" class="grid">
       <img id="preview-image" src="/no-preview.png" />
       <label for="angle">Tree Angle</label>
       <input type="number" id="angle" name="angle"
-        default="0" min="0" max="350" step="5" />
+        value="0" min="0" max="350" step="5" required />
       <div class="buttons">
-        <input type="button" id="calibrate" value="Calibrate" />
+        <input type="submit" id="calibrate" value="Calibrate" />
         <a class="button" href="/">Cancel</a>
       </div>
     </form>

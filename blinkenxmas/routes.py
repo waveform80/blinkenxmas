@@ -105,7 +105,7 @@ def generate_animation(request, name):
         return HTTPResponse(request, body=json.dumps(data))
 
 
-@route('/calibrate/preview.mjpg', 'GET')
+@route('/live-preview.mjpg', 'GET')
 def calibration_preview(request):
     request.close_connection = False
     request.send_response(200)
@@ -119,3 +119,21 @@ def calibration_preview(request):
     request.end_headers()
     request.server.camera.add_client(request)
     return DummyResponse()
+
+
+@route('/angle<angle>_base.jpg', 'GET')
+def calibration_base(request, angle):
+    try:
+        angle = int(angle, base=10)
+    except ValueError:
+        return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
+    try:
+        base = request.server.angles[angle][None]
+    except KeyError:
+        # No base image exists for this angle; switch off the LEDs and capture
+        # one
+        request.server.queue.put([])
+        # XXX Wait? May not be necessary given camera warm-up time
+        base = request.server.camera.capture(angle)
+        request.server.angles[angle] = {None: base}
+    return HTTPResponse(request, body=base, mime_type='image/jpeg')

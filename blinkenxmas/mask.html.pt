@@ -1,0 +1,34 @@
+<div metal:use-macro="layout">
+  <div tal:omit-tag="1" metal:fill-slot="title">Calibration Mask</div>
+  <div metal:fill-slot="head">
+    <meta name="description" content="Calibration of Blinken' Xmas Tree" />
+  </div>
+
+  <article metal:fill-slot="content" tal:define="angle request.query['angle'][0]">
+    <p>3D positions: ${len(store.positions)}/${led_count}</p>
+    <p>Angles calibrated: ${len(angles)}</p>
+
+    <p>Click on the capture below (in which all the LEDs should be off) to draw
+    a mask around the tree. The mask doesn't have to be terribly accurate; it
+    simply helps the algorithm ignore "impossible" LED positions.</p>
+
+    <form action="/capture.html" method="get" class="grid">
+      <img id="preview-image" src="/angle${str(angle).rjust(3, '0')}_base.jpg" />
+      <p>Tree Angle</p>
+      <p>
+        <input type="number" id="angle" name="angle" value="${angle}" readonly />
+      </p>
+      <div class="buttons">
+        <input type="button" id="calibrate" value="Calibrate" />
+        <a class="button" href="/">Cancel</a>
+      </div>
+    </form>
+  </article>
+
+  <div metal:fill-slot="scripts">
+    <script src="/messages.js"></script>
+    <script src="/calibrate.js"></script>
+    <script>initMaskForm(document.forms[0]);</script>
+  </div>
+</div>
+

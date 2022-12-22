@@ -89,6 +89,11 @@ class ConfigArgumentParser(ArgumentParser):
             self._config[section][key] = str(getattr(namespace, dest))
 
 
+def get_resolution(s):
+    width, height = (int(i) for i in s.lower().split('x', 1))
+    return width, height
+
+
 def get_port(service):
     try:
         return int(service)

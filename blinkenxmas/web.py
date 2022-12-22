@@ -12,7 +12,7 @@ from pathlib import Path
 # NOTE: The routes and animations imports are performed solely to "register"
 # their definitions with the httpd module
 from . import mqtt, httpd, routes, animations
-from .config import get_config, get_parser, get_port, SUPPRESS
+from .config import get_config, get_parser, get_resolution, get_port, SUPPRESS
 
 
 def get_web_parser():
@@ -32,12 +32,16 @@ def get_web_parser():
         '--camera-type', section='camera', key='type', default='none',
         choices={'none', 'files', 'picamera', 'gstreamer'}, help=SUPPRESS)
     parser.add_argument(
-        '--camera-path', section='camera', key='path', type=Path,
-        help=SUPPRESS)
+        '--camera-path', section='camera', key='path', type=Path, help=SUPPRESS)
     parser.add_argument(
         '--camera-device', section='camera', key='device',
-        default='/dev/video0', type=Path,
-        help=SUPPRESS)
+        default='/dev/video0', type=Path, help=SUPPRESS)
+    parser.add_argument(
+        '--camera-capture', section='camera', key='capture',
+        default='960x720', type=get_resolution, help=SUPPRESS)
+    parser.add_argument(
+        '--camera-preview', section='camera', key='preview',
+        default='640x480', type=get_resolution, help=SUPPRESS)
 
     parser.set_defaults_from(config)
     return parser

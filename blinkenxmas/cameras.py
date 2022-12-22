@@ -16,11 +16,11 @@ class AbstractSource:
         self._lock = Lock()
         self._clients = []
 
-    def start_preview(self, angle, resolution):
+    def start_preview(self, angle):
         """
         Start a live preview from the camera, passing JPEG image frames to
         the internal :meth:`_preview_frame` method. The *angle* is the current
-        angle of the tree, and *resolution* is the expected preview resolution.
+        angle of the tree.
         """
         raise NotImplementedError
 
@@ -30,7 +30,7 @@ class AbstractSource:
         """
         raise NotImplementedError
 
-    def capture(self, angle, led, color):
+    def capture(self, angle, led=None, color=None):
         """
         Capture a high-quality (highest possible resolution) image of the tree
         at *angle* with *led* lit with specified *color*. Expected to return a
@@ -60,11 +60,7 @@ class AbstractSource:
         with self._lock:
             if not self._clients:
                 angle = int(client.query.get('angle', ['0'])[0])
-                resolution = (
-                    int(client.query.get('width', ['640'])[0]),
-                    int(client.query.get('height', ['480'])[0]),
-                )
-                self.start_preview(angle, resolution)
+                self.start_preview(angle)
             self._clients.append(client)
 
     def remove_clients(self, clients):
@@ -90,14 +86,13 @@ class FilesSource(AbstractSource):
 
         super().__init__(config)
         self._path = config.camera_path
-        self._preview = None
+        self._preview_res = config.camera_preview
 
-    def start_preview(self, angle, resolution):
+    def start_preview(self, angle):
         with FilesSource.lock:
             if FilesSource.thread is None:
                 FilesSource.thread = Thread(
-                    target=self._preview_thread, args=(angle, resolution,),
-                    daemon=True)
+                    target=self._preview_thread, args=(angle,), daemon=True)
                 FilesSource.stop.clear()
                 FilesSource.thread.start()
 
@@ -107,21 +102,23 @@ class FilesSource(AbstractSource):
                 FilesSource.stop.set()
                 FilesSource.thread = None
 
-    def _preview_thread(self, angle, resolution):
-        width, height = resolution
+    def _preview_thread(self, angle):
         base_path = self._path / f'angle{angle:03d}_base.jpg'
-        image = Image.open(base_path).resize(resolution)
+        image = Image.open(base_path).resize(self._preview_res)
         preview = io.BytesIO()
         image.save(preview, 'jpeg')
         while not FilesSource.stop.wait(timeout=0.1):
             self._preview_frame(preview.getvalue())
 
-    def capture(self, angle, led, color):
-        if self._preview is not None:
+    def capture(self, angle, led=None, color=None):
+        if FilesSource.thread is not None:
             raise RuntimeError('Cannot capture while previewing')
-        return (
-            self._path /
-            f'angle{angle:03d}_led{led:03d}_color{color.html}.jpg').open('rb')
+        if led is None:
+            return (self._path / f'angle{angle:03d}_base.jpg').open('rb')
+        else:
+            return (
+                self._path /
+                f'angle{angle:03d}_led{led:03d}_color{color.html}.jpg').open('rb')
 
 
 class PiCameraOutput:
@@ -142,27 +139,35 @@ class PiCameraOutput:
 
 
 class PiCameraSource(AbstractSource):
+    lock = Lock()
+    output = None
+
     def __init__(self, config):
         from picamera import PiCamera
         assert config.camera_type == 'picamera'
 
         super().__init__(config)
         self._camera = PiCamera()
-        self._preview = None
+        self._capture_res = config.camera_capture
+        self._preview_res = config.camera_preview
 
-    def start_preview(self, angle, resolution):
-        self._preview = PiCameraOutput(self)
-        self._camera.resolution = resolution
-        self._camera.start_recording(self._preview, format='mjpeg')
+    def start_preview(self, angle):
+        with PiCameraSource.lock:
+            if PiCameraSource.output is None:
+                PiCameraSource.output = PiCameraOutput(self)
+                self._camera.resolution = self._preview_res
+                self._camera.start_recording(
+                    PiCameraSource.output, format='mjpeg')
 
     def stop_preview(self):
-        self._camera.stop_recording()
-        self._preview = None
+        with PiCameraSource.lock:
+            if PiCameraSource.output is not None:
+                self._camera.stop_recording()
+                PiCameraSource.output = None
 
-    def capture(self, angle, led, color):
-        if self._preview is not None:
-            raise RuntimeError('Cannot capture while previewing')
-        self._camera.resolution = self._camera.MAX_RESOLUTION
+    def capture(self, angle, led=None, color=None):
+        self.stop_preview()
+        self._camera.resolution = self._capture_res
         frame = io.BytesIO()
         self._camera.capture(frame, format='jpeg')
         frame.seek(0)
@@ -195,12 +200,16 @@ class GStreamerSource(AbstractSource):
 
         super().__init__(config)
         self._device = config.camera_device
+        self._capture_res = config.camera_capture
+        self._preview_res = config.camera_preview
+        self._captured = Event()
+        self._discard = 0
 
-    def start_preview(self, angle, resolution):
+    def start_preview(self, angle):
         with GStreamerSource.lock:
             if GStreamerSource.thread is None:
                 GStreamerSource.thread = Thread(
-                    target=self._gst_thread, args=(resolution,), daemon=True)
+                    target=self._gst_thread, daemon=True)
                 GStreamerSource.stop.clear()
                 GStreamerSource.thread.start()
 
@@ -214,11 +223,46 @@ class GStreamerSource(AbstractSource):
                 # via a GStreamer callback)
                 GStreamerSource.thread = None
 
-    def capture(self, angle, led, color):
-        pass
+    def capture(self, angle, led=None, color=None):
+        self.stop_preview()
+        width, height = self._capture_res
+        pipeline = self.Gst.parse_launch(
+            f"""
+            v4l2src device={self._device} !
+            capsfilter caps=image/jpeg,width={width},height={height} !
+            appsink drop=true emit-signals=true name=sink
+            """)
+        if pipeline.set_state(self.Gst.State.PLAYING) == self.Gst.StateChangeReturn.FAILURE:
+            raise RuntimeError('failed to start GStreamer pipeline')
+        data = io.BytesIO()
+        try:
+            sink = pipeline.get_by_name('sink')
+            # Number of frames to initially discard; some cameras require
+            # several "warm-up" frames to measure white-balance, exposure,
+            # and so on so discard a few before capturing
+            self._discard = 10
+            self._captured.clear()
+            sink.connect('new-sample', self._capture_sample, data)
+            if not self._captured.wait(timeout=30):
+                raise RuntimeError('failed to capture image')
+            data.seek(0)
+            return data
+        finally:
+            pipeline.set_state(self.Gst.State.NULL)
 
-    def _gst_thread(self, resolution):
-        width, height = resolution
+    def _capture_sample(self, sink, data):
+        sample = sink.emit('pull-sample')
+        if not isinstance(sample, self.Gst.Sample):
+            return self.Gst.FlowReturn.ERROR
+        buf = sample.get_buffer()
+        self._discard -= 1
+        if not self._discard:
+            data.write(buf.extract_dup(0, buf.get_size()))
+            self._captured.set()
+        return self.Gst.FlowReturn.OK
+
+    def _gst_thread(self):
+        width, height = self._preview_res
         pipeline = self.Gst.parse_launch(
             f"""
             v4l2src device={self._device} !
@@ -229,12 +273,12 @@ class GStreamerSource(AbstractSource):
             raise RuntimeError('failed to start GStreamer pipeline')
         try:
             sink = pipeline.get_by_name('sink')
-            sink.connect('new-sample', self._new_sample, None)
+            sink.connect('new-sample', self._preview_sample, None)
             self.stop.wait()
         finally:
             pipeline.set_state(self.Gst.State.NULL)
 
-    def _new_sample(self, sink, user_data):
+    def _preview_sample(self, sink, user_data):
         sample = sink.emit('pull-sample')
         if not isinstance(sample, self.Gst.Sample):
             return self.Gst.FlowReturn.ERROR

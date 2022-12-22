@@ -15,7 +15,7 @@ def home(request):
         headers={'Location': '/index.html'})
 
 
-@route('/preset/:name', 'GET')
+@route('/preset/<name>', 'GET')
 def get_preset(request, name):
     try:
         data = request.store.presets[name]
@@ -24,7 +24,7 @@ def get_preset(request, name):
     return HTTPResponse(request, body=json.dumps(data))
 
 
-@route('/preset/:name', 'DELETE')
+@route('/preset/<name>', 'DELETE')
 def del_preset(request, name):
     try:
         del request.store.presets[name]
@@ -33,7 +33,7 @@ def del_preset(request, name):
     return HTTPResponse(request, status_code=HTTPStatus.NO_CONTENT)
 
 
-@route('/preset/:name', 'PUT')
+@route('/preset/<name>', 'PUT')
 def set_preset(request, name):
     try:
         data = request.json()
@@ -62,8 +62,8 @@ def preview(request):
         return HTTPResponse(request, status_code=HTTPStatus.NO_CONTENT)
 
 
-@route('/show/:name', 'GET')
-@route('/show/:name', 'POST')
+@route('/show/<name>', 'GET')
+@route('/show/<name>', 'POST')
 def preview_preset(request, name):
     try:
         data = request.store.presets[name]
@@ -80,7 +80,7 @@ def preview_preset(request, name):
                 headers={'Location': '/index.html'})
 
 
-@route('/animation/:name', 'POST')
+@route('/animation/<name>', 'POST')
 def generate_animation(request, name):
     try:
         anim = request.animations[name]

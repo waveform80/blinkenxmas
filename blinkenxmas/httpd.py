@@ -37,8 +37,7 @@ def get_best_family(host, port):
 def route(pattern, command='GET'):
     def decorator(f):
         s = re.escape(pattern)
-        s = re.sub(r'\*\*:([A-Za-z_][A-Za-z0-9_]*)', r'(?P<\1>.+)', s)
-        s = re.sub(r'\*?:([A-Za-z_][A-Za-z0-9_]*)', r'(?P<\1>[^/]+)', s)
+        s = re.sub(r'<([A-Za-z_][A-Za-z0-9_]*)>', r'(?P<\1>[^/]+)', s)
         pattern_re = re.compile(f'^{s}$')
         assert pattern_re not in HTTPRequestHandler.routes
         HTTPRequestHandler.routes[(pattern_re, command)] = f

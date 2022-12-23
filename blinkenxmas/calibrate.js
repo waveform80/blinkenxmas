@@ -11,6 +11,47 @@ function initCalibrateForm(form) {
     calibrateBtn.addEventListener('click', stopPreview);
 }
 
+function initMaskForm(form) {
+    let preview = form.querySelector('#preview-image');
+    let canvas = document.createElement('canvas');
+    let mask = new Array();
+
+    canvas.id = 'preview-image';
+    preview.onload = () => {
+        console.log("Natural resolution", preview.naturalWidth, ",", preview.naturalHeight);
+        console.log("Preview resolution", preview.width, ",", preview.height);
+        canvas.width = preview.width;
+        canvas.height = preview.height;
+        showMask(canvas, preview, mask);
+        preview.replaceWith(canvas);
+    };
+
+    canvas.addEventListener('mousedown', (evt) => {
+        let coords = [evt.offsetX / canvas.width, evt.offsetY / canvas.height];
+        console.log("Click event", coords);
+        mask.push(coords);
+
+        showMask(canvas, preview, mask);
+    });
+}
+
+function showMask(canvas, image, maskPath) {
+    let context = canvas.getContext('2d');
+
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    context.lineWidth = 3;
+    context.strokeStyle = '#80f';
+    if (maskPath.length) {
+        let [x, y] = maskPath[0];
+        context.beginPath();
+        context.moveTo(x * canvas.width, y * canvas.height);
+        for (const [x, y] of maskPath)
+            context.lineTo(x * canvas.width, y * canvas.height);
+        context.closePath();
+        context.stroke();
+    }
+}
+
 function startPreview(evt) {
     let form = document.forms[0];
     let previewBtn = form.querySelector('#preview');
@@ -30,21 +71,4 @@ function stopPreview(evt) {
     previewBtn.removeEventListener('click', stopPreview);
     previewBtn.addEventListener('click', startPreview);
     previewBtn.value = 'Preview';
-}
-
-function initMaskForm(form) {
-    let buttons = form.querySelector('.buttons');
-    let calibrateBtn = form.elements['calibrate'];
-    let angle = (new URL(document.location)).searchParams.get('angle');
-    let preview = form.querySelector('#preview-image');
-    let canvas = document.createElement('canvas');
-    let context = canvas.getContext('2d');
-
-    canvas.id = 'preview-image';
-    preview.onload = () => {
-        canvas.width = preview.width;
-        canvas.height = preview.height;
-        context.drawImage(preview, 0, 0, preview.width, preview.height);
-        preview.replaceWith(canvas);
-    };
 }

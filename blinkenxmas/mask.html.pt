@@ -12,14 +12,18 @@
     a mask around the tree. The mask doesn't have to be terribly accurate; it
     simply helps the algorithm ignore "impossible" LED positions.</p>
 
-    <form action="/capture.html" method="get" class="grid">
+    <p>This step is optional; you can proceed without a mask but the
+    calibration may mistake background changes for LED positions (captures of
+    more angles is likely to mitigate this).</p>
+
+    <form action="/calibrate.html" method="get" class="grid">
       <img id="preview-image" src="/angle${str(angle).rjust(3, '0')}_base.jpg" />
       <p>Tree Angle</p>
       <p>
         <input type="number" id="angle" name="angle" value="${angle}" readonly />
       </p>
       <div class="buttons">
-        <input type="button" id="calibrate" value="Calibrate" />
+        <input type="submit" id="calibrate" value="Calibrate" />
         <a class="button" href="/">Cancel</a>
       </div>
     </form>

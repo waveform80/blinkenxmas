@@ -25,7 +25,7 @@
       <input type="number" id="angle" name="angle"
         value="0" min="0" max="350" step="5" required />
       <div class="buttons">
-        <input type="submit" id="calibrate" value="Calibrate" />
+        <input type="submit" id="capture" value="Capture" />
         <a class="button" href="/">Cancel</a>
       </div>
     </form>

@@ -128,12 +128,13 @@ def calibration_base(request, angle):
     except ValueError:
         return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
     try:
-        base = request.server.angles[angle][None]
+        base = io.BytesIO(request.server.angles[angle][None])
     except KeyError:
         # No base image exists for this angle; switch off the LEDs and capture
         # one
         request.server.queue.put([])
         # XXX Wait? May not be necessary given camera warm-up time
         base = request.server.camera.capture(angle)
-        request.server.angles[angle] = {None: base}
+        request.server.angles[angle] = {None: base.read()}
+        base.seek(0)
     return HTTPResponse(request, body=base, mime_type='image/jpeg')

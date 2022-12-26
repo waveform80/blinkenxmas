@@ -8,7 +8,7 @@
     <p tal:condition="not store.presets">No presets defined yet!</p>
     <p tal:condition="not store.presets" class="buttons">
       <a class="button" href="create.html">Create</a>
-      <a class="button" href="capture.html">Calibrate</a>
+      <a tal:condition="request.server.camera" class="button" href="capture.html">Calibrate</a>
     </p>
     <form tal:condition="store.presets">
       <p>Select from one of the following presets:</p>

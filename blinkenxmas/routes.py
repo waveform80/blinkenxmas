@@ -6,6 +6,7 @@ from colorzero import Color
 
 from .httpd import route
 from .http import HTTPResponse, DummyResponse
+from .calibrate import Calibration
 
 
 @route('/')
@@ -21,7 +22,8 @@ def get_preset(request, name):
         data = request.store.presets[name]
     except KeyError:
         return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
-    return HTTPResponse(request, body=json.dumps(data))
+    return HTTPResponse(request, body=json.dumps(data),
+                        mime_type='application/json')
 
 
 @route('/preset/<name>', 'DELETE')
@@ -127,14 +129,70 @@ def calibration_base(request, angle):
         angle = int(angle, base=10)
     except ValueError:
         return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
+
     try:
-        base = io.BytesIO(request.server.angles[angle][None])
+        calibration = request.server.angles[angle]
     except KeyError:
-        # No base image exists for this angle; switch off the LEDs and capture
-        # one
-        request.server.queue.put([])
-        # XXX Wait? May not be necessary given camera warm-up time
-        base = request.server.camera.capture(angle)
-        request.server.angles[angle] = {None: base.read()}
-        base.seek(0)
-    return HTTPResponse(request, body=base, mime_type='image/jpeg')
+        calibration = request.server.angles[angle] = Calibration(
+            angle, request.server.camera, request.server.queue,
+            request.server.config.led_count)
+    return HTTPResponse(request, body=calibration.base, mime_type='image/jpeg')
+
+
+@route('/angle<angle>_mask.json', 'GET')
+def calibration_mask(request, angle):
+    try:
+        angle = int(angle, base=10)
+        calibration = request.server.angles[angle]
+    except (KeyError, ValueError):
+        return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
+
+    return HTTPResponse(request, body=json.dumps(calibration.mask),
+                        mime_type='application/json')
+
+
+@route('/angle<angle>_state.json', 'GET')
+def calibration_state(request, angle):
+    try:
+        angle = int(angle, base=10)
+        calibration = request.server.angles[angle]
+    except (KeyError, ValueError):
+        return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
+
+    return HTTPResponse(request, body=json.dumps({
+        'progress': calibration.progress,
+        'positions': calibration.positions
+    }), mime_type='application/json')
+
+
+@route('/calibrate.html', 'GET')
+def calibration_run(request):
+    try:
+        angle = int(request.query['angle'][0])
+        mask = [
+            (float(x), float(y))
+            for x, y in json.loads(request.query['mask'][0])
+            if 0 <= float(x) <= 1 and 0 <= float(y) <= 1
+        ]
+        calibration = request.server.angles[angle]
+    except (KeyError, ValueError):
+        return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
+
+    calibration.start(mask)
+
+    # Returning None leaves the request to search for a static file or a
+    # template; in this case it should find the calibrate.html.pt template and
+    # render that as the response
+    return None
+
+
+@route('/cancel.html', 'GET')
+def calibration_cancel(request):
+    try:
+        angle = int(request.query['angle'][0])
+        calibration = request.server.angles[angle]
+    except (KeyError, ValueError):
+        return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
+
+    calibration.stop()
+    del request.server.angles[angle]

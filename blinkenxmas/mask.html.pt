@@ -1,28 +1,30 @@
-<div metal:use-macro="layout">
+<div metal:use-macro="layout" tal:define="angle request.query['angle'][0]">
   <div tal:omit-tag="1" metal:fill-slot="title">Calibration Mask</div>
   <div metal:fill-slot="head">
-    <meta name="description" content="Calibration of Blinken' Xmas Tree" />
+    <meta name="description" content="Calibration of Blinken' Xmas LED positions" />
   </div>
 
-  <article metal:fill-slot="content" tal:define="angle request.query['angle'][0]">
+  <article metal:fill-slot="content">
     <p>3D positions: ${len(store.positions)}/${led_count}</p>
     <p>Angles calibrated: ${len(angles)}</p>
 
-    <p>Click on the capture below (in which all the LEDs should be off) to draw
-    a mask around the tree. The mask doesn't have to be terribly accurate; it
-    simply helps the algorithm ignore "impossible" LED positions.</p>
+    <p>Click around the tree on the capture below (in which all the LEDs should
+    be off) to draw an outline. The will be used as a "mask" to limit the
+    search for LED positions to areas within the mask. This doesn't have to be
+    terribly accurate; it simply helps the algorithm ignore "impossible" LED
+    positions.</p>
 
     <p>This step is optional; you can proceed without a mask but the
     calibration may mistake background changes for LED positions (captures of
     more angles is likely to mitigate this).</p>
 
     <form action="/calibrate.html" method="get" class="grid">
+      <!-- TODO: code the non-JS version with img/ismap -->
       <img id="preview-image" src="/angle${str(angle).rjust(3, '0')}_base.jpg" />
       <p>Tree Angle</p>
-      <p>
-        <input type="number" id="angle" name="angle" value="${angle}" readonly />
-      </p>
+      <input type="number" id="angle" name="angle" value="${angle}" readonly />
       <div class="buttons">
+        <input type="hidden" id="mask" name="mask" value="" />
         <input type="submit" id="calibrate" value="Calibrate" />
         <a class="button" href="/">Cancel</a>
       </div>
@@ -35,4 +37,3 @@
     <script>initMaskForm(document.forms[0]);</script>
   </div>
 </div>
-

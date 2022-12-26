@@ -9,13 +9,10 @@
     <p>Angles calibrated: ${len(angles)}</p>
 
     <p>
-    <span tal:condition="len(store.positions) == led_count">Calibration is
-      complete. If you wish to re-calibrate,</span>
-    <span tal:condition="len(store.positions) > led_count">Configuration has
-      changed since the tree was calibrated. If you wish to re-calibrate,</span>
-    <span tal:condition="len(store.positions) < led_count">Calibration is
-      required for certain animations to operate correctly. To start
-      calibration,</span>
+    <span tal:condition="store.positions">Calibration is complete. If you wish
+      to re-calibrate,</span>
+    <span tal:condition="not store.positions">Calibration is required for
+      certain animations to operate correctly. To start calibration,</span>
     enter the initial angle of the tree below and select "Capture". Otherwise,
     select "Cancel" to return to the main page</p>
 
@@ -34,6 +31,7 @@
     zero", i.e. the "normal" position of your tree. Once calibration of this
     angle is complete, rotate your tree by a measured amount about the axis
     running through its trunk and calibrate the new angle.</p>
+
     <p>You will likely need 4 or 5 calibration measurements to accurately plot
     the position of all LEDs on your tree. Remember that not all LEDs will be
     visible from each position and the algorithm requires at least two
@@ -46,6 +44,6 @@
   <div metal:fill-slot="scripts">
     <script src="/messages.js"></script>
     <script src="/calibrate.js"></script>
-    <script>initCalibrateForm(document.forms[0]);</script>
+    <script>initCaptureForm(document.forms[0]);</script>
   </div>
 </div>

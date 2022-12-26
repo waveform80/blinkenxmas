@@ -1,4 +1,4 @@
-function initCalibrateForm(form) {
+function initCaptureForm(form) {
     let buttons = form.querySelector('.buttons');
     let captureBtn = form.elements['capture'];
     let previewBtn = document.createElement('input');
@@ -24,33 +24,69 @@ function initMaskForm(form) {
     undoBtn.value = 'Undo';
     buttons.insertBefore(undoBtn, calibrateBtn);
 
+    // Replace the preview image with a canvas that the user can click on to
+    // draw the calibration mask
     canvas.id = 'preview-image';
     preview.onload = () => {
-        console.log("Natural resolution", preview.naturalWidth, ",", preview.naturalHeight);
-        console.log("Preview resolution", preview.width, ",", preview.height);
         canvas.width = preview.width;
         canvas.height = preview.height;
-        drawMask(canvas, preview, mask);
+        drawMask(form, canvas, preview, mask);
         preview.replaceWith(canvas);
     };
 
     canvas.addEventListener('mousedown', (evt) => {
         let coords = [evt.offsetX / canvas.width, evt.offsetY / canvas.height];
-        console.log("Click event", coords);
         mask.push(coords);
-
-        drawMask(canvas, preview, mask);
+        drawMask(form, canvas, preview, mask);
     });
 
     undoBtn.addEventListener('click', (evt) => {
         mask.pop();
-        drawMask(canvas, preview, mask);
+        drawMask(form, canvas, preview, mask);
     });
 }
 
-function drawMask(canvas, image, maskPath) {
+function initCalibrateForm(form, angle) {
+    angle = new String(angle).padStart(3, '0');
+    let refreshBtn = form.querySelector('#refresh');
+    let progressBar = form.querySelector('#progress');
+    let preview = form.querySelector('#preview-image');
+    let canvas = document.createElement('canvas');
+
+    refreshBtn.remove();
+    canvas.id = 'preview-image';
+    preview.onload = () => {
+        canvas.width = preview.width;
+        canvas.height = preview.height;
+        drawState(canvas, preview, []);
+        preview.replaceWith(canvas);
+    };
+
+    function refresh() {
+        let req = new Request(`/angle${angle}_state.json`, {
+            method: 'GET',
+            cache: 'no-store',
+        });
+        fetch(req)
+            .then((resp) => resp.json())
+            .then((data) => {
+                console.log(data.progress);
+                progressBar.value = data.progress;
+                if (preview.complete)
+                    drawState(canvas, preview, data.positions);
+                if (data.progress < 1)
+                    setTimeout(refresh, 1000);
+                // TODO: Move to final page once progress is done
+            })
+            .catch((e) => showMessage(e));
+    }
+    refresh();
+}
+
+function drawMask(form, canvas, image, maskPath) {
     let context = canvas.getContext('2d');
 
+    form.elements['mask'].value = JSON.stringify(maskPath);
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
     if (maskPath.length) {
         // Draw the path
@@ -74,6 +110,25 @@ function drawMask(canvas, image, maskPath) {
             context.fill();
             context.stroke();
         }
+    }
+}
+
+function drawState(canvas, image, positions) {
+    let context = canvas.getContext('2d');
+
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    context.strokeStyle = '#000';
+    context.fillStyle = '#ffa';
+    for (led in positions) {
+        let [x, y] = positions[led];
+        x *= canvas.width;
+        y *= canvas.height;
+
+        context.beginPath();
+        context.ellipse(x, y, 5, 5, 0, 0, 2 * Math.PI);
+        context.fill();
+        context.stroke();
+        context.fillText(led, x + 7, y - 7);
     }
 }
 

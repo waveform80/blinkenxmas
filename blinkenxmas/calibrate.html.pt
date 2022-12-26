@@ -1,0 +1,32 @@
+<div metal:use-macro="layout" tal:define="angle request.query['angle'][0]">
+  <div tal:omit-tag="1" metal:fill-slot="title">Calibration</div>
+  <div metal:fill-slot="head">
+    <meta name="description" content="Calibration of Blinken' Xmas LED positions" />
+  </div>
+
+  <article metal:fill-slot="content">
+    <p>3D positions: ${len(store.positions)}/${led_count}</p>
+    <p>Angles calibrated: ${len(angles)}</p>
+
+    <p>Calibration for angle ${angle}° running, please wait. During this
+    process you should see each LED on the tree illuminating in turn, while the
+    camera captures it. This can take a while; please try to ensure people
+    &amp; pets stay out of the way while the procedure is running!</p>
+
+    <form class="grid">
+      <img id="preview-image" src="/angle${str(angle).rjust(3, '0')}_base.jpg" />
+      <label for="progress">Progress</label>
+      <progress id="progress" value="angles[angle].progress"></progress>
+      <div class="buttons">
+        <a class="button" id="refresh" href="/calibrate.html?angle=${angle}">Refresh</a>
+        <a class="button" href="/cancel.html?angle=${angle}">Cancel</a>
+      </div>
+    </form>
+  </article>
+
+  <div metal:fill-slot="scripts">
+    <script src="/messages.js"></script>
+    <script src="/calibrate.js"></script>
+    <script>initCalibrateForm(document.forms[0], ${angle});</script>
+  </div>
+</div>

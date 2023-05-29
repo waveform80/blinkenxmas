@@ -43,11 +43,11 @@ def set_preset(request, name):
     except ValueError:
         return HTTPResponse(request, status_code=HTTPStatus.BAD_REQUEST)
     if name in request.store.presets:
-        code = HTTPStatus.CREATED
-        headers= {'Location': '/preset/' + name}
-    else:
         code = HTTPStatus.NO_CONTENT
         headers = {}
+    else:
+        code = HTTPStatus.CREATED
+        headers= {'Location': '/preset/' + name}
     request.store.presets[name] = data
     return HTTPResponse(request, status_code=code, headers=headers)
 

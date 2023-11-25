@@ -135,7 +135,7 @@ def calibration_base(request, angle):
     except KeyError:
         calibration = request.server.angles[angle] = Calibration(
             angle, request.server.camera, request.server.queue,
-            request.server.config.led_count)
+            request.server.config.led_strips)
     return HTTPResponse(request, body=calibration.base, mime_type='image/jpeg')
 
 
@@ -160,8 +160,9 @@ def calibration_state(request, angle):
         return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
 
     return HTTPResponse(request, body=json.dumps({
-        'progress': calibration.progress,
-        'positions': calibration.positions
+        'progress':  calibration.progress,
+        'positions': calibration.positions,
+        'scores':    calibration.scores,
     }), mime_type='application/json')
 
 
@@ -180,9 +181,7 @@ def calibration_run(request):
 
     calibration.start(mask)
 
-    # Returning None leaves the request to search for a static file or a
-    # template; in this case it should find the calibrate.html.pt template and
-    # render that as the response
+    # Fall-through to render the calibrate.html.pt template as the response
     return None
 
 

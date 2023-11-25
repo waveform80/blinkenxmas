@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from string import Template
 from fnmatch import fnmatchcase
+from itertools import accumulate, chain
 from argparse import ArgumentParser, SUPPRESS
 from configparser import RawConfigParser, ConfigParser
 
@@ -94,6 +95,13 @@ def resolution(s):
     return width, height
 
 
+def strips(s):
+    start = 0
+    for count in map(int, s.split(',')):
+        yield range(start, start + count)
+        start += count
+
+
 def port(service):
     try:
         return int(service)
@@ -127,12 +135,18 @@ def get_parser(config, **kwargs):
         "Default: %(default)s")
 
     # Internal use arguments
+    led_sections = [s for s in config if s.startswith('leds:')]
+    strip_counts = [int(config[s]['count']) for s in led_sections]
     parser.add_argument(
-        '--led-count', metavar='NUM', type=int, default=sum((
-            int(config[section]['count'])
-            for section in config
-            if section.startswith('leds:')
-        ), start=0),
+        '--led-strips', metavar='NUM,NUM,...', type=strips, default=[
+            range(start, start + count)
+            for start, count
+            in zip(accumulate(chain([0], strip_counts)), strip_counts)
+        ],
+        help=SUPPRESS)
+    parser.add_argument(
+        '--led-count', metavar='NUM', type=int,
+        default=sum(strip_counts, start=0),
         help=SUPPRESS)
     parser.add_argument(
         '--fps', metavar='NUM', type=int, default=min((

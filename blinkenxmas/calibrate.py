@@ -31,7 +31,10 @@ def weighted_median(seq):
 
 
 class Calibration:
-    def __init__(self, angle, camera, queue, led_count):
+    GOOD_SCORE = 40
+    BAD_SCORE = 10
+
+    def __init__(self, angle, camera, queue, strips):
         self._lock = Lock()
         self._stop = Event()
         self._thread = None
@@ -47,7 +50,8 @@ class Calibration:
         self._angle = angle
         self._mask = []
         self._positions = {}
-        self._count = led_count
+        self._scores = {}
+        self._strips = strips
         self._camera = camera
         self._queue = queue
         self.capture_base()
@@ -73,7 +77,8 @@ class Calibration:
         with self._lock:
             if not self._thread:
                 self._thread = Thread(target=self.calibrate, daemon=True)
-                self._mask = mask
+                if mask:
+                    self._mask = mask
                 self._stop.clear()
                 self._thread.start()
 
@@ -107,35 +112,55 @@ class Calibration:
         # median to determine "the" position of the LED in the X/Y plane for
         # the given angle (X will be adjusted to Z later based on the
         # configured angle).
-        for led in range(self._count):
-            positions = []
-            for color in self._colors:
-                if self._stop.wait(0):
-                    return
-                self._queue.put([[
-                    color if led == i else black
-                    for i in range(self._count)
-                ]])
-                self._queue.join()
-                with self._camera.capture(self._angle, led, color) as f:
-                    image = clear.copy()
-                    image.paste(Image.open(f), mask=mask)
-                diff = ImageChops.subtract(image, base).filter(
-                    ImageFilter.GaussianBlur(radius=7)).convert('L')
-                arr = np.frombuffer(diff.tobytes(), dtype=np.uint8).reshape(
-                    diff.height, diff.width)
-                score = arr.max()
-                if score:
-                    coords = (arr == score).nonzero()
-                    for y, x in zip(*coords):
-                        # The int() calls below are necessary to convert from
-                        # numpy's size-specific integers (which can't be
-                        # serialized to JSON)
-                        positions.append(((x / w, y / h), int(score)))
+        for strip in self._strips:
+            for led in strip:
+                positions = []
+                for color in self._colors:
+                    if self._stop.wait(0):
+                        return
+                    self._queue.put([[
+                        color if led == i else black
+                        for i in range(self._count)
+                    ]])
+                    self._queue.join()
+                    with self._camera.capture(self._angle, led, color) as f:
+                        image = clear.copy()
+                        image.paste(Image.open(f), mask=mask)
+                    diff = ImageChops.subtract(image, base).filter(
+                        ImageFilter.GaussianBlur(radius=5)).convert('L')
+                    arr = np.frombuffer(
+                        diff.tobytes(), dtype=np.uint8).reshape(
+                        diff.height, diff.width)
+                    score = arr.max()
+                    if score:
+                        coords = (arr == score).nonzero()
+                        for y, x in zip(*coords):
+                            # The int() calls below are necessary to convert
+                            # from numpy's size-specific integers (which can't
+                            # be serialized to JSON)
+                            positions.append(((x / w, y / h), int(score)))
 
-            position, score = weighted_median(positions)
-            # TODO Threshold the score
-            self._positions[led] = position
+                position, score = weighted_median(positions)
+                # TODO Threshold the score
+                self._positions[led] = position
+                self._scores[led] = score
+
+            # Remove all "bad" points, then calculate the max. distance between
+            # "good" points
+            bad_leds = {
+                led for led, score in self._scores.items()
+                if score < self.BAD_SCORE
+            }
+            good_leds = {
+                led for led, score in self._scores.items()
+                if self.GOOD_SCORE <= score
+            }
+            max_dist = max(
+                dist(self._positions[a], self._positions[b]) / (b - a)
+                for a in good_leds
+                for b in good_leds
+                if b > a
+            )
 
     @property
     def angle(self):
@@ -161,4 +186,12 @@ class Calibration:
             # (could lock, but the dict is guaranteed tiny)
             for led, coord in self._positions.copy().items()
             if coord is not None
+        }
+
+    @property
+    def scores(self):
+        return {
+            led: score
+            for led, score in self._scores.copy().items()
+            if score is not None
         }

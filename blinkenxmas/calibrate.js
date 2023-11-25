@@ -58,7 +58,7 @@ function initCalibrateForm(form, angle) {
     preview.onload = () => {
         canvas.width = preview.width;
         canvas.height = preview.height;
-        drawState(canvas, preview, []);
+        drawState(canvas, preview);
         preview.replaceWith(canvas);
     };
 
@@ -73,7 +73,7 @@ function initCalibrateForm(form, angle) {
                 console.log(data.progress);
                 progressBar.value = data.progress;
                 if (preview.complete)
-                    drawState(canvas, preview, data.positions);
+                    drawState(canvas, preview, data);
                 if (data.progress < 1)
                     setTimeout(refresh, 1000);
                 // TODO: Move to final page once progress is done
@@ -113,14 +113,20 @@ function drawMask(form, canvas, image, maskPath) {
     }
 }
 
-function drawState(canvas, image, positions) {
+function drawState(canvas, image, data) {
     let context = canvas.getContext('2d');
 
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    if (!data) return;
     context.strokeStyle = '#000';
-    context.fillStyle = '#ffa';
-    for (led in positions) {
-        let [x, y] = positions[led];
+    for (led in data.positions) {
+        let [x, y] = data.positions[led];
+        let score = data.scores[led];
+        context.fillStyle = `rgb(
+            ${Math.min(255, 128 + Math.floor(score * 2.0))},
+            ${Math.min(255,   0 + Math.floor(score * 1.5))},
+            ${Math.min(255,   0 + Math.floor(score * 0.5))}
+        )`;
         x *= canvas.width;
         y *= canvas.height;
 
@@ -128,16 +134,18 @@ function drawState(canvas, image, positions) {
         context.ellipse(x, y, 5, 5, 0, 0, 2 * Math.PI);
         context.fill();
         context.stroke();
-        context.fillText(led, x + 7, y - 7);
+        context.fillText(`${led} [${score}]`, x + 7, y - 7);
     }
 }
 
 function startPreview(evt) {
     let form = document.forms[0];
+    let angle = parseInt(form.elements['angle'].value);
     let previewBtn = form.querySelector('#preview');
 
     // XXX: Set angle correctly
-    form.querySelector('#preview-image').src = '/live-preview.mjpg?angle=0';
+    form.querySelector('#preview-image').src =
+        `/live-preview.mjpg?angle=${angle}`;
     previewBtn.removeEventListener('click', startPreview);
     previewBtn.addEventListener('click', stopPreview);
     previewBtn.value = 'Stop';

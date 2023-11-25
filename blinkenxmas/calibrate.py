@@ -40,13 +40,6 @@ class Calibration:
         self._thread = None
         self._base = None
         self._base_image = None
-        # XXX Make this configurable? Is it necessary to do different colors?
-        self._colors = [
-            Color('red'),
-            Color('green'),
-            Color('blue'),
-            Color('white'),
-        ]
         self._angle = angle
         self._mask = []
         self._positions = {}
@@ -93,6 +86,7 @@ class Calibration:
 
     def calibrate(self):
         black = Color('black')
+        white = Color('white')
         w, h = self._base_image.size
         clear = Image.new('RGB', (w, h))
         mask = Image.new('1', (w, h))
@@ -112,33 +106,32 @@ class Calibration:
         # median to determine "the" position of the LED in the X/Y plane for
         # the given angle (X will be adjusted to Z later based on the
         # configured angle).
+        count = sum(len(strip) for strip in self._strips)
         for strip in self._strips:
             for led in strip:
                 positions = []
-                for color in self._colors:
-                    if self._stop.wait(0):
-                        return
-                    self._queue.put([[
-                        color if led == i else black
-                        for i in range(self._count)
-                    ]])
-                    self._queue.join()
-                    with self._camera.capture(self._angle, led, color) as f:
-                        image = clear.copy()
-                        image.paste(Image.open(f), mask=mask)
-                    diff = ImageChops.subtract(image, base).filter(
-                        ImageFilter.GaussianBlur(radius=5)).convert('L')
-                    arr = np.frombuffer(
-                        diff.tobytes(), dtype=np.uint8).reshape(
-                        diff.height, diff.width)
-                    score = arr.max()
-                    if score:
-                        coords = (arr == score).nonzero()
-                        for y, x in zip(*coords):
-                            # The int() calls below are necessary to convert
-                            # from numpy's size-specific integers (which can't
-                            # be serialized to JSON)
-                            positions.append(((x / w, y / h), int(score)))
+                if self._stop.wait(0):
+                    return
+                scene = [black] * count
+                scene[led] = white
+                self._queue.put([scene])
+                self._queue.join()
+                with self._camera.capture(self._angle, led, white) as f:
+                    image = clear.copy()
+                    image.paste(Image.open(f), mask=mask)
+                diff = ImageChops.subtract(image, base).filter(
+                    ImageFilter.GaussianBlur(radius=5)).convert('L')
+                arr = np.frombuffer(
+                    diff.tobytes(), dtype=np.uint8).reshape(
+                    diff.height, diff.width)
+                score = arr.max()
+                if score:
+                    coords = (arr == score).nonzero()
+                    for y, x in zip(*coords):
+                        # The int() calls below are necessary to convert
+                        # from numpy's size-specific integers (which can't
+                        # be serialized to JSON)
+                        positions.append(((x / w, y / h), int(score)))
 
                 position, score = weighted_median(positions)
                 # TODO Threshold the score
@@ -176,7 +169,7 @@ class Calibration:
 
     @property
     def progress(self):
-        return len(self._positions) / self._count
+        return len(self._positions) / sum(len(strip) for strip in self._strips)
 
     @property
     def positions(self):

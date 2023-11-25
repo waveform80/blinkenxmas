@@ -30,27 +30,23 @@ class LEDStrips:
             'BGR': plasma.COLOR_ORDER_BGR,
             'BRG': plasma.COLOR_ORDER_BRG,
         }
+        class_map = {
+            'WS2812': plasma.WS2812,
+            'APA102': plasma.APA102,
+        }
         pios = [(pio, sm) for pio in range(2) for sm in range(4)]
         self._strips = [
             (
-                plasma.WS2812(
+                class_map[led_type](
                     led_count, pio, sm, *pins, rgbw=color_order[-1] == 'W',
-                    color_order=order_map[color_order.rstrip('W')])
-                if led_type == 'WS2812' else
-                plasma.APA102(
-                    led_count, pio, sm, *pins, rgbw=color_order[-1] == 'W',
-                    color_order=order_map[color_order.rstrip('W')])
-                if led_type == 'APA102' else
-                None,
+                    color_order=order_map[color_order.rstrip('W')]),
                 led_count,
                 rev_index,
             )
             for (led_type, led_count, rev_index, color_order, *pins), (pio, sm)
             in zip(led_config, pios)
         ]
-        for (strip, _, _), (led_type, *_) in zip(self._strips, led_config):
-            if strip is None:
-                raise ValueError(f'invalid LED strip type: {led_type}')
+        for strip, _, _ in self._strips:
             strip.start()
 
     def __len__(self):

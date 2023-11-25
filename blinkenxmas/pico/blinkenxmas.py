@@ -1,7 +1,7 @@
 import gc
 import time
 import machine
-import uasyncio as asyncio
+import asyncio
 
 from animation import Animation
 from leds import LEDStrips

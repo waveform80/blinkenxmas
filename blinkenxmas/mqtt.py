@@ -122,8 +122,7 @@ class MessageThread(Thread):
                             client.publish(self.topic, chunk, qos=1)
                             for chunk in render(frames, self.fps)
                         ]
-                        # XXX Raise exception on timeout?
-                        while not all(m.is_published for m in messages):
+                        while not all(m.is_published() for m in messages):
                             client.loop(timeout=1)
                     finally:
                         self.queue.task_done()

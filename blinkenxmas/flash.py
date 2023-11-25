@@ -50,7 +50,7 @@ def main(args=None):
 
         pyb = pyboard.Pyboard(str(options.port), baudrate=115200)
         try:
-            pyb.enter_raw_repl(soft_reset=True)
+            pyb.enter_raw_repl()
             try:
                 with tempfile.TemporaryDirectory() as tmp_name:
                     tmp_path = Path(tmp_name)

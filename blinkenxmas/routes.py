@@ -190,9 +190,11 @@ def calibration_run(request):
 def calibration_cancel(request):
     try:
         angle = int(request.query['angle'][0])
-        calibration = request.server.angles[angle]
+        calibration = request.server.angles.pop(angle)
     except (KeyError, ValueError):
         return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
 
     calibration.stop()
-    del request.server.angles[angle]
+    return HTTPResponse(
+        request, status_code=HTTPStatus.SEE_OTHER,
+        headers={'Location': '/index.html'})

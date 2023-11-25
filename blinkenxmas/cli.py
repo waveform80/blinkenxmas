@@ -83,7 +83,7 @@ def get_cli_parser():
 
 
 def do_help(config, queue):
-    parser = get_commands_parser()
+    parser = get_cli_parser()
     if 'cmd' in config and config.cmd is not None:
         parser.parse_args([config.cmd, '-h'])
     else:
@@ -108,13 +108,13 @@ def do_set(config, queue):
 
 def do_list(config, queue):
     store = Storage(config.db)
-    for preset in store:
+    for preset in store.presets:
         print(preset)
 
 
 def do_show(config, queue):
     store = Storage(config.db)
-    queue.put(store[config.preset])
+    queue.put(store.presets[config.preset])
 
 
 def main(args=None):

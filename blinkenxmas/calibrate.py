@@ -2,6 +2,7 @@ import io
 from time import sleep
 from pathlib import Path
 from operator import itemgetter
+from itertools import accumulate
 from threading import Thread, Event, Lock
 
 import numpy as np
@@ -10,16 +11,16 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 from . import mqtt, httpd
 
-
-def cum_sum(it, start=0):
-    for item in it:
-        start += item
-        yield start
+try:
+    from math import dist
+except ImportError:
+    from math import sqrt
+    dist = lambda a, b: sqrt(sum((px - qx) ** 2 for px, qx in zip(p, q)))
 
 
 def weighted_median(seq):
     items = sorted(seq, key=itemgetter(0))
-    cum_weights = list(cum_sum(weight for item, weight in items))
+    cum_weights = list(accumulate(weight for item, weight in items))
     try:
         median = cum_weights[-1] / 2.0
     except IndexError:

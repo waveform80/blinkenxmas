@@ -89,12 +89,12 @@ class ConfigArgumentParser(ArgumentParser):
             self._config[section][key] = str(getattr(namespace, dest))
 
 
-def get_resolution(s):
+def resolution(s):
     width, height = (int(i) for i in s.lower().split('x', 1))
     return width, height
 
 
-def get_port(service):
+def port(service):
     try:
         return int(service)
     except ValueError:
@@ -118,7 +118,7 @@ def get_parser(config, **kwargs):
         "%(default)s")
     parser.add_argument(
         '--broker-port', section='mqtt', key='port',
-        type=get_port, metavar='ADDR',
+        type=port, metavar='ADDR',
         help="the address on which to find the MQTT broker. Default: "
         "%(default)s")
     parser.add_argument(

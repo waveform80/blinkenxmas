@@ -121,6 +121,14 @@ def get_parser(config, **kwargs):
         section='web', key='database',
         help="the SQLite database to store presets in. Default: %(default)s")
     parser.add_argument(
+        '--no-production', dest='production', section='web', key='production',
+        action='store_false')
+    parser.add_argument(
+        '--production', section='web', key='production', action='store_true',
+        help="If specified, run in production mode where an internal server "
+        "error will not terminate the server and will not output a stack "
+        "trace (default: no)")
+    parser.add_argument(
         '--broker-address', section='mqtt', key='host', metavar='ADDR',
         help="the address on which to find the MQTT broker. Default: "
         "%(default)s")

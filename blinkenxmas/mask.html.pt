@@ -1,4 +1,4 @@
-<div metal:use-macro="layout" tal:define="angle request.query['angle'][0]">
+<div metal:use-macro="layout" tal:define="angle request.query['angle']">
   <div tal:omit-tag="1" metal:fill-slot="title">Calibration Mask</div>
   <div metal:fill-slot="head">
     <meta name="description" content="Calibration of Blinken' Xmas LED positions" />

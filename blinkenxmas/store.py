@@ -144,6 +144,10 @@ class Storage:
     schema_version = 2
 
     def __init__(self, db):
+        if sqlite3.threadsafety < 1:
+            raise RuntimeError(
+                'sqlite3 must be compiled with at least basic multi-thread '
+                'capabilities')
         self._conn = sqlite3.connect(db)
         self._conn.row_factory = sqlite3.Row
         self._presets = StoragePresets(self._conn)

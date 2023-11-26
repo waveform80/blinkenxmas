@@ -104,6 +104,7 @@ function generateAnim(form) {
 
     let req = new Request(`/animation/${encodeURIComponent(animation)}`, {
       method: 'POST',
+      headers: new Headers({'Content-Type': 'application/json'}),
       body: JSON.stringify(params),
       cache: 'no-store',
     });
@@ -123,6 +124,7 @@ function doPreview(form) {
     .then((data) => {
       let req = new Request('/preview', {
         method: 'POST',
+        headers: new Headers({'Content-Type': 'application/json'}),
         body: data,
         cache: 'no-store',
       });
@@ -140,6 +142,7 @@ function doCreate(form) {
       let name = form.elements['name'].value;
       let req = new Request(`/preset/${encodeURIComponent(name)}`, {
         method: 'PUT',
+        headers: new Headers({'Content-Type': 'application/json'}),
         body: data,
         cache: 'no-store',
       });

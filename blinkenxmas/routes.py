@@ -22,8 +22,9 @@ def get_preset(request, name):
         data = request.store.presets[name]
     except KeyError:
         return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
-    return HTTPResponse(request, body=json.dumps(data),
-                        mime_type='application/json')
+    else:
+        return HTTPResponse(request, mime_type='application/json',
+                            body=json.dumps(data))
 
 
 @route('/preset/<name>', 'DELETE')
@@ -32,7 +33,8 @@ def del_preset(request, name):
         del request.store.presets[name]
     except KeyError:
         return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
-    return HTTPResponse(request, status_code=HTTPStatus.NO_CONTENT)
+    else:
+        return HTTPResponse(request, status_code=HTTPStatus.NO_CONTENT)
 
 
 @route('/preset/<name>', 'PUT')
@@ -109,18 +111,34 @@ def generate_animation(request, name):
 
 @route('/live-preview.mjpg', 'GET')
 def calibration_preview(request):
-    request.close_connection = False
+    #request.close_connection = False
     request.send_response(200)
     # Don't cache the response... no, really don't
     request.send_header('Age', 0)
     request.send_header('Cache-Control', 'no-cache, private')
-    request.send_header('Pragma', 'no-cache')
     # Dreadful hack which tells the browser this resource contains several
     # MIME "things" which should replace the original as each is received
-    request.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=--FRAME')
+    request.send_header(
+        'Content-Type', 'multipart/x-mixed-replace; boundary=FRAME')
     request.end_headers()
+
     request.server.camera.add_client(request)
-    return DummyResponse()
+    try:
+        while True:
+            with request.server.camera.frame_ready:
+                request.server.camera.frame_ready.wait()
+                frame = request.server.camera.frame
+            request.wfile.write(b'--FRAME\r\n')
+            request.send_header('Content-Type', 'image/jpeg')
+            request.send_header('Content-Length', len(frame))
+            request.end_headers()
+            request.wfile.write(frame)
+            request.wfile.write(b'\r\n')
+    except (BrokenPipeError, ConnectionResetError):
+        pass
+    finally:
+        request.server.camera.remove_client(request)
+    return DummyResponse(request)
 
 
 @route('/angle<angle>_base.jpg', 'GET')
@@ -169,10 +187,10 @@ def calibration_state(request, angle):
 @route('/calibrate.html', 'GET')
 def calibration_run(request):
     try:
-        angle = int(request.query['angle'][0])
+        angle = int(request.query['angle'])
         mask = [
             (float(x), float(y))
-            for x, y in json.loads(request.query['mask'][0])
+            for x, y in json.loads(request.query['mask'])
             if 0 <= float(x) <= 1 and 0 <= float(y) <= 1
         ]
         calibration = request.server.angles[angle]
@@ -188,7 +206,7 @@ def calibration_run(request):
 @route('/cancel.html', 'GET')
 def calibration_cancel(request):
     try:
-        angle = int(request.query['angle'][0])
+        angle = int(request.query['angle'])
         calibration = request.server.angles.pop(angle)
     except (KeyError, ValueError):
         return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)

@@ -1,7 +1,7 @@
 import io
 import sys
 from pathlib import Path
-from threading import Lock, Thread, Event
+from threading import Lock, Thread, Event, Condition
 
 from PIL import Image
 
@@ -15,6 +15,8 @@ class AbstractSource:
     def __init__(self, config):
         self._lock = Lock()
         self._clients = []
+        self.frame = b''
+        self.frame_ready = Condition()
 
     def start_preview(self, angle):
         """
@@ -39,37 +41,24 @@ class AbstractSource:
         raise NotImplementedError
 
     def _preview_frame(self, frame):
-        died = []
-        size = len(frame)
-        with self._lock:
-            for client in self._clients:
-                try:
-                    client.wfile.write(b'--FRAME\r\n')
-                    client.send_header('Content-Type', 'image/jpeg')
-                    client.send_header('Content-Length', size)
-                    client.end_headers()
-                    client.wfile.write(frame)
-                    client.wfile.write(b'\r\n')
-                except Exception as e:
-                    client.wfile.close()
-                    died.append(client)
-        if died:
-            self.remove_clients(died)
+        with self.frame_ready:
+            self.frame = frame
+            if self.frame:
+                self.frame_ready.notify_all()
 
     def add_client(self, client):
         with self._lock:
             if not self._clients:
-                angle = int(client.query.get('angle', ['0'])[0])
+                angle = int(client.query.get('angle', '0'))
                 self.start_preview(angle)
             self._clients.append(client)
 
-    def remove_clients(self, clients):
+    def remove_client(self, client):
         with self._lock:
-            for client in clients:
-                try:
-                    self._clients.remove(client)
-                except ValueError:
-                    pass # already removed
+            try:
+                self._clients.remove(client)
+            except ValueError:
+                pass # already removed
             if not self._clients:
                 self.stop_preview()
 

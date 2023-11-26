@@ -30,11 +30,11 @@ class AbstractSource:
         """
         raise NotImplementedError
 
-    def capture(self, angle, led=None, color=None):
+    def capture(self, angle, led=None):
         """
         Capture a high-quality (highest possible resolution) image of the tree
-        at *angle* with *led* lit with specified *color*. Expected to return a
-        file-like object containing the JPEG image data.
+        at *angle* with *led* lit full white. Expected to return a file-like
+        object containing the JPEG image data.
         """
         raise NotImplementedError
 
@@ -110,7 +110,7 @@ class FilesSource(AbstractSource):
         while not FilesSource.stop.wait(timeout=0.1):
             self._preview_frame(preview.getvalue())
 
-    def capture(self, angle, led=None, color=None):
+    def capture(self, angle, led=None):
         if FilesSource.thread is not None:
             raise RuntimeError('Cannot capture while previewing')
         if led is None:
@@ -118,7 +118,7 @@ class FilesSource(AbstractSource):
         else:
             return (
                 self._path /
-                f'angle{angle:03d}_led{led:03d}_color{color.html}.jpg').open('rb')
+                f'angle{angle:03d}_led{led:03d}.jpg').open('rb')
 
 
 class PiCameraOutput:
@@ -165,7 +165,7 @@ class PiCameraSource(AbstractSource):
                 self._camera.stop_recording()
                 PiCameraSource.output = None
 
-    def capture(self, angle, led=None, color=None):
+    def capture(self, angle, led=None):
         self.stop_preview()
         self._camera.resolution = self._capture_res
         frame = io.BytesIO()
@@ -223,7 +223,7 @@ class GStreamerSource(AbstractSource):
                 # via a GStreamer callback)
                 GStreamerSource.thread = None
 
-    def capture(self, angle, led=None, color=None):
+    def capture(self, angle, led=None):
         self.stop_preview()
         width, height = self._capture_res
         pipeline = self.Gst.parse_launch(

@@ -116,7 +116,7 @@ class Calibration:
                 scene[led] = white
                 self._queue.put([scene])
                 self._queue.join()
-                with self._camera.capture(self._angle, led, white) as f:
+                with self._camera.capture(self._angle, led) as f:
                     image = clear.copy()
                     image.paste(Image.open(f), mask=mask)
                 diff = ImageChops.subtract(image, base).filter(

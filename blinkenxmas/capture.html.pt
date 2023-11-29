@@ -6,23 +6,27 @@
 
   <article metal:fill-slot="content">
     <p>3D positions: ${len(store.positions)}/${led_count}</p>
-    <p>Angles calibrated: ${len(angles)}</p>
 
     <p>
     <span tal:condition="store.positions">Calibration is complete. If you wish
       to re-calibrate,</span>
     <span tal:condition="not store.positions">Calibration is required for
-      certain animations to operate correctly. To start calibration,</span>
-    enter the initial angle of the tree below and select "Capture". Otherwise,
-    select "Cancel" to return to the main page</p>
+      certain animations to operate correctly. You have ${len(angles)} angle(s)
+      of the tree captured so far. To start or continue calibration,</span>
+    enter the angle of the tree below and select "Capture". Otherwise,
+    select "Cancel" to return to the main page.</p>
+
+    <p tal:condition="len(angles)">To finish calibration and commit
+    the 3D positions currently calculated, select "Commit".</p>
 
     <form action="/mask.html" method="get" class="grid">
       <img id="preview-image" src="/no-preview.png" />
       <label for="angle">Tree Angle</label>
       <input type="number" id="angle" name="angle"
-        value="0" min="0" max="350" step="5" required />
+        value="0" min="0" max="355" step="5" required />
       <div class="buttons">
         <input type="submit" id="capture" value="Capture" />
+        <a tal:condition="len(positions)" class="button" href="/commit.html">Commit</a>
         <a class="button" href="/">Cancel</a>
       </div>
     </form>

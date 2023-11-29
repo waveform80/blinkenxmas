@@ -76,7 +76,8 @@ function initCalibrateForm(form, angle) {
                     drawState(canvas, preview, data);
                 if (data.progress < 1)
                     setTimeout(refresh, 1000);
-                // TODO: Move to final page once progress is done
+                else
+                    window.location = '/capture.html';
             })
             .catch((e) => showMessage(e));
     }

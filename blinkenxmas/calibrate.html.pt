@@ -6,7 +6,6 @@
 
   <article metal:fill-slot="content">
     <p>3D positions: ${len(store.positions)}/${led_count}</p>
-    <p>Angles calibrated: ${len(angles)}</p>
 
     <p>Calibration for angle ${angle}° running, please wait. During this
     process you should see each LED on the tree illuminating in turn, while the

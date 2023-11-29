@@ -220,6 +220,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             'timedelta':      dt.timedelta,
             'led_count':      self.server.config.led_count,
             'angles':         self.server.angles,
+            'positions':      self.server.positions,
             'store':          self.store,
             # "Sanitize" animations to make it JSON serializable
             'animations':     {
@@ -458,6 +459,7 @@ class HTTPThread(Thread):
             'gstreamer': cameras.GStreamerSource,
         }[config.camera_type.strip().lower()](config)
         self.httpd.angles = {}
+        self.httpd.positions = {}
         self.httpd.exception = None
         self._shutdown_needed = False
 

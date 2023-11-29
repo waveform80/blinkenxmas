@@ -1,6 +1,8 @@
 import io
+import logging
 from time import sleep
 from pathlib import Path
+from statistics import median
 from operator import itemgetter
 from itertools import accumulate
 from threading import Thread, Event, Lock
@@ -18,21 +20,17 @@ except ImportError:
     dist = lambda a, b: sqrt(sum((px - qx) ** 2 for px, qx in zip(p, q)))
 
 
-def weighted_median(seq):
-    items = sorted(seq, key=itemgetter(0))
-    cum_weights = list(accumulate(weight for item, weight in items))
-    try:
-        median = cum_weights[-1] / 2.0
-    except IndexError:
-        raise ValueError('seq must contain at least one item')
-    for (item, weight), cum_weight in zip(items, cum_weights):
-        if cum_weight >= median:
-            return item, weight
+class PointNotFound(ValueError):
+    """
+    Exception raised by the calibration engine when it cannot find an LED by
+    comparison to a base unlit image.
+    """
 
 
-class Calibration:
-    GOOD_SCORE = 40
-    BAD_SCORE = 10
+class Angle:
+    score_fuzz = 10
+    score_min = 10
+    area_max = 0.01
 
     def __init__(self, angle, camera, queue, strips):
         self._lock = Lock()
@@ -88,24 +86,15 @@ class Calibration:
         black = Color('black')
         white = Color('white')
         w, h = self._base_image.size
+        blur = ImageFilter.GaussianBlur(radius=5)
         clear = Image.new('RGB', (w, h))
         mask = Image.new('1', (w, h))
         draw = ImageDraw.Draw(mask)
         draw.polygon([(int(x * w), int(y * h)) for x, y in self._mask], fill=1)
         base = clear.copy()
         base.paste(self._base_image, mask=mask)
+        base = base.filter(blur)
 
-        # The position is calculated by taking the difference between the
-        # captured image for a given color on the LED and the base image
-        # captured for the currently configured angle, applying a Gaussian blur
-        # to remove high-frequency noise (as a result of camera motion,
-        # changing daylight, etc.), and selecting the brightest pixels in the
-        # resulting image.
-        #
-        # The positions of the brightest pixels are then subject to a weighted
-        # median to determine "the" position of the LED in the X/Y plane for
-        # the given angle (X will be adjusted to Z later based on the
-        # configured angle).
         count = sum(len(strip) for strip in self._strips)
         for strip in self._strips:
             for led in strip:
@@ -119,41 +108,53 @@ class Calibration:
                 with self._camera.capture(self._angle, led) as f:
                     image = clear.copy()
                     image.paste(Image.open(f), mask=mask)
-                diff = ImageChops.subtract(image, base).filter(
-                    ImageFilter.GaussianBlur(radius=5)).convert('L')
-                arr = np.frombuffer(
-                    diff.tobytes(), dtype=np.uint8).reshape(
-                    diff.height, diff.width)
-                score = arr.max()
-                if score:
-                    coords = (arr == score).nonzero()
-                    for y, x in zip(*coords):
-                        # The int() calls below are necessary to convert
-                        # from numpy's size-specific integers (which can't
-                        # be serialized to JSON)
-                        positions.append(((x / w, y / h), int(score)))
+                    image = image.filter(blur)
+                try:
+                    position, score = self._calibrate_diff(base, image)
+                except PointNotFound as e:
+                    self._scores[led] = 0
+                    logging.warning('LED #%d: %s', led, str(e))
+                    continue
+                else:
+                    self._positions[led] = position
+                    self._scores[led] = score
 
-                position, score = weighted_median(positions)
-                # TODO Threshold the score
-                self._positions[led] = position
-                self._scores[led] = score
-
-            # Remove all "bad" points, then calculate the max. distance between
-            # "good" points
-            bad_leds = {
-                led for led, score in self._scores.items()
-                if score < self.BAD_SCORE
-            }
-            good_leds = {
-                led for led, score in self._scores.items()
-                if self.GOOD_SCORE <= score
-            }
-            max_dist = max(
-                dist(self._positions[a], self._positions[b]) / (b - a)
-                for a in good_leds
-                for b in good_leds
-                if b > a
-            )
+    def _calibrate_diff(self, unlit, lit):
+        # The position is calculated by taking the difference between the
+        # captured image for a given color on the LED and the base image
+        # captured for the currently configured angle, applying a Gaussian blur
+        # to remove high-frequency noise (as a result of camera motion,
+        # changing daylight, etc.), and selecting the brightest pixels in the
+        # resulting image.
+        #
+        # If the brightest pixels aren't sufficiently bright (indicating very
+        # little difference), the point is rejected. The area covered by the
+        # brightest pixels is then sanity checked (a less than marginal match
+        # usually covers several patches of an image). If this passes, the a
+        # median of all matched coordinates is taken to determine the canonical
+        # "position" of the LED. Note this only covers the position in the X/Y
+        # plane. Later we'll calculate the Z based on matching positions
+        # between angles.
+        diff = ImageChops.difference(lit, unlit).convert('L')
+        w, h = diff.size
+        arr = np.frombuffer(diff.tobytes(), dtype=np.uint8).reshape(h, w)
+        score = arr.max()
+        if score < self.score_min:
+            raise PointNotFound(f'diff score too low: {score}')
+        coords = (arr >= score - self.score_fuzz).nonzero()
+        area = (
+            (coords[1].max() - coords[1].min()) *
+            (coords[0].max() - coords[0].min())) / (w * h)
+        if area > self.area_max:
+            raise PointNotFound(
+                f'potential coords cover large area: {area*100:0.2f}%')
+        coords = [(x / w, y / h) for y, x in zip(*coords)]
+        position = (
+            median(x for x, y in coords),
+            median(y for x, y in coords))
+        # The int() calls below are necessary to convert from numpy's
+        # size-specific integers (which can't be serialized to JSON)
+        return position, int(score)
 
     @property
     def angle(self):
@@ -169,7 +170,7 @@ class Calibration:
 
     @property
     def progress(self):
-        return len(self._positions) / sum(len(strip) for strip in self._strips)
+        return len(self._scores) / sum(len(strip) for strip in self._strips)
 
     @property
     def positions(self):
@@ -188,3 +189,12 @@ class Calibration:
             for led, score in self._scores.copy().items()
             if score is not None
         }
+
+
+class Positions:
+    def __init__(self):
+        self._positions = {}
+
+    @property
+    def positions(self):
+        return self._positions

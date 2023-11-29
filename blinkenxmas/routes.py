@@ -6,7 +6,7 @@ from colorzero import Color
 
 from .httpd import route
 from .http import HTTPResponse, DummyResponse
-from .calibrate import Calibration
+from .calibrate import Angle, Positions
 
 
 @route('/')
@@ -151,7 +151,7 @@ def calibration_base(request, angle):
     try:
         calibration = request.server.angles[angle]
     except KeyError:
-        calibration = request.server.angles[angle] = Calibration(
+        calibration = request.server.angles[angle] = Angle(
             angle, request.server.camera, request.server.queue,
             request.server.config.led_strips)
     return HTTPResponse(request, body=calibration.base, mime_type='image/jpeg')
@@ -179,6 +179,7 @@ def calibration_state(request, angle):
 
     return HTTPResponse(request, body=json.dumps({
         'progress':  calibration.progress,
+        'mask':      calibration.mask,
         'positions': calibration.positions,
         'scores':    calibration.scores,
     }), mime_type='application/json')

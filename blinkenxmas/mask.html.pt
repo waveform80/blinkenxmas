@@ -25,7 +25,7 @@
       <input type="number" id="angle" name="angle" value="${angle}" readonly />
       <div class="buttons">
         <input type="hidden" id="mask" name="mask" value="" />
-        <input type="submit" id="calibrate" value="Calibrate" />
+        <input type="submit" id="scan" value="Scan" />
         <a class="button" href="/">Cancel</a>
       </div>
     </form>

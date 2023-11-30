@@ -13,7 +13,7 @@ function initCaptureForm(form) {
 
 function initMaskForm(form) {
     let buttons = form.querySelector('.buttons');
-    let calibrateBtn = form.elements['calibrate'];
+    let scanBtn = form.elements['scan'];
     let undoBtn = document.createElement('input');
     let preview = form.querySelector('#preview-image');
     let canvas = document.createElement('canvas');
@@ -22,7 +22,7 @@ function initMaskForm(form) {
     undoBtn.id = 'undo';
     undoBtn.type = 'button';
     undoBtn.value = 'Undo';
-    buttons.insertBefore(undoBtn, calibrateBtn);
+    buttons.insertBefore(undoBtn, scanBtn);
 
     // Replace the preview image with a canvas that the user can click on to
     // draw the calibration mask

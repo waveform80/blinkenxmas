@@ -11,18 +11,20 @@ class StoragePositions(MutableMapping):
     def _create_tables(self):
         with self._conn:
             self._conn.execute(
+                "DROP TABLE IF EXISTS positions")
+            self._conn.execute(
                 """
                 CREATE TABLE positions (
                     led  INTEGER NOT NULL,
-                    x    NUMBER NOT NULL,
                     y    NUMBER NOT NULL,
-                    z    NUMBER NOT NULL,
+                    a    NUMBER NOT NULL,
+                    r    NUMBER NOT NULL,
 
                     CONSTRAINT presets_pk PRIMARY KEY (led),
                     CONSTRAINT coords_ck CHECK (
-                        x BETWEEN 0 AND 1 AND
                         y BETWEEN 0 AND 1 AND
-                        z BETWEEN 0 AND 1
+                        a BETWEEN 0 AND 360 AND
+                        r BETWEEN 0 AND 1
                     )
                 )
                 """)
@@ -51,7 +53,7 @@ class StoragePositions(MutableMapping):
         return False
 
     def __getitem__(self, led):
-        sql = "SELECT x, y, z FROM positions WHERE led = ?"
+        sql = "SELECT y, a, r FROM positions WHERE led = ?"
         for row in self._conn.execute(sql, (led,)):
             return tuple(row)
         raise KeyError(led)
@@ -62,12 +64,12 @@ class StoragePositions(MutableMapping):
         data = json.dumps(data)
         sql = (
             """
-            INSERT INTO positions (led, x, y, z) VALUES (?, ?, ?, ?)
-            ON CONFLICT (led) DO UPDATE SET x = ?, y = ?, z = ?
+            INSERT INTO positions (led, y, a, r) VALUES (?, ?, ?, ?)
+            ON CONFLICT (led) DO UPDATE SET y = ?, a = ?, r = ?
             """)
         x, y, z = position
         with self._conn:
-            self._conn.execute(sql, (led, x, y, z, x, y, z))
+            self._conn.execute(sql, (led, y, a, r, y, a, r))
 
     def __delitem__(self, led):
         sql = "DELETE FROM presets WHERE led = ?"
@@ -141,7 +143,7 @@ class StoragePresets(MutableMapping):
 
 
 class Storage:
-    schema_version = 2
+    schema_version = 3
 
     def __init__(self, db):
         if sqlite3.threadsafety < 1:

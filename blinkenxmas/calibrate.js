@@ -135,7 +135,7 @@ function drawState(canvas, image, data) {
         context.ellipse(x, y, 5, 5, 0, 0, 2 * Math.PI);
         context.fill();
         context.stroke();
-        context.fillText(`${led} [${score}]`, x + 7, y - 7);
+        context.fillText(`${led}`, x + 7, y - 7);
     }
 }
 

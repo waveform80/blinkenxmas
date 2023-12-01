@@ -5,9 +5,6 @@
   </div>
 
   <article metal:fill-slot="content">
-    <p>3D positions: ${len(store.positions)}/${led_count}</p>
-    <p>Angles calibrated: ${len(angles)}</p>
-
     <p>Click around the tree on the capture below (in which all the LEDs should
     be off) to draw an outline. The will be used as a "mask" to limit the
     search for LED positions to areas within the mask. This doesn't have to be

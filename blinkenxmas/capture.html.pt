@@ -5,7 +5,8 @@
   </div>
 
   <article metal:fill-slot="content">
-    <p>3D positions: ${len(store.positions)}/${led_count}</p>
+    <p>3D positions stored: ${len(store.positions)}/${led_count}</p>
+    <p>3D positions calculated: ${len(calibration.calculator.positions)}/${led_count}</p>
 
     <p>
     <span tal:condition="store.positions">Calibration is complete. If you wish

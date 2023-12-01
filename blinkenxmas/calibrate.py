@@ -1,11 +1,14 @@
 import io
 import logging
+import math as m
 from time import sleep
 from pathlib import Path
-from statistics import median
+from collections import Counter
+from contextlib import suppress
 from operator import itemgetter
-from itertools import accumulate
+from statistics import median, mean
 from threading import Thread, Event, Lock
+from itertools import accumulate, combinations
 
 import numpy as np
 from colorzero import Color
@@ -27,7 +30,19 @@ class PointNotFound(ValueError):
     """
 
 
-class Angle:
+def weighted_median(seq):
+    items = sorted(seq, key=itemgetter(0))
+    cum_weights = list(accumulate(weight for item, weight in items))
+    try:
+        median = cum_weights[-1] / 2.0
+    except IndexError:
+        raise ValueError('seq must contain at least one item')
+    for (item, weight), cum_weight in zip(items, cum_weights):
+        if cum_weight >= median:
+            return item, weight
+
+
+class AngleScanner:
     score_fuzz = 10
     score_min = 10
     area_max = 0.01
@@ -64,7 +79,7 @@ class Angle:
             (0, h - 1),
         ]
 
-    def start(self, mask):
+    def scan(self, mask):
         with self._lock:
             if not self._thread:
                 self._thread = Thread(target=self.calibrate, daemon=True)
@@ -83,6 +98,13 @@ class Angle:
                 self._thread = None
 
     def calibrate(self):
+        try:
+            self._calibrate_scan()
+        finally:
+            self._queue.put([[]])
+            self._queue.join()
+
+    def _calibrate_scan(self):
         black = Color('black')
         white = Color('white')
         w, h = self._base_image.size
@@ -96,15 +118,16 @@ class Angle:
         base = base.filter(blur)
 
         count = sum(len(strip) for strip in self._strips)
+        scene = [black] * count
         for strip in self._strips:
             for led in strip:
                 positions = []
                 if self._stop.wait(0):
                     return
-                scene = [black] * count
                 scene[led] = white
                 self._queue.put([scene])
                 self._queue.join()
+                scene[led] = black
                 with self._camera.capture(self._angle, led) as f:
                     image = clear.copy()
                     image.paste(Image.open(f), mask=mask)
@@ -191,10 +214,146 @@ class Angle:
         }
 
 
-class Positions:
-    def __init__(self):
+class PositionsCalculator:
+    score_min = 40
+
+    def __init__(self, strips):
+        self._angles = {}
+        self._scores = {}
         self._positions = {}
+        self._confidence = {}
+
+    def add_angle(self, scanner):
+        with suppress(KeyError):
+            del self._angles[scanner.angle]
+        # The coordinates passed by the scanner are relative to the picture as
+        # a whole, but we need the X coordinates to be relative to the trunk
+        # of the tree (or the centre of rotation, more precisely). Find the
+        # trunk's X coordinate by the average of the minimum and maximum X
+        # coordinates of "good" positions
+        good_x = [
+            x
+            for ((x, y), score) in [
+                (scanner.positions[key], scanner.scores[key])
+                for key in scanner.positions
+            ]
+            if score >= self.score_min
+        ]
+        trunk_x = mean([min(good_x), max(good_x)])
+        self._angles[scanner.angle] = {
+            led: (x - trunk_x, y)
+            for led, (x, y) in scanner.positions.items()
+        }
+        self._scores[scanner.angle] = {
+            led: score
+            for led, score in scanner.scores.items()
+        }
+        self.estimate()
+
+    def estimate(self):
+        logging.info(
+            f'Beginning estimation with {len(self._angles)} scanned angles')
+        led_angles = {}
+        new_positions = {}
+        for angle in self._angles:
+            for led in self._angles[angle]:
+                led_angles.setdefault(led, set()).add(angle)
+        for led, angles in led_angles.items():
+            if len(angles) == 1:
+                continue
+            logging.info(
+                f'Estimating position of LED {led} from {len(angles)} angles')
+            for a1, a2 in combinations(sorted(angles), 2):
+                if abs(a2 - a1) == 180:
+                    logging.warning('Skipping because angle difference is 180°')
+                    continue
+
+                x1, y1 = self._angles[a1][led]
+                x2, y2 = self._angles[a2][led]
+                if abs(y1 - y2) > 0.1:
+                    logging.warning(
+                        f'LED {led} went from ({x1}, {y1}) at {a1}° to '
+                        f'({x2}, {y2}) at {a2}°')
+                # This little bit of trigonometric magic is thanks to user KDP
+                # on the math(s) stack-exchange [1]. The question for that
+                # answer is written specifically with this application in mind
+                # and may shed more light on how this is being solved, too.
+                #
+                # [1]: https://math.stackexchange.com/a/4816273/555505
+                #
+                # NOTE: This probably *ought* to use atan2, but every time I've
+                # tried in practice I get plenty of weird readings that are
+                # exactly 180° out. Oh well, this seems to work for now...
+                alpha = m.radians(a2) - m.radians(a1)
+                try:
+                    beta = m.atan(
+                        m.sin(alpha) /
+                        ((x2 / x1) - m.cos(alpha)))
+                    r = abs(x1 / m.sin(beta))
+                except ZeroDivisionError:
+                    logging.warning(
+                        f'Bad r-calculation for LED {led} with alpha={alpha}, '
+                        f'x1={x1}, x2={x2}')
+                    continue
+
+                # Because atan only operates from -90° to 90° (-π/2 to π/2 for
+                # those working in radians), we need to determine where on the
+                # circle it is. The offset and modulo step gets us into the
+                # "left half" of the tree (angles 0° to 180°). We then
+                # calculate a "check x1" value. If this has the same sign as
+                # the original then our result is actually in the "right half"
+                # of the tree (as you look at it) so we need to offset by 180°.
+                a = (m.degrees(beta) - a1) % 180
+                tx1 = r * m.sin(m.radians(a1 + a))
+                if (tx1 > 0) == (x1 > 0):
+                    a += 180
+                else:
+                    tx1 = -tx1
+                if not m.isclose(x1, tx1, rel_tol=0.00001):
+                    logging.warning(
+                        f'Test x-calculation for LED {led} is not within '
+                        f'expected tolerance, x1={x1}, tx1={tx1}')
+
+                # Calculate a confidence score to use as a weighted median on
+                # determining the "real" position. This is heavily biased by
+                # the two scores of the input points. The sin of the angle
+                # between the two measured angles favours those that aren't
+                # near 0 and 180° (at which point the problem is degenerate and
+                # nothing can be determined) and favours those closer to 90°.
+                # Finally, major differences in the two Y-coordinates are
+                # heavily penalised.
+                confidence = abs(
+                    self._scores[a1][led] *
+                    self._scores[a2][led] *
+                    m.sin(alpha) *
+                    max(0, 1 - (y2 - y1) * 10))
+
+                if r <= 1:
+                    new_positions.setdefault(led, set()).add((
+                        (y1, a, r), # height from base, angle, radius from trunk
+                        confidence,
+                    ))
+                else:
+                    logging.warning(
+                        f'Ignoring z={z} for LED {led} with alpha={alpha}, '
+                        f'beta={beta}, x1={x1}, x2={x2}')
+        if new_positions:
+            self._positions = {
+                led: weighted_median(positions)
+                for led, positions in new_positions.items()
+            }
+
+    @property
+    def angles(self):
+        return self._angles
 
     @property
     def positions(self):
         return self._positions
+
+
+class Calibration:
+    def __init__(self, config):
+        self.config = config
+        self.scanner = None
+        self.calculator = PositionsCalculator(config.led_strips)

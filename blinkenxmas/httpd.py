@@ -49,7 +49,7 @@ except ImportError:
 
 from chameleon import PageTemplate
 
-from . import cameras, store
+from . import cameras, store, calibrate
 from .http import HTTPResponse
 
 
@@ -219,8 +219,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             'datetime':       dt.datetime,
             'timedelta':      dt.timedelta,
             'led_count':      self.server.config.led_count,
-            'angles':         self.server.angles,
-            'positions':      self.server.positions,
+            'calibration':    self.server.calibration,
             'store':          self.store,
             # "Sanitize" animations to make it JSON serializable
             'animations':     {
@@ -458,8 +457,7 @@ class HTTPThread(Thread):
             'picamera':  cameras.PiCameraSource,
             'gstreamer': cameras.GStreamerSource,
         }[config.camera_type.strip().lower()](config)
-        self.httpd.angles = {}
-        self.httpd.positions = {}
+        self.httpd.calibration = calibrate.Calibration(config)
         self.httpd.exception = None
         self._shutdown_needed = False
 

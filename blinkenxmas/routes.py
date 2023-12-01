@@ -6,7 +6,7 @@ from colorzero import Color
 
 from .httpd import route
 from .http import HTTPResponse, DummyResponse
-from .calibrate import Angle, Positions
+from .calibrate import AngleScanner
 
 
 @route('/')
@@ -137,6 +137,25 @@ def generate_animation(request, name):
         return HTTPResponse(request, body=json.dumps(data))
 
 
+@route('/capture.html', 'GET')
+def calibration_positions(request):
+    """
+    This handler runs at the start of calibration, and immediately after each
+    angle has been scanned. Ultimately it just falls through to the
+    :file:`capture.html.pt` template but before that, if LED positions from the
+    scan of an angle are present,  it will feed them to the calibration
+    algorithm to determine 3D positions of those LEDs.
+    """
+    scanner = request.server.calibration.scanner
+    if scanner is not None and scanner.progress == 1:
+        calc = request.server.calibration.calculator
+        request.server.calibration.scanner = None
+        calc.add_angle(scanner)
+
+    # Fall-through to render the capture.html.pt template as the response
+    return None
+
+
 @route('/live-preview.mjpg', 'GET')
 def calibration_preview(request):
     """
@@ -173,12 +192,20 @@ def calibration_preview(request):
     return DummyResponse(request)
 
 
+def scanner_for(request, angle):
+    scanner = request.server.calibration.scanner
+    if scanner is None or scanner.angle != angle:
+        raise ValueError(f'Scanner is not for {angle}')
+    return scanner
+
+
 @route('/angle<angle>_base.jpg', 'GET')
 def calibration_base(request, angle):
     """
-    This handler returns the :class:`~blinkenxmas.calibrate.Angle` instance for
-    the specified angle. If none exists, one will be constructed, which will
-    implicitly capture the first image of the (unlit) tree at this angle.
+    This handler returns the :class:`~blinkenxmas.calibrate.AngleScanner`
+    instance for the specified angle. If none exists, one will be constructed,
+    which will implicitly capture the first image of the (unlit) tree at this
+    angle.
 
     The image of the unlit tree is returned as the response.
     """
@@ -186,14 +213,14 @@ def calibration_base(request, angle):
         angle = int(angle, base=10)
     except ValueError:
         return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
-
     try:
-        calibration = request.server.angles[angle]
-    except KeyError:
-        calibration = request.server.angles[angle] = Angle(
+        scanner = scanner_for(request, angle)
+    except ValueError:
+        scanner = request.server.calibration.scanner = AngleScanner(
             angle, request.server.camera, request.server.queue,
             request.server.config.led_strips)
-    return HTTPResponse(request, body=calibration.base, mime_type='image/jpeg')
+
+    return HTTPResponse(request, body=scanner.base, mime_type='image/jpeg')
 
 
 @route('/angle<angle>_mask.json', 'GET')
@@ -206,11 +233,11 @@ def calibration_mask(request, angle):
     """
     try:
         angle = int(angle, base=10)
-        calibration = request.server.angles[angle]
-    except (KeyError, ValueError):
+        scanner = scanner_for(request, angle)
+    except ValueError:
         return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
 
-    return HTTPResponse(request, body=json.dumps(calibration.mask),
+    return HTTPResponse(request, body=json.dumps(scanner.mask),
                         mime_type='application/json')
 
 
@@ -230,15 +257,15 @@ def calibration_state(request, angle):
     """
     try:
         angle = int(angle, base=10)
-        calibration = request.server.angles[angle]
-    except (KeyError, ValueError):
+        scanner = scanner_for(request, angle)
+    except ValueError:
         return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
 
     return HTTPResponse(request, body=json.dumps({
-        'progress':  calibration.progress,
-        'mask':      calibration.mask,
-        'positions': calibration.positions,
-        'scores':    calibration.scores,
+        'progress':  scanner.progress,
+        'mask':      scanner.mask,
+        'positions': scanner.positions,
+        'scores':    scanner.scores,
     }), mime_type='application/json')
 
 
@@ -247,10 +274,10 @@ def calibration_run(request):
     """
     This handler ultimately falls through to the :file:`calibrate.html.pt`
     template. Before doing so, however, it retrieves the
-    :class:`~blinkenxmas.calibrate.Angle` instance for the specified angle
-    and starts the calibration scan. If mask data is passed (as a JSON array)
-    in the "mask" value of the query-string, it will be passed to the scan
-    method.
+    :class:`~blinkenxmas.calibrate.AngleScanner` instance for the specified
+    angle and starts the calibration scan. If mask data is passed (as a JSON
+    array) in the "mask" value of the query-string, it will be passed to the
+    scan method.
     """
     try:
         angle = int(request.query['angle'])
@@ -259,11 +286,11 @@ def calibration_run(request):
             for x, y in json.loads(request.query['mask'])
             if 0 <= float(x) <= 1 and 0 <= float(y) <= 1
         ]
-        calibration = request.server.angles[angle]
+        scanner = scanner_for(request, angle)
     except (KeyError, ValueError):
         return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
 
-    calibration.start(mask)
+    scanner.scan(mask)
 
     # Fall-through to render the calibrate.html.pt template as the response
     return None
@@ -277,11 +304,28 @@ def calibration_cancel(request):
     """
     try:
         angle = int(request.query['angle'])
-        calibration = request.server.angles.pop(angle)
-    except (KeyError, ValueError):
+        scanner = scanner_for(request, angle)
+    except ValueError:
         return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
 
-    calibration.stop()
+    request.server.calibration.scanner = None
+    scanner.stop()
     return HTTPResponse(
         request, status_code=HTTPStatus.SEE_OTHER,
         headers={'Location': '/index.html'})
+
+
+@route('/estimated.json', 'GET')
+def calibration_result(request):
+    calculator = request.server.calibration.calculator
+    return HTTPResponse(request, body=json.dumps({
+        'positions': {
+            led: list(coords)
+            for led, coords in calculator.positions.items()
+        },
+    }), mime_type='application/json')
+
+
+@route('/commit.html', 'GET')
+def calibration_commit(request):
+    pass

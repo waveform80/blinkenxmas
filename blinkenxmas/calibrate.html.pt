@@ -15,7 +15,7 @@
     <form class="grid">
       <img id="preview-image" src="/angle${str(angle).rjust(3, '0')}_base.jpg" />
       <label for="progress">Progress</label>
-      <progress id="progress" value="angles[angle].progress"></progress>
+      <progress id="progress" value="${calibration.scanner.progress}"></progress>
       <div class="buttons">
         <a class="button" id="refresh" href="/calibrate.html?angle=${angle}">Refresh</a>
         <a class="button" href="/cancel.html?angle=${angle}">Cancel</a>

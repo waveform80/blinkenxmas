@@ -11,13 +11,15 @@
     <span tal:condition="store.positions">Calibration is complete. If you wish
       to re-calibrate,</span>
     <span tal:condition="not store.positions">Calibration is required for
-      certain animations to operate correctly. You have ${len(angles)} angle(s)
-      of the tree captured so far. To start or continue calibration,</span>
+      certain animations to operate correctly. You have
+      ${len(calibration.calculator.angles)} angle(s) of the tree scanned so
+    far. To start or continue calibration,</span>
     enter the angle of the tree below and select "Capture". Otherwise,
     select "Cancel" to return to the main page.</p>
 
-    <p tal:condition="len(angles)">To finish calibration and commit
-    the 3D positions currently calculated, select "Commit".</p>
+    <p tal:condition="len(calibration.calculator.positions)">To finish
+    calibration and commit the 3D positions currently calculated, select
+    "Commit".</p>
 
     <form action="/mask.html" method="get" class="grid">
       <img id="preview-image" src="/no-preview.png" />
@@ -26,7 +28,8 @@
         value="0" min="0" max="355" step="5" required />
       <div class="buttons">
         <input type="submit" id="capture" value="Capture" />
-        <a tal:condition="len(positions)" class="button" href="/commit.html">Commit</a>
+        <a tal:condition="len(calibration.calculator.positions)" class="button"
+          href="/commit.html">Commit</a>
         <a class="button" href="/">Cancel</a>
       </div>
     </form>
@@ -36,7 +39,7 @@
     angle is complete, rotate your tree by a measured amount about the axis
     running through its trunk and calibrate the new angle.</p>
 
-    <p>You will likely need 4 or 5 calibration measurements to accurately plot
+    <p>You will likely need 4 or 5 scans of different angles to accurately plot
     the position of all LEDs on your tree. Remember that not all LEDs will be
     visible from each position and the algorithm requires at least two
     different views of each LED to calculate its 3-dimensional position. It may

@@ -1,7 +1,26 @@
 import json
+import math as m
 import sqlite3
 import logging
 from collections.abc import MutableMapping
+
+
+class Position(namedtuple('Position', ('x', 'y', 'z', 'a', 'r'))):
+    @classmethod
+    def from_polar(cls, y, a, r):
+        x = r * m.sin(m.radians(a))
+        z = r * m.cos(m.radians(a))
+        return Position(x, y, z, a, r)
+
+    @classmethod
+    def from_cartesian(cls, x, y, z):
+        a = m.degrees(m.atan2(z, x) + m.pi)
+        r = m.hypot(x, z)
+        return Position(x, y, z, a, r)
+
+    @property
+    def a_r(self):
+        return m.radians(self.a)
 
 
 class StoragePositions(MutableMapping):
@@ -55,21 +74,21 @@ class StoragePositions(MutableMapping):
     def __getitem__(self, led):
         sql = "SELECT y, a, r FROM positions WHERE led = ?"
         for row in self._conn.execute(sql, (led,)):
-            return tuple(row)
+            return Position.from_polar(row.y, row.a, row.r)
         raise KeyError(led)
 
     def __setitem__(self, led, position):
-        # TODO Assert that the structure is correct (voluptuous? Or just
-        # decompose it into tables?)
-        data = json.dumps(data)
+        if not isinstance(position, Position):
+            position = Position.from_cartesian(*position)
         sql = (
             """
             INSERT INTO positions (led, y, a, r) VALUES (?, ?, ?, ?)
             ON CONFLICT (led) DO UPDATE SET y = ?, a = ?, r = ?
             """)
-        x, y, z = position
         with self._conn:
-            self._conn.execute(sql, (led, y, a, r, y, a, r))
+            self._conn.execute(sql, (
+                led, position.y, position.a, position.r,
+                position.y, position.a, position.r))
 
     def __delitem__(self, led):
         sql = "DELETE FROM presets WHERE led = ?"

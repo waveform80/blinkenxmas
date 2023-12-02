@@ -115,7 +115,6 @@ config['keepalive'] = 120
 leds = LEDStrips(config['leds'])
 client = MQTTClient(config)
 
-
 def main():
     Animation.setup()
     try:

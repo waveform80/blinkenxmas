@@ -335,4 +335,11 @@ def calibration_result(request):
 
 @route('/commit.html', 'GET')
 def calibration_commit(request):
-    pass
+    calculator = request.server.calibration.calculator
+    with request.store:
+        request.store.positions.clear()
+        for led, position in calculator.positions.items():
+            request.store.positions[led] = position
+    return HTTPResponse(
+        request, status_code=HTTPStatus.SEE_OTHER,
+        headers={'Location': '/index.html'})

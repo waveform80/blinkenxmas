@@ -1,13 +1,10 @@
 <div metal:use-macro="layout">
   <div tal:omit-tag="1" metal:fill-slot="title">Calibration</div>
-  <div metal:fill-slot="head">
+  <div tal:omit-tag="1" metal:fill-slot="head">
     <meta name="description" content="Calibration of Blinken' Xmas LED positions" />
   </div>
 
   <article metal:fill-slot="content">
-    <p>3D positions stored: ${len(store.positions)}/${led_count}</p>
-    <p>3D positions calculated: ${len(calibration.calculator.positions)}/${led_count}</p>
-
     <p>
     <span tal:condition="store.positions">Calibration is complete. If you wish
       to re-calibrate,</span>
@@ -49,9 +46,10 @@
     for each calibration.</p>
   </article>
 
-  <div metal:fill-slot="scripts">
+  <div tal:omit-tag="1" metal:fill-slot="scripts">
     <script src="/messages.js"></script>
     <script src="/calibrate.js"></script>
     <script>initCaptureForm(document.forms[0]);</script>
+    <script>showMessages();</script>
   </div>
 </div>

@@ -1,6 +1,6 @@
 <div metal:use-macro="layout" tal:define="angle request.query['angle']">
   <div tal:omit-tag="1" metal:fill-slot="title">Calibration</div>
-  <div metal:fill-slot="head">
+  <div tal:omit-tag="1" metal:fill-slot="head">
     <meta name="description" content="Calibration of Blinken' Xmas LED positions" />
   </div>
 
@@ -21,9 +21,10 @@
     </form>
   </article>
 
-  <div metal:fill-slot="scripts">
+  <div tal:omit-tag="1" metal:fill-slot="scripts">
     <script src="/messages.js"></script>
     <script src="/calibrate.js"></script>
     <script>initCalibrateForm(document.forms[0], ${angle});</script>
+    <script>showMessages();</script>
   </div>
 </div>

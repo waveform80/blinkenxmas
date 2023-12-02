@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="/style.css" />
     <link rel="shortcut icon" href="/favicon.opt.svg" type="image/x-icon" />
     <link rel="icon" href="/favicon.opt.svg" type="image/x-icon" />
-    <meta tal:omit-tag="1" metal:define-slot="head" />
+    <meta metal:define-slot="head" />
   </head>
 
   <body>
@@ -15,14 +15,9 @@
       <a class="logo" href="/"><div></div><h1>Blinken' Xmas</h1></a>
     </header>
 
-    <section id="message">
-      <a href="" onclick="hideMessage()">x</a>
-      <p></p>
-    </section>
-
-    <article metal:define-slot="content">
-    </article>
-    <div tal:omit-tag="1" metal:define-slot="scripts" />
+    <section id="messages"></section>
+    <article metal:define-slot="content"></article>
+    <div metal:define-slot="scripts" />
   </body>
 </html>
 </foo>

@@ -48,7 +48,8 @@ class AngleScanner:
     area_max = 0.01
     logger = logging.getLogger('scanner')
 
-    def __init__(self, angle, camera, queue, strips):
+    def __init__(self, angle, camera, queue, strips, messages):
+        self._messages = messages
         self._lock = Lock()
         self._stop = Event()
         self._thread = None
@@ -105,6 +106,7 @@ class AngleScanner:
         finally:
             self._queue.put([[]])
             self._queue.join()
+            self._messages.show(f'Scan finished for angle {self._angle}°')
 
     def _calibrate_scan(self):
         black = Color('black')
@@ -220,11 +222,20 @@ class PositionsCalculator:
     score_min = 40
     logger = logging.getLogger('calculator')
 
-    def __init__(self, strips):
+    def __init__(self, strips, messages):
+        self._messages = messages
+        self._strips = strips
         self._angles = {}
         self._scores = {}
         self._positions = {}
         self._confidence = {}
+
+    def clear(self):
+        self._angles.clear()
+        self._scores.clear()
+        self._positions.clear()
+        self._confidence.clear()
+        self._messages.show('Cleared calculated positions')
 
     def add_angle(self, scanner):
         with suppress(KeyError):
@@ -346,6 +357,9 @@ class PositionsCalculator:
                 led: weighted_median(positions)
                 for led, positions in new_positions.items()
             }
+            self._messages.show(
+                f'Calculated {len(self._positions)} from '
+                f'{len(self._angles)} angles')
 
     @property
     def angles(self):
@@ -357,7 +371,7 @@ class PositionsCalculator:
 
 
 class Calibration:
-    def __init__(self, config):
+    def __init__(self, config, messages):
         self.config = config
         self.scanner = None
-        self.calculator = PositionsCalculator(config.led_strips)
+        self.calculator = PositionsCalculator(config.led_strips, messages)

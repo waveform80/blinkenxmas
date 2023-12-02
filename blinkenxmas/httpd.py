@@ -28,8 +28,8 @@ import datetime as dt
 import urllib.parse
 from http import HTTPStatus
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
-from collections import namedtuple
-from threading import Thread
+from collections import namedtuple, deque
+from threading import Thread, Lock
 from contextlib import suppress
 
 # NOTE: The fallback comes first here as Python 3.7 incorporates
@@ -430,6 +430,40 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             resp.send_body()
 
 
+class Messages:
+    """
+    This is a trivial class which is used to buffer up to *maxlen* messages,
+    which are simple strings, for display to the user at some future point.
+
+    The :meth:`show` method is used to add a message to the buffer, and
+    :meth:`drain` to retrieve all messages from the buffer as a list of
+    strings. Instances of the class are thread-safe and may be used from
+    multiple threads without additional locking.
+    """
+    def __init__(self, maxlen=20):
+        self._lock = Lock()
+        self._items = deque(maxlen=maxlen)
+
+    def show(self, msg):
+        """
+        Add *msg* to the buffer. If the buffer is already full (has *maxlen*
+        items in it), the oldest message is discarded and the new message is
+        appended.
+        """
+        with self._lock:
+            self._items.append(msg)
+
+    def drain(self):
+        """
+        Empties the buffer, returning all messages currently stored within it
+        as a :class:`list`.
+        """
+        with self._lock:
+            result = list(self._items)
+            self._items.clear()
+        return result
+
+
 class HTTPThread(Thread):
     """
     The blinkenxmas HTTP thread class wraps an instance of :class:`HTTPServer`
@@ -452,13 +486,15 @@ class HTTPThread(Thread):
         self.httpd = HTTPServer(addr[:2], HTTPRequestHandler)
         self.httpd.queue = queue
         self.httpd.config = config
+        self.httpd.messages = Messages()
         self.httpd.camera = {
             'none':      lambda config: None,
             'files':     cameras.FilesSource,
             'picamera':  cameras.PiCameraSource,
             'gstreamer': cameras.GStreamerSource,
         }[config.camera_type.strip().lower()](config)
-        self.httpd.calibration = calibrate.Calibration(config)
+        self.httpd.calibration = calibrate.Calibration(
+            config, self.httpd.messages)
         self.httpd.exception = None
         self._shutdown_needed = False
 

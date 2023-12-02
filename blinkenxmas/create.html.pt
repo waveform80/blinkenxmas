@@ -1,6 +1,6 @@
 <div metal:use-macro="layout">
   <div tal:omit-tag="1" metal:fill-slot="title">Home</div>
-  <div metal:fill-slot="head">
+  <div tal:omit-tag="1" metal:fill-slot="head">
     <meta name="description" content="Create a new Blinken' Xmas preset" />
   </div>
 
@@ -24,10 +24,11 @@
     </form>
   </article>
 
-  <div metal:fill-slot="scripts">
+  <div tal:omit-tag="1" metal:fill-slot="scripts">
     <script>var animations=${json(animations)};</script>
     <script src="/messages.js"></script>
     <script src="/create.js"></script>
     <script>initCreateForm(document.forms[0]);</script>
+    <script>showMessages();</script>
   </div>
 </div>

@@ -20,6 +20,13 @@ def home(request):
         headers={'Location': '/index.html'})
 
 
+@route('/messages.json', 'GET')
+def get_messages(request):
+    return HTTPResponse(
+        request, mime_type='application/json',
+        body=json.dumps(request.server.messages.drain()))
+
+
 @route('/preset/<name>', 'GET')
 def get_preset(request, name):
     """
@@ -218,7 +225,7 @@ def calibration_base(request, angle):
     except ValueError:
         scanner = request.server.calibration.scanner = AngleScanner(
             angle, request.server.camera, request.server.queue,
-            request.server.config.led_strips)
+            request.server.config.led_strips, request.server.messages)
 
     return HTTPResponse(request, body=scanner.base, mime_type='image/jpeg')
 

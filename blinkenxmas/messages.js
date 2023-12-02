@@ -1,10 +1,27 @@
 function showMessage(s) {
-  document.querySelector("#message p").innerHTML = s;
-  document.querySelector("#message").style.display = "block";
+  const messageDiv = document.createElement('div');
+  const messageClose = document.createElement('a');
+  const messageP = document.createElement('p');
+  messageP.textContent = s;
+  messageClose.textContent = 'x';
+  messageClose.href = document.location.pathname;
+  messageClose.addEventListener('click', hideMessage);
+  messageDiv.append(messageClose, messageP);
+  document.querySelector('#messages').append(messageDiv);
 }
 
-function hideMessage() {
-  document.querySelector("#message").style.display = "none";
+function hideMessage(evt) {
+  evt.target.parentElement.remove();
+  evt.preventDefault();
+  evt.stopPropagation();
+}
+
+function showMessages() {
+  let req = new Request('/messages.json', { cache: 'no-store' });
+  return fetch(req)
+    .then((resp) => resp.json())
+    .then((data) => data.map(showMessage))
+    .catch((e) => showMessage(e));
 }
 
 function escapeIdent(s) {

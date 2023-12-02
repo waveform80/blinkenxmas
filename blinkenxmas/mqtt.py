@@ -86,10 +86,9 @@ def render(animation, fps, chunk_size=chunk_size):
 
 
 class MessageThread(Thread):
-    def __init__(self, queue, config, messages):
+    def __init__(self, queue, config):
         super().__init__(target=self.listen, daemon=True)
         self.queue = queue
-        self.messages = messages
         self.host = config.broker_address
         self.port = config.broker_port
         self.topic = config.topic

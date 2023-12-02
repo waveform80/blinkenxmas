@@ -317,6 +317,7 @@ def calibration_cancel(request):
 
     request.server.calibration.scanner = None
     scanner.stop()
+    request.server.messages.show(f'Cancelled current scan for angle {angle}°')
     return HTTPResponse(
         request, status_code=HTTPStatus.SEE_OTHER,
         headers={'Location': '/index.html'})
@@ -340,6 +341,9 @@ def calibration_commit(request):
         request.store.positions.clear()
         for led, position in calculator.positions.items():
             request.store.positions[led] = position
+        calculator.clear()
+    request.server.messages.show(
+        f'Committed {len(calculator.positions)} LED positions to the database')
     return HTTPResponse(
         request, status_code=HTTPStatus.SEE_OTHER,
         headers={'Location': '/index.html'})

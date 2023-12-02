@@ -46,7 +46,7 @@ def get_web_parser():
         '--camera-preview', section='camera', key='preview',
         default='640x480', type=resolution, help=SUPPRESS)
     parser.add_argument(
-        '--camera-rotation', section='camera', key='rotation',
+        '--camera-rotation', section='camera', key='rotate',
         default='0', type=rotation, help=SUPPRESS)
 
     parser.set_defaults_from(config)

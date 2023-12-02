@@ -522,8 +522,8 @@ class HTTPThread(Thread):
         try:
             host, port = self.httpd.socket.getsockname()[:2]
             hostname = socket.gethostname()
-            self.http.logger.warning(f'Serving on {host} port {port}')
-            self.http.logger.warning(f'http://{hostname}:{port}/ ...')
+            self.httpd.logger.warning(f'Serving on {host} port {port}')
+            self.httpd.logger.warning(f'http://{hostname}:{port}/ ...')
             self._shutdown_needed = True
             self.httpd.serve_forever()
         except Exception as exc:

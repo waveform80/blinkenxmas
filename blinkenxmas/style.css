@@ -108,29 +108,22 @@ header {
 header h1 { margin: 0.5rem 1rem; }
 
 article,
-section#message {
+section#messages {
     width: 50rem;
     align-self: center;
 }
 
-section#message {
+section#messages > div {
     border: 1px solid #88f;
     background: #ccf;
-    border-radius: 5px;
+    border-radius: 1rem;
     margin-top: 1.5rem;
     padding: 1rem;
-    display: none;
 }
 
-section#message > a:first-child {
-    color: #88f;
-    float: right;
-}
-section#message > a:first-child:hover {
-    text-decoration: none;
-}
-
-section#message > * { margin-top: 0; }
+section#messages div a { color: #88f; float: right; }
+section#messages div a:hover { text-decoration: none; }
+section#messages div :is(a, p) { margin-top: 0; }
 
 ul#presets {
     display: grid;

@@ -66,6 +66,11 @@ class StoragePositions(MutableMapping):
         for row in self._conn.execute(sql):
             yield row['led']
 
+    def items(self):
+        sql = "SELECT led, y, a, r FROM positions ORDER BY led"
+        for row in self._conn.execute(sql):
+            yield row['led'], Position.from_polar(row['y'], row['a'], row['r'])
+
     def __contains__(self, led):
         sql = "SELECT 1 FROM positions WHERE led = ?"
         for row in self._conn.execute(sql, (led,)):

@@ -1,5 +1,6 @@
 import io
 import time
+import zlib
 import struct
 from queue import Empty
 from threading import Thread, Event
@@ -13,6 +14,7 @@ from .pico.animation import (
     anim_fmt,
     frame_fmt,
     led_fmt,
+    wbits,
 )
 
 
@@ -77,7 +79,10 @@ def render(animation, fps, chunk_size=chunk_size):
 
     def chunkify(stream, chunk_size):
         # Split into 1KB chunks with headers
-        s = b''.join(stream)
+        compressor = zlib.compressobj(
+            zlib.Z_BEST_COMPRESSION, wbits=wbits, memLevel=9)
+        s = b''.join(compressor.compress(buf) for buf in stream)
+        s += compressor.flush()
         ident = time.monotonic_ns() % (2 ** 32)
         for i in range(0, len(s), chunk_size):
             yield struct.pack(packet_fmt, ident, i, len(s)) + s[i:i + chunk_size]

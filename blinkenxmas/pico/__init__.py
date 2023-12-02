@@ -9,11 +9,15 @@
 
 import sys
 
+class _MockModule:
+    pass
+
 class _MockMicropython:
     @staticmethod
     def const(s):
         return s
 
+sys.modules['deflate'] = _MockModule()
 sys.modules['micropython'] = _MockMicropython()
 del _MockMicropython
 

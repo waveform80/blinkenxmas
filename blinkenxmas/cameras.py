@@ -136,7 +136,7 @@ class PiCameraSource(AbstractSource):
         assert config.camera_type == 'picamera'
 
         super().__init__(config)
-        self._camera = PiCamera()
+        self._camera = PiCamera(framerate=15)
         self._camera.rotation = config.camera_rotation
         self._capture_res = config.camera_capture
         self._preview_res = config.camera_preview

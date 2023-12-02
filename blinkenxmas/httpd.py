@@ -125,7 +125,7 @@ class Param(namedtuple('Param', ('label', 'input_type', 'default', 'min', 'max')
         return super(Param, cls).__new__(
             cls, label, input_type, default, min, max)
 
-    def value(self, request, value):
+    def value(self, value):
         return (
             int(value) if self.input_type == 'range' else
             float(value) if self.input_type == 'number' else
@@ -133,15 +133,15 @@ class Param(namedtuple('Param', ('label', 'input_type', 'default', 'min', 'max')
             str(value))
 
 class ParamLEDCount:
-    def value(self, request, value=None):
+    def value(self, request):
         return request.server.config.led_count
 
 class ParamPositions:
-    def value(self, request, value=None):
+    def value(self, request):
         return request.store.positions
 
 class ParamFPS:
-    def value(self, request, value=None):
+    def value(self, request):
         return request.server.config.fps
 
 

@@ -186,7 +186,7 @@ def simple_rainbow(led_count, count, saturation, value):
            count=Param('# Rainbows', 'range', default=1, min=1, max=5),
            saturation=Param('Saturation', 'range', default=10, min=1, max=10),
            value=Param('Brightness', 'range', default=10, min=1, max=10))
-def rainbow(pos, count, saturation, value):
+def rainbow(led_count, positions, count, saturation, value):
     black = Color('black')
     return [[
         Color(h=positions[led].y, s=(saturation / 10), v=(value / 10))

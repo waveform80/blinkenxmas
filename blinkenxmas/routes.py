@@ -2,7 +2,7 @@ import io
 import json
 from http import HTTPStatus
 
-from .httpd import route
+from .httpd import route, Param
 from .http import HTTPResponse, DummyResponse
 from .calibrate import AngleScanner
 
@@ -121,11 +121,20 @@ def generate_animation(request, name):
     """
     try:
         anim = request.animations[name]
-        data = anim.function(**{
-            name: anim.params[name].value(request, value)
+        kwargs = {
+            name: anim.params[name].value(value)
             for name, value in request.json().items()
+            if name in anim.params
+            and isinstance(anim.params[name], Param)
+        }
+        kwargs.update({
+            name: param.value(request)
+            for name, param in anim.params.items()
+            if not isinstance(param, Param)
         })
+        data = anim.function(**kwargs)
     except (KeyError, ValueError, TypeError) as e:
+        print(repr(e))
         return HTTPResponse(
             request, body=str(e), status_code=HTTPStatus.BAD_REQUEST)
     else:

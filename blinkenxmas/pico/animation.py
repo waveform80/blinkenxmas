@@ -7,7 +7,7 @@ from micropython import const
 
 anim_path = 'animations'
 
-chunk_size = const(1024)
+chunk_size = const(4096)
 packet_fmt = const('!LLL')
 anim_fmt   = const('!BH')
 frame_fmt  = const('!B')

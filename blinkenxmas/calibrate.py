@@ -358,7 +358,7 @@ class PositionsCalculator:
                 for position, weight in (weighted_median(positions),)
             }
             self._messages.show(
-                f'Calculated {len(self._positions)} from '
+                f'Calculated {len(self._positions)} LED positions from '
                 f'{len(self._angles)} angles')
 
     @property

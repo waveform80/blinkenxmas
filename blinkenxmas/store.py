@@ -177,6 +177,15 @@ class Storage:
         self._positions = StoragePositions(self._conn)
         self._create_tables()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        if exc[0] is not None:
+            self._conn.rollback()
+        else:
+            self._conn.commit()
+
     @property
     def presets(self):
         return self._presets

@@ -15,6 +15,7 @@ from colorzero import Color
 from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 from . import mqtt, httpd
+from .store import Position
 
 try:
     from math import dist
@@ -228,13 +229,11 @@ class PositionsCalculator:
         self._angles = {}
         self._scores = {}
         self._positions = {}
-        self._confidence = {}
 
     def clear(self):
         self._angles.clear()
         self._scores.clear()
         self._positions.clear()
-        self._confidence.clear()
         self._messages.show('Cleared calculated positions')
 
     def add_angle(self, scanner):
@@ -354,8 +353,9 @@ class PositionsCalculator:
                         f'beta={beta}, x1={x1}, x2={x2}')
         if new_positions:
             self._positions = {
-                led: weighted_median(positions)
+                led: Position.from_polar(*position)
                 for led, positions in new_positions.items()
+                for position, weight in (weighted_median(positions),)
             }
             self._messages.show(
                 f'Calculated {len(self._positions)} from '

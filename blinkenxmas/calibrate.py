@@ -63,9 +63,10 @@ class AngleScanner:
         self.capture_base()
 
     def capture_base(self):
-        self._queue.put([])
+        self._queue.put([[]])
         self._queue.join()
-        # XXX Wait? May not be necessary given camera warm-up time
+        # Be sure the camera's had some time to warm up and deal with AWB et al
+        sleep(1)
         self._base = io.BytesIO(self._camera.capture(self._angle).read())
         self._base_image = Image.open(self._base)
         if self._base_image.mode != 'RGB':

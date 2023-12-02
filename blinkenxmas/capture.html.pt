@@ -6,12 +6,16 @@
 
   <article metal:fill-slot="content">
     <p>
-    <span tal:condition="store.positions">Calibration is complete. If you wish
-      to re-calibrate,</span>
-    <span tal:condition="not store.positions">Calibration is required for
-      certain animations to operate correctly. You have
+    <span tal:condition="calibration.calculator.angles">You have
       ${len(calibration.calculator.angles)} angle(s) of the tree scanned so
-    far. To start or continue calibration,</span>
+      far. To continue calibration,</span>
+    <span tal:condition="not calibration.calculator.angles">
+      <span tal:condition="store.positions">Calibration is complete
+        (${len(store.positions)} LED positions stored in the database). If you
+        wish to re-calibrate,</span>
+      <span tal:condition="not store.positions">Calibration is required for
+        certain animations to operate correctly. To start calibration,</span>
+    </span>
     enter the angle of the tree below and select "Capture". Otherwise,
     select "Cancel" to return to the main page.</p>
 

@@ -343,7 +343,7 @@ def calibration_commit(request):
             request.store.positions[led] = position
         calculator.clear()
     request.server.messages.show(
-        f'Committed {len(calculator.positions)} LED positions to the database')
+        f'Committed {len(request.store.positions)} LED positions to the database')
     return HTTPResponse(
         request, status_code=HTTPStatus.SEE_OTHER,
         headers={'Location': '/index.html'})

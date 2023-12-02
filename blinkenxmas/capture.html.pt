@@ -26,8 +26,10 @@
         value="0" min="0" max="355" step="5" required />
       <div class="buttons">
         <input type="submit" id="capture" value="Capture" />
-        <a tal:condition="len(calibration.calculator.positions)" class="button"
-          href="/commit.html">Commit</a>
+        <a class="button" tal:condition="not len(calibration.calculator.positions)" href="/">Cancel</a>
+      </div>
+      <div class="buttons" tal:condition="len(calibration.calculator.positions)">
+        <a class="button" href="/commit.html">Commit</a>
         <a class="button" href="/">Cancel</a>
       </div>
     </form>

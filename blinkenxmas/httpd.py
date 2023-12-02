@@ -153,6 +153,7 @@ class HTTPServer(ThreadingHTTPServer):
     """
     allow_reuse_address = True
     daemon_threads = True
+    logger = logging.getLogger('httpd')
 
     def handle_error(self, request, client_address):
         """
@@ -485,8 +486,8 @@ class HTTPThread(Thread):
         try:
             host, port = self.httpd.socket.getsockname()[:2]
             hostname = socket.gethostname()
-            logging.warning(f'Serving on {host} port {port}')
-            logging.warning(f'http://{hostname}:{port}/ ...')
+            self.http.logger.warning(f'Serving on {host} port {port}')
+            self.http.logger.warning(f'http://{hostname}:{port}/ ...')
             self._shutdown_needed = True
             self.httpd.serve_forever()
         except Exception as exc:

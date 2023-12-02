@@ -1,6 +1,6 @@
-import sys
 import json
 import sqlite3
+import logging
 from collections.abc import MutableMapping
 
 
@@ -144,6 +144,7 @@ class StoragePresets(MutableMapping):
 
 class Storage:
     schema_version = 3
+    logger = logging.getLogger('storage')
 
     def __init__(self, db):
         if sqlite3.threadsafety < 1:
@@ -164,10 +165,9 @@ class Storage:
     def positions(self):
         return self._positions
 
-    @staticmethod
-    def log_message(msg):
-        print(msg, file=sys.stderr)
-        sys.stderr.flush()
+    @classmethod
+    def log_message(cls, msg):
+        cls.logger.warning(msg)
 
     def _create_tables(self):
         try:

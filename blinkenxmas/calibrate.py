@@ -46,6 +46,7 @@ class AngleScanner:
     score_fuzz = 10
     score_min = 10
     area_max = 0.01
+    logger = logging.getLogger('scanner')
 
     def __init__(self, angle, camera, queue, strips):
         self._lock = Lock()
@@ -137,7 +138,7 @@ class AngleScanner:
                     position, score = self._calibrate_diff(base, image)
                 except PointNotFound as e:
                     self._scores[led] = 0
-                    logging.warning('LED #%d: %s', led, str(e))
+                    self.logger.warning('LED #%d: %s', led, str(e))
                     continue
                 else:
                     self._positions[led] = position
@@ -217,6 +218,7 @@ class AngleScanner:
 
 class PositionsCalculator:
     score_min = 40
+    logger = logging.getLogger('calculator')
 
     def __init__(self, strips):
         self._angles = {}
@@ -252,7 +254,7 @@ class PositionsCalculator:
         self.estimate()
 
     def estimate(self):
-        logging.info(
+        self.logger.info(
             f'Beginning estimation with {len(self._angles)} scanned angles')
         led_angles = {}
         new_positions = {}
@@ -262,17 +264,18 @@ class PositionsCalculator:
         for led, angles in led_angles.items():
             if len(angles) == 1:
                 continue
-            logging.info(
+            self.logger.info(
                 f'Estimating position of LED {led} from {len(angles)} angles')
             for a1, a2 in combinations(sorted(angles), 2):
                 if abs(a2 - a1) == 180:
-                    logging.warning('Skipping because angle difference is 180°')
+                    self.logger.warning(
+                        'Skipping because angle difference is 180°')
                     continue
 
                 x1, y1 = self._angles[a1][led]
                 x2, y2 = self._angles[a2][led]
                 if abs(y1 - y2) > 0.1:
-                    logging.warning(
+                    self.logger.warning(
                         f'LED {led} went from ({x1}, {y1}) at {a1}° to '
                         f'({x2}, {y2}) at {a2}°')
                 # This little bit of trigonometric magic is thanks to user KDP
@@ -292,7 +295,7 @@ class PositionsCalculator:
                         ((x2 / x1) - m.cos(alpha)))
                     r = abs(x1 / m.sin(beta))
                 except ZeroDivisionError:
-                    logging.warning(
+                    self.logger.warning(
                         f'Bad r-calculation for LED {led} with alpha={alpha}, '
                         f'x1={x1}, x2={x2}')
                     continue
@@ -311,7 +314,7 @@ class PositionsCalculator:
                 else:
                     tx1 = -tx1
                 if not m.isclose(x1, tx1, rel_tol=0.00001):
-                    logging.warning(
+                    self.logger.warning(
                         f'Test x-calculation for LED {led} is not within '
                         f'expected tolerance, x1={x1}, tx1={tx1}')
 
@@ -335,7 +338,7 @@ class PositionsCalculator:
                         confidence,
                     ))
                 else:
-                    logging.warning(
+                    self.logger.warning(
                         f'Ignoring z={z} for LED {led} with alpha={alpha}, '
                         f'beta={beta}, x1={x1}, x2={x2}')
         if new_positions:

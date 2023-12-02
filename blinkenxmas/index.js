@@ -93,8 +93,9 @@ function doRemove(form) {
 
 function doShow(name) {
   let req = new Request(`/show/${encodeURIComponent(name)}`, {
-    method: "POST",
-    cache: "no-store",
+    method: 'POST',
+    headers: new Headers({'Content-Type': 'application/x-www-form-urlencoded'}),
+    cache: 'no-store',
   });
   fetch(req)
     .catch((e) => showMessage(e));

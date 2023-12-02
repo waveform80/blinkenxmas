@@ -20,14 +20,18 @@ led_size    = struct.calcsize(led_fmt)
 
 
 class Animation:
-    def __init__(self, initial_msg):
-        self.ident, offset, size = struct.unpack(packet_fmt, initial_msg)
+    def __init__(self, buf):
+        initial_msg = memoryview(buf)
+        self.ident, offset, size = struct.unpack_from(packet_fmt, initial_msg)
         print(f'Receiving new animation {self.ident} (size {size//1024}KB)')
         self._fps = None
         self._len = None
+        # Pre-allocate the file in which we store the animation
         self._buf = open(f'{anim_path}/{self.ident}.dat', 'wb')
         self._buf.seek(size - 1)
         self._buf.write(b'\x00')
+        # Chunks is a bit-field where each bit indicates a chunk yet to be
+        # received. The animation is complete when chunks == 0
         self._chunks = 2 ** math.ceil(size / chunk_size) - 1
         self.write(initial_msg)
 
@@ -48,7 +52,7 @@ class Animation:
 
     def write(self, buf):
         msg = memoryview(buf)
-        ident, offset, size = struct.unpack(packet_fmt, msg)
+        ident, offset, size = struct.unpack_from(packet_fmt, msg)
         if ident != self.ident:
             raise ValueError('new ident')
         chunk = 2 ** (offset // chunk_size)
@@ -57,8 +61,8 @@ class Animation:
             self._buf.write(msg[packet_size:])
             self._chunks &= ~chunk
             if chunk == 1:
-                self._fps, self._len = struct.unpack(
-                    anim_fmt, msg[packet_size:packet_size + anim_size])
+                self._fps, self._len = struct.unpack_from(
+                    anim_fmt, msg, packet_size)
         self._buf.close()
         self._buf = open(f'{anim_path}/{self.ident}.dat', 'rb')
 
@@ -80,8 +84,8 @@ class Animation:
         for frame in range(len(self)):
             assert self._buf.readinto(frame_buf) == len(frame_buf)
             count, = struct.unpack(frame_fmt, frame_buf)
-            frame = [None] * count
+            leds = [None] * count
             for led in range(count):
                 assert self._buf.readinto(led_buf) == len(led_buf)
-                frame[led] = struct.unpack(led_fmt, led_buf)
-            yield frame
+                leds[led] = struct.unpack(led_fmt, led_buf)
+            yield leds

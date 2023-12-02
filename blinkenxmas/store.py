@@ -93,8 +93,8 @@ class StoragePositions(MutableMapping):
             """)
         with self._conn:
             self._conn.execute(sql, (
-                led, position['y'], position['a'], position['r'],
-                position['y'], position['a'], position['r']))
+                led, position.y, position.a, position.r,
+                position.y, position.a, position.r))
 
     def __delitem__(self, led):
         sql = "DELETE FROM presets WHERE led = ?"

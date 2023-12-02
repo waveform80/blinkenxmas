@@ -12,7 +12,10 @@ from pathlib import Path
 # NOTE: The routes and animations imports are performed solely to "register"
 # their definitions with the httpd module
 from . import mqtt, httpd, routes, animations
-from .config import get_config, get_parser, resolution, port, SUPPRESS
+from .config import (
+    get_config, get_parser,
+    resolution, port, rotation, SUPPRESS
+)
 
 
 def get_web_parser():
@@ -42,6 +45,9 @@ def get_web_parser():
     parser.add_argument(
         '--camera-preview', section='camera', key='preview',
         default='640x480', type=resolution, help=SUPPRESS)
+    parser.add_argument(
+        '--camera-rotation', section='camera', key='rotation',
+        default='0', type=rotation, help=SUPPRESS)
 
     parser.set_defaults_from(config)
     return parser

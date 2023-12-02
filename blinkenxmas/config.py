@@ -95,6 +95,13 @@ def resolution(s):
     return width, height
 
 
+def rotation(s):
+    r = int(s) % 360
+    if r not in (0, 90, 180, 270):
+        raise ValueError(f'invalid rotation {s}; must be multiple of 90')
+    return r
+
+
 def strips(s):
     start = 0
     for count in map(int, s.split(',')):
@@ -109,7 +116,7 @@ def port(service):
         try:
             return socket.getservbyname(service)
         except OSError:
-            raise ValueError('invalid service name or port number')
+            raise ValueError(f'invalid service name or port number: {service}')
 
 
 def get_parser(config, **kwargs):

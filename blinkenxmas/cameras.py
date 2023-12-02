@@ -137,6 +137,7 @@ class PiCameraSource(AbstractSource):
 
         super().__init__(config)
         self._camera = PiCamera()
+        self._camera.rotation = config.camera_rotation
         self._capture_res = config.camera_capture
         self._preview_res = config.camera_preview
 

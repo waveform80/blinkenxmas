@@ -5,7 +5,7 @@ from collections import deque
 import numpy as np
 from colorzero import Color, Lightness
 
-from .httpd import animation, Param
+from .httpd import animation, Param, ParamLEDCount, ParamPositions, ParamFPS
 
 
 def pairwise(it):
@@ -47,20 +47,24 @@ def preview(anim):
 
 
 @animation('Solid Color',
+           led_count=ParamLEDCount(),
            color=Param('Color', 'color', default='#000000'))
-def solid_color(led_count, fps, color):
+def solid_color(led_count, color):
     return [[color for led in range(led_count)]]
 
 
 @animation('Solid Gradient',
+           led_count=ParamLEDCount(),
            color1=Param('From', 'color', default='#000000'),
            color2=Param('To', 'color', default='#ffffff'))
-def solid_gradient(led_count, fps, color1, color2):
+def solid_gradient(led_count, color1, color2):
     gradient = color1.gradient(color2, steps=led_count)
     return [[color for color in gradient]]
 
 
 @animation('Sweep',
+           led_count=ParamLEDCount(),
+           fps=ParamFPS(),
            color=Param('Color', 'color', default='#ffffff'),
            duration=Param('Duration', 'range', default=1, min=1, max=10))
 def sweep(led_count, fps, color, duration):
@@ -79,6 +83,8 @@ def sweep(led_count, fps, color, duration):
 
 
 @animation('Bounce',
+           led_count=ParamLEDCount(),
+           fps=ParamFPS(),
            color=Param('Color', 'color', default='#ffffff'),
            duration=Param('Duration', 'range', default=1, min=1, max=10))
 def bounce(led_count, fps, color, duration):
@@ -98,6 +104,8 @@ def bounce(led_count, fps, color, duration):
 
 
 @animation('Flash',
+           led_count=ParamLEDCount(),
+           fps=ParamFPS(),
            color1=Param('Color 1', 'color', default='#000000'),
            color2=Param('Color 2', 'color', default='#ffffff'),
            speed=Param('Speed', 'range', default=5, min=1, max=10))
@@ -111,6 +119,8 @@ def flash(led_count, fps, color1, color2, speed):
 
 
 @animation('Twinkle',
+           led_count=ParamLEDCount(),
+           fps=ParamFPS(),
            color=Param('Color', 'color', default='#ffffff'),
            lit=Param('Lit %', 'range', default=1, min=1, max=10),
            speed=Param('Speed', 'range', default=1, min=1, max=10))
@@ -158,18 +168,36 @@ def twinkle(led_count, fps, color, lit, speed, duration=10):
     return zip(*leds)
 
 
-@animation('Rainbow',
+@animation('Simple Rainbow',
+           led_count=ParamLEDCount(),
            count=Param('# Rainbows', 'range', default=1, min=1, max=5),
            saturation=Param('Saturation', 'range', default=10, min=1, max=10),
            value=Param('Brightness', 'range', default=10, min=1, max=10))
-def rainbow(led_count, fps, count, saturation, value):
+def simple_rainbow(led_count, count, saturation, value):
     return [[
         Color(h=led * count / led_count, s=(saturation / 10), v=(value / 10))
         for led in range(led_count)
     ]]
 
 
+@animation('Rainbow',
+           led_count=ParamLEDCount(),
+           positions=ParamPositions(),
+           count=Param('# Rainbows', 'range', default=1, min=1, max=5),
+           saturation=Param('Saturation', 'range', default=10, min=1, max=10),
+           value=Param('Brightness', 'range', default=10, min=1, max=10))
+def rainbow(pos, count, saturation, value):
+    black = Color('black')
+    return [[
+        Color(h=positions[led].y, s=(saturation / 10), v=(value / 10))
+        if led in positions else black
+        for led in range(led_count)
+    ]]
+
+
 @animation('Rolling Rainbow',
+           led_count=ParamLEDCount(),
+           fps=ParamFPS(),
            count=Param('# Rainbows', 'range', default=1, min=1, max=5),
            saturation=Param('Saturation', 'range', default=10, min=1, max=10),
            value=Param('Brightness', 'range', default=10, min=1, max=10),

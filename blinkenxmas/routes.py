@@ -2,8 +2,6 @@ import io
 import json
 from http import HTTPStatus
 
-from colorzero import Color
-
 from .httpd import route
 from .http import HTTPResponse, DummyResponse
 from .calibrate import AngleScanner
@@ -123,19 +121,11 @@ def generate_animation(request, name):
     """
     try:
         anim = request.animations[name]
-        params = {
-            name:
-                int(value) if anim.params[name].input_type == 'range' else
-                float(value) if anim.params[name].input_type == 'number' else
-                Color(value) if anim.params[name].input_type == 'color' else
-                str(value)
+        data = anim.function(**{
+            name: anim.params[name].value(request, value)
             for name, value in request.json().items()
-        }
-        data = anim.function(
-            request.server.config.led_count,
-            request.server.config.fps,
-            **params)
-    except (ValueError, TypeError) as e:
+        })
+    except (KeyError, ValueError, TypeError) as e:
         return HTTPResponse(
             request, body=str(e), status_code=HTTPStatus.BAD_REQUEST)
     else:

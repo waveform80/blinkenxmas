@@ -48,6 +48,7 @@ except ImportError:
     from importlib_metadata import version
 
 from chameleon import PageTemplate
+from colorzero import Color
 
 from . import cameras, store, calibrate
 from .http import HTTPResponse
@@ -117,11 +118,31 @@ def route(pattern, command='GET'):
 
 
 Function = namedtuple('Function', ('name', 'function', 'params'))
+
 class Param(namedtuple('Param', ('label', 'input_type', 'default', 'min', 'max'))):
     __slots__ = () # workaround python issue #24931
     def __new__(cls, label, input_type, *, default=None, min=None, max=None):
         return super(Param, cls).__new__(
             cls, label, input_type, default, min, max)
+
+    def value(self, request, value):
+        return (
+            int(value) if self.input_type == 'range' else
+            float(value) if self.input_type == 'number' else
+            Color(value) if self.input_type == 'color' else
+            str(value))
+
+class ParamLEDCount:
+    def value(self, request, value=None):
+        return request.server.config.led_count
+
+class ParamPositions:
+    def value(self, request, value=None):
+        return request.store.positions
+
+class ParamFPS:
+    def value(self, request, value=None):
+        return request.server.config.fps
 
 
 def animation(name, **params):
@@ -224,7 +245,11 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             'store':          self.store,
             # "Sanitize" animations to make it JSON serializable
             'animations':     {
-                name: Function(anim.name, None, anim.params)
+                name: Function(anim.name, None, {
+                    pname: param
+                    for pname, param in anim.params.items()
+                    if isinstance(param, Param)
+                })
                 for name, anim in self.animations.items()
             },
         }

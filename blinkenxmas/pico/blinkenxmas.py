@@ -123,7 +123,7 @@ def main():
     finally:
         client.close()
         if config.get('error', 'reset') == 'reset':
-            machine.soft_reset()
+            machine.reset()
         else:
             asyncio.new_event_loop()
             asyncio.run(blinkie(5))

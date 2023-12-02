@@ -75,7 +75,7 @@ class StoragePositions(MutableMapping):
     def __getitem__(self, led):
         sql = "SELECT y, a, r FROM positions WHERE led = ?"
         for row in self._conn.execute(sql, (led,)):
-            return Position.from_polar(row.y, row.a, row.r)
+            return Position.from_polar(row['y'], row['a'], row['r'])
         raise KeyError(led)
 
     def __setitem__(self, led, position):
@@ -88,8 +88,8 @@ class StoragePositions(MutableMapping):
             """)
         with self._conn:
             self._conn.execute(sql, (
-                led, position.y, position.a, position.r,
-                position.y, position.a, position.r))
+                led, position['y'], position['a'], position['r'],
+                position['y'], position['a'], position['r']))
 
     def __delitem__(self, led):
         sql = "DELETE FROM presets WHERE led = ?"

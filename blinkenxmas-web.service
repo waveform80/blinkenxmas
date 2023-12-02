@@ -1,0 +1,11 @@
+[Unit]
+Description=Blinkenxmas web service
+After=network.target local-fs.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/bxweb
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

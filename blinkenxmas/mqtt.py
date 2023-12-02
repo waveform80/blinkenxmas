@@ -8,6 +8,7 @@ import paho.mqtt.client as mqtt
 from colorzero import Color
 
 from .pico.animation import (
+    chunk_size,
     packet_fmt,
     anim_fmt,
     frame_fmt,
@@ -15,7 +16,7 @@ from .pico.animation import (
 )
 
 
-def render(animation, fps, chunk_size=1024):
+def render(animation, fps, chunk_size=chunk_size):
     """
     Given an *animation* (which is a list of lists of strings of HTML color
     specifications), and an *fps* speed, returns a byte-string representation

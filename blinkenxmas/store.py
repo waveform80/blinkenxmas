@@ -2,6 +2,7 @@ import json
 import math as m
 import sqlite3
 import logging
+from collections import namedtuple
 from collections.abc import MutableMapping
 
 

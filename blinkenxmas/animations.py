@@ -393,7 +393,7 @@ def pride(led_count, positions, flag, saturation, value):
     if flag == 'inter':
         mid_y = scale(0.5, (0, 1), range_of(pos.y for pos in positions.values()))
         mid_z = scale(0.5, (0, 1), range_of(pos.z for pos in positions.values()))
-        def circle(pos, min_r=0.2, max_r=0.3):
+        def circle(pos, min_r=0.1, max_r=0.2):
             return min_r**2 <= (pos.z - mid_z)**2 + (pos.y - mid_y)**2 <= max_r**2
         colors = (Color('#ffd800'), Color('#8d02b1'))
         return [[

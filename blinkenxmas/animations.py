@@ -336,10 +336,11 @@ def rolling_simple_rainbow(led_count, fps, count, saturation, value, duration):
 @animation('Spinning Rainbow',
            led_count=ParamLEDCount(),
            fps=ParamFPS(),
+           positions=ParamPositions(),
            saturation=Param('Saturation', 'range', default=10, min=1, max=10),
            value=Param('Brightness', 'range', default=10, min=1, max=10),
            duration=Param('Duration', 'range', default=1, min=1, max=10))
-def spinning_rainbow(led_count, fps, saturation, value, duration):
+def spinning_rainbow(led_count, fps, positions, saturation, value, duration):
     """
     Displays a rainbow around the trunk of the tree which spins for the
     specified duration. The saturation and brightness sliders determine the

@@ -1,6 +1,7 @@
 import io
 import json
 from http import HTTPStatus
+from urllib.parse import quote
 
 from .httpd import route, Param
 from .http import HTTPResponse, DummyResponse
@@ -69,7 +70,7 @@ def set_preset(request, name):
         headers = {}
     else:
         code = HTTPStatus.CREATED
-        headers= {'Location': '/preset/' + name}
+        headers= {'Location': f'/preset/{quote(name)}'}
     request.store.presets[name] = data
     return HTTPResponse(request, status_code=code, headers=headers)
 

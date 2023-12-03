@@ -3,7 +3,7 @@ from itertools import tee
 from collections import deque
 
 import numpy as np
-from colorzero import Color, Lightness
+from colorzero import Color, Lightness, Saturation
 
 from .httpd import animation, Param, ParamLEDCount, ParamLEDPositions, ParamFPS
 
@@ -379,8 +379,8 @@ def spinning_rainbow(led_count, fps, positions, saturation, value, duration):
                'inter':   'Intersex',
            }),
            saturation=Param('Saturation', 'range', default=10, min=1, max=10),
-           value=Param('Brightness', 'range', default=10, min=1, max=10))
-def pride(led_count, positions, flag, saturation, value):
+           lightness=Param('Brightness', 'range', default=10, min=1, max=10))
+def pride(led_count, positions, flag, saturation, lightness):
     """
     Display one of the Pride flags on the tree from top to bottom. The
     saturation and brightness sliders determine the strength of colors in the
@@ -463,8 +463,10 @@ def pride(led_count, positions, flag, saturation, value):
            ],
         }[flag]
         y_range = range_of(pos.y for pos in positions.values())
+        out_range = (0, len(colors) - 0.00001)
         return [[
-            colors[int(scale(positions[led].y, y_range, (0, len(colors) - 0.00001)))]
+            colors[int(scale(positions[led].y, y_range, out_range))]
+                * Saturation(saturation / 10) * Lightness(lightness / 10)
             if led in positions else black
             for led in range(led_count)
         ]]

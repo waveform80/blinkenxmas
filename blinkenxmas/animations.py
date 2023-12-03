@@ -464,7 +464,7 @@ def pride(led_count, positions, flag, saturation, value):
         }[flag]
         y_range = range_of(pos.y for pos in positions.values())
         return [[
-            colors[int(scale(positions[led].y, y_range, (0, len(colors) - 1)))]
+            colors[int(scale(positions[led].y, y_range, (0, len(colors) - 0.00001)))]
             if led in positions else black
             for led in range(led_count)
         ]]

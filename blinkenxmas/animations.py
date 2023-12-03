@@ -361,3 +361,110 @@ def spinning_rainbow(led_count, fps, positions, saturation, value, duration):
         ]
         for frame in range(frame_count)
     ]
+
+
+@animation('Pride',
+           led_count=ParamLEDCount(),
+           positions=ParamLEDPositions(),
+           flag=Param('Flag', 'select', default='gay', choices={
+               'gay':     'Gay',
+               'bi':      'Bisexual',
+               'lesbian': 'Lesbian',
+               'trans':   'Transgender',
+               'pan':     'Pansexual',
+               'ace':     'Asexual',
+               'nonbin':  'Non-binary',
+               'fluid':   'Gender-fluid',
+               'queer':   'Gender-queer',
+               'inter':   'Intersex',
+           }),
+           saturation=Param('Saturation', 'range', default=10, min=1, max=10),
+           value=Param('Brightness', 'range', default=10, min=1, max=10))
+def pride(led_count, positions, flag, saturation, value):
+    """
+    Display one of the Pride flags on the tree from top to bottom. The
+    saturation and brightness sliders determine the strength of colors in the
+    rainbow.
+
+    Please note this requires that you have run the calibration step to
+    determine LED positions accurately.
+    """
+    black = Color('black')
+    if flag == 'inter':
+        mid_y = scale(0.5, (0, 1), range_of(pos.y for pos in positions.values()))
+        mid_z = scale(0.5, (0, 1), range_of(pos.z for pos in positions.values()))
+        def circle(pos, min_r=0.2, max_r=0.3):
+            return min_r**2 <= (pos.z - mid_z)**2 + (pos.y - mid_y)**2 <= max_r**2
+        colors = (Color('#ffd800'), Color('#8d02b1'))
+        return [[
+            colors[circle(positions[led])]
+            if led in positions else black
+            for led in range(led_count)
+        ]]
+    else:
+        colors = {
+            'gay': [
+                Color('#e50203'),
+                Color('#ff8a01'),
+                Color('#feed00'),
+                Color('#008026'),
+                Color('#014bfe'),
+                Color('#750685'),
+            ],
+            'bi': [
+                Color('#d60270'),
+                Color('#d60270'),
+                Color('#9b4f97'),
+                Color('#0038a7'),
+                Color('#0038a7'),
+            ],
+            'lesbian': [
+                Color('#d62c00'),
+                Color('#ff9956'),
+                Color('#ffe'),
+                Color('#d362a4'),
+                Color('#a40162'),
+            ],
+            'trans': [
+                Color('#5bcff9'),
+                Color('#f5a8b8'),
+                Color('white'),
+                Color('#f5a8b8'),
+                Color('#5bcff9'),
+            ],
+            'pan': [
+                Color('#ff218c'),
+                Color('#ffd800'),
+                Color('#21b1fe'),
+            ],
+           'ace': [
+               Color('black'),
+               Color('#a0a0a0'),
+               Color('white'),
+               Color('#9a0778'),
+           ],
+           'nonbin': [
+               Color('#fff430'),
+               Color('white'),
+               Color('#9d59d2'),
+               Color('black'),
+           ],
+           'fluid': [
+               Color('#fe75a1'),
+               Color('white'),
+               Color('#bf17d5'),
+               Color('black'),
+               Color('#323ebc'),
+           ],
+           'queer': [
+               Color('#b57edc'),
+               Color('white'),
+               Color('#4a8123'),
+           ],
+        }[flag]
+        y_range = range_of(pos.y for pos in positions.values())
+        return [[
+            colors[int(scale(positions[led].y, y_range, (0, len(colors) - 1)))]
+            if led in positions else black
+            for led in range(led_count)
+        ]]

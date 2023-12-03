@@ -72,13 +72,13 @@ function setupCreateForm(form) {
     }
 
     for (let label of dataArea.labels)
-      label.style.display = 'none';
-    dataArea.style.display = 'none';
+      label.hidden = true;
+    dataArea.hidden = true;
   }
   else {
     for (let label of dataArea.labels)
-      label.style.display = 'block';
-    dataArea.style.display = 'block';
+      label.hidden = false;
+    dataArea.hidden = false;
   }
 }
 

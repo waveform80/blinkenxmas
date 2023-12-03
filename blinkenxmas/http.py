@@ -85,6 +85,17 @@ def merge(ranges):
 
 COPY_BUFSIZE = 64 * 1024
 def transfer(source, target, *, byterange=None):
+    """
+    Transfer *byterange* bytes (a :class:`range` object), or all bytes (if
+    *byterange* is :data:`None`, the default) from *source* to *target*.
+
+    The *target* must implement a ``write`` method, and the *source* must at
+    the very least implement a ``read`` method, but preferably a ``readinto``
+    method (which will permit a single static buffer to be used during the
+    transfer). If *byterange* is not :data:`None`, the *source* must
+    additionally implemented ``seek``. No attempt is made to seek the *target*;
+    bytes are simply written to it at its current position.
+    """
     if byterange is not None:
         if byterange.step != 1:
             raise ValueError('step in byterange must be 1')
@@ -423,11 +434,6 @@ class HTTPResponse:
     def send_headers(self):
         """
         Transmit the response's headers to the client.
-
-        If the connection breaks or resets during transmission, the method
-        returns :data:`False` to indicate to the caller that the body should
-        not be sent. Otherwise, returns :data:`True` to indicate body
-        transmission may proceed.
         """
         self.request.send_response(self.status_code.value)
         num_ranges = (

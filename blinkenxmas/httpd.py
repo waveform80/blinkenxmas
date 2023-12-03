@@ -139,7 +139,7 @@ class ParamLEDCount:
     def value(self, request):
         return request.server.config.led_count
 
-class ParamPositions:
+class ParamLEDPositions:
     def value(self, request):
         return request.store.positions
 
@@ -162,8 +162,8 @@ def animation(name, **params):
     * :class:`ParamLEDCount` will pass the number of LEDs defined to the
       specified parameter
 
-    * :class:`ParamPositions` will pass the mapping of LEDs indexes to detected
-      positions
+    * :class:`ParamLEDPositions` will pass the mapping of LEDs indexes to
+      detected positions
 
     * :class:`ParamFPS` will pass the FPS the animation will be shown at
 

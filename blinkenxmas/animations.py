@@ -5,7 +5,7 @@ from collections import deque
 import numpy as np
 from colorzero import Color, Lightness
 
-from .httpd import animation, Param, ParamLEDCount, ParamPositions, ParamFPS
+from .httpd import animation, Param, ParamLEDCount, ParamLEDPositions, ParamFPS
 
 
 def scale(value, in_range, out_range):
@@ -104,7 +104,7 @@ def simple_gradient(led_count, color1, color2):
 
 @animation('Gradient',
            led_count=ParamLEDCount(),
-           positions=ParamPositions(),
+           positions=ParamLEDPositions(),
            bottom=Param('Bottom', 'color', default='#000000'),
            top=Param('Top', 'color', default='#ffffff'))
 def gradient(led_count, positions, bottom, top):
@@ -289,7 +289,7 @@ def simple_rainbow(led_count, count, saturation, value):
 
 @animation('Rainbow',
            led_count=ParamLEDCount(),
-           positions=ParamPositions(),
+           positions=ParamLEDPositions(),
            count=Param('# Rainbows', 'range', default=1, min=1, max=5),
            saturation=Param('Saturation', 'range', default=10, min=1, max=10),
            value=Param('Brightness', 'range', default=10, min=1, max=10))
@@ -336,7 +336,7 @@ def rolling_simple_rainbow(led_count, fps, count, saturation, value, duration):
 @animation('Spinning Rainbow',
            led_count=ParamLEDCount(),
            fps=ParamFPS(),
-           positions=ParamPositions(),
+           positions=ParamLEDPositions(),
            saturation=Param('Saturation', 'range', default=10, min=1, max=10),
            value=Param('Brightness', 'range', default=10, min=1, max=10),
            duration=Param('Duration', 'range', default=1, min=1, max=10))

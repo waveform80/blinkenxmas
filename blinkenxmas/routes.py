@@ -51,6 +51,7 @@ def del_preset(request, name):
     except KeyError:
         return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
     else:
+        request.server.messages.show(f'Removed preset {name}')
         return HTTPResponse(request, status_code=HTTPStatus.NO_CONTENT)
 
 
@@ -68,9 +69,11 @@ def set_preset(request, name):
     if name in request.store.presets:
         code = HTTPStatus.NO_CONTENT
         headers = {}
+        request.server.messages.show(f'Updated preset {name}')
     else:
         code = HTTPStatus.CREATED
         headers= {'Location': f'/preset/{quote(name)}'}
+        request.server.messages.show(f'Created preset {name}')
     request.store.presets[name] = data
     return HTTPResponse(request, status_code=code, headers=headers)
 

@@ -67,12 +67,11 @@ function doRemove(form) {
   let toRemove = Array
     .from(form.elements['name'])
     .filter((item) => item.checked);
-  let toRemoveNames = toRemove.map((item) => item.dataset.preset);
 
   function _remove(item) {
     if (item == undefined) {
       cancelManage(form);
-      showMessage(`Removed ${toRemoveNames.join(', ')}`);
+      showMessages();
     }
     else {
       let name = item.dataset.preset;

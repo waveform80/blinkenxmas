@@ -295,14 +295,17 @@ def simple_rainbow(led_count, count, saturation, value):
            value=Param('Brightness', 'range', default=10, min=1, max=10))
 def rainbow(led_count, positions, count, saturation, value):
     """
-    This displays a rainbow from the top of the tree, to the bottom. Please
-    note this requires that you have run the calibration step to determine LED
-    positions accurately.
+    This displays the specified number of rainbows from the top of the tree, to
+    the bottom. The saturation and brightness sliders determine the strength
+    of colors in the rainbow.
+
+    Please note this requires that you have run the calibration step to
+    determine LED positions accurately.
     """
     black = Color('black')
     y_range = range_of(pos.y for pos in positions.values())
     return [[
-        Color(h=scale(positions[led].y, y_range, (0, 1)),
+        Color(h=scale(positions[led].y, y_range, (0, count)) % 1,
               s=(saturation / 10),
               v=(value / 10))
         if led in positions else black

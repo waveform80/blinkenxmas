@@ -11,8 +11,10 @@
       <label for="animation">Animation</label>
       <select name="animation">
         <option value="">Custom</option>
-        <option tal:repeat="anim animations" value="${anim}">${animations[anim].name}</option>
+        <option tal:repeat="anim animations"
+          value="${anim}">${animations[anim].name}</option>
       </select>
+      <span hidden class="description"></span>
       <label for="data">Data</label>
       <textarea name="data" id="data" rows="5">[]</textarea>
       <div class="buttons">
@@ -25,7 +27,7 @@
   </article>
 
   <div tal:omit-tag="1" metal:fill-slot="scripts">
-    <script>var animations=${json(animations)};</script>
+    <script>var animations=${structure: json(animations)};</script>
     <script src="/messages.js"></script>
     <script src="/create.js"></script>
     <script>initCreateForm(document.forms[0]);</script>

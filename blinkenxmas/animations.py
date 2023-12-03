@@ -79,16 +79,48 @@ def preview(anim):
            led_count=ParamLEDCount(),
            color=Param('Color', 'color', default='#000000'))
 def solid_color(led_count, color):
+    """
+    This "animation" simply shows the selected color on all LEDs of the tree.
+    Use black to create a setting that turns all LEDs off.
+    """
     return [[color for led in range(led_count)]]
 
 
-@animation('Solid Gradient',
+@animation('Simple Gradient',
            led_count=ParamLEDCount(),
            color1=Param('From', 'color', default='#000000'),
            color2=Param('To', 'color', default='#ffffff'))
-def solid_gradient(led_count, color1, color2):
+def simple_gradient(led_count, color1, color2):
+    """
+    This displays a gradient that fades from one color to another along all
+    LEDs of the tree. Please note this does *not* use the scanned coordinates
+    of the LEDs (see "Gradient" instead), so the effect will only appear to be
+    a gradient over the height of the tree if the LEDs are laid out in numeric
+    order.
+    """
     gradient = color1.gradient(color2, steps=led_count)
     return [[color for color in gradient]]
+
+
+@animation('Gradient',
+           led_count=ParamLEDCount(),
+           positions=ParamPositions(),
+           bottom=Param('Bottom', 'color', default='#000000'),
+           top=Param('Top', 'color', default='#ffffff'))
+def gradient(led_count, positions, bottom, top):
+    """
+    This displays a gradient that fades from one color at the bottom of the
+    tree, to another color at the top. Please note this requires that you have
+    run the calibration step to determine LED positions accurately.
+    """
+    black = Color('black')
+    y_range = range_of(pos.y for pos in positions.values())
+    gradient = list(top.gradient(bottom, steps=20))
+    return [[
+        gradient[int(positions[led].y * 19)]
+        if led in positions else black
+        for led in range(led_count)
+    ]]
 
 
 @animation('Sweep',
@@ -97,6 +129,15 @@ def solid_gradient(led_count, color1, color2):
            color=Param('Color', 'color', default='#ffffff'),
            duration=Param('Duration', 'range', default=1, min=1, max=10))
 def sweep(led_count, fps, color, duration):
+    """
+    This animation sweeps the specified color along the LEDs in numeric order.
+    The Duration determines how many seconds it takes for the color to sweep
+    from one end to the other.
+
+    Please note this does *not* use the scanned coordinates of the LEDs, so the
+    sweep will only appear to move up the tree if the LEDs are laid out in
+    numeric order.
+    """
     frame_count = int(fps * duration)
     return [
         [
@@ -117,6 +158,16 @@ def sweep(led_count, fps, color, duration):
            color=Param('Color', 'color', default='#ffffff'),
            duration=Param('Duration', 'range', default=1, min=1, max=10))
 def bounce(led_count, fps, color, duration):
+    """
+    This animation is similar to "Sweep", moving the specified color along the
+    LEDs in numeric order, but then moves the color back making the animation
+    symmetric. The Duration determines how many seconds it takes for the color
+    to sweep from one end to the other.
+
+    Please note this does *not* use the scanned coordinates of the LEDs, so the
+    sweep will only appear to move up the tree if the LEDs are laid out in
+    numeric order.
+    """
     frame_count = int(fps * duration / 2)
     anim = [
         [
@@ -139,6 +190,10 @@ def bounce(led_count, fps, color, duration):
            color2=Param('Color 2', 'color', default='#ffffff'),
            speed=Param('Speed', 'range', default=5, min=1, max=10))
 def flash(led_count, fps, color1, color2, speed):
+    """
+    This animation trivially flashes all LEDs on the tree alternately between
+    color 1 and 2 at the specified speed.
+    """
     duration = 11 - speed
     frame_count = fps * duration // 2
     return (
@@ -154,6 +209,17 @@ def flash(led_count, fps, color1, color2, speed):
            lit=Param('Lit %', 'range', default=1, min=1, max=10),
            speed=Param('Speed', 'range', default=1, min=1, max=10))
 def twinkle(led_count, fps, color, lit, speed, duration=10):
+    """
+    Generates a cyclic animation that randomly fades LEDs on the tree from
+    black up to the specified color and back to black. The "Lit %" determines
+    the number of LEDs that should be fully lit during any given frame. The
+    "Speed" indicates how quickly the fade should occur.
+
+    .. warning::
+
+        This animation is currently broken (takes too long to generate on the
+        server).
+    """
     frame_count = int(fps * duration)
     lit = led_count * lit // 50
     black = Color('black')
@@ -203,8 +269,43 @@ def twinkle(led_count, fps, color, lit, speed, duration=10):
            saturation=Param('Saturation', 'range', default=10, min=1, max=10),
            value=Param('Brightness', 'range', default=10, min=1, max=10))
 def simple_rainbow(led_count, count, saturation, value):
+    """
+    This displays a rainbow along all LEDs of the tree. If you have multiple
+    equal length strips of LEDs on your tree, it is worth setting "# Rainbows"
+    to the number of strips to obtain a continuous rainbow up the height of the
+    tree.
+
+    Please note this does *not* use the scanned coordinates of the LEDs (see
+    "Rainbow" instead), so the effect will only appear to be a rainbow over the
+    height of the tree if the LEDs are laid out in numeric order, and/or the
+    "# Rainbows" parameter equals the number of (equal length) strips running
+    up the tree.
+    """
     return [[
         Color(h=led * count / led_count, s=(saturation / 10), v=(value / 10))
+        for led in range(led_count)
+    ]]
+
+
+@animation('Rainbow',
+           led_count=ParamLEDCount(),
+           positions=ParamPositions(),
+           count=Param('# Rainbows', 'range', default=1, min=1, max=5),
+           saturation=Param('Saturation', 'range', default=10, min=1, max=10),
+           value=Param('Brightness', 'range', default=10, min=1, max=10))
+def rainbow(led_count, positions, count, saturation, value):
+    """
+    This displays a rainbow from the top of the tree, to the bottom. Please
+    note this requires that you have run the calibration step to determine LED
+    positions accurately.
+    """
+    black = Color('black')
+    y_range = range_of(pos.y for pos in positions.values())
+    return [[
+        Color(h=scale(positions[led].y, y_range, (0, 1)),
+              s=(saturation / 10),
+              v=(value / 10))
+        if led in positions else black
         for led in range(led_count)
     ]]
 
@@ -227,21 +328,3 @@ def rolling_simple_rainbow(led_count, fps, count, saturation, value, duration):
         ]
         for frame in range(frame_count)
     ]
-
-
-@animation('Rainbow',
-           led_count=ParamLEDCount(),
-           positions=ParamPositions(),
-           count=Param('# Rainbows', 'range', default=1, min=1, max=5),
-           saturation=Param('Saturation', 'range', default=10, min=1, max=10),
-           value=Param('Brightness', 'range', default=10, min=1, max=10))
-def rainbow(led_count, positions, count, saturation, value):
-    black = Color('black')
-    y_range = range_of(pos.y for pos in positions.values())
-    return [[
-        Color(h=scale(positions[led].y, y_range, (0, 1)),
-              s=(saturation / 10),
-              v=(value / 10))
-        if led in positions else black
-        for led in range(led_count)
-    ]]

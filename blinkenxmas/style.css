@@ -167,8 +167,30 @@ form.grid {
 
 form.grid img,
 form.grid canvas,
+form.grid .description,
 form.grid .buttons {
     grid-column: 1 / span 2;
+}
+
+form.grid .description { text-align: justify; }
+form.grid .description :first-child { margin-top: 0; }
+form.grid .description .admonition {
+    background: #ddd;
+    border-radius: 5px;
+    margin-top: 1.5rem;
+    padding: 0.5rem;
+}
+form.grid .description .admonition .admonition-title {
+    color: white;
+    background: #c51a4a;
+    border-radius: 5px 5px 0 0;
+    font-weight: bold;
+    padding: 0.5rem;
+    margin: -0.5rem;
+    margin-bottom: 0.5rem;
+}
+form.grid .description .admonition .admonition-title + * {
+    margin-top: 0;
 }
 
 .buttons input, .buttons a {

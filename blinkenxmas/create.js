@@ -12,6 +12,8 @@ function initCreateForm(form) {
 function setupCreateForm(form) {
   let animation = form.elements['animation'].value;
   let dataArea = form.elements['data'];
+  let nameInput = form.elements['name'];
+  let descElem = form.querySelector('.description');
 
   // Remove existing animation controls
   for (let elem of Array.from(form.elements)) {
@@ -38,8 +40,15 @@ function setupCreateForm(form) {
     elem.remove();
   }
 
+  descElem.hidden = true;
   if (animation) {
-    let params = animations[animation][2];
+    let params = animations[animation][3];
+
+    nameInput.defaultValue = animations[animation][0];
+    if (animations[animation][1]) {
+      descElem.innerHTML = animations[animation][1];
+      descElem.hidden = false;
+    }
 
     // Create new elements for the selected animation before the buttons at
     // the bottom of the form

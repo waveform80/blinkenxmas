@@ -27,6 +27,7 @@ import mimetypes
 import datetime as dt
 import urllib.parse
 from http import HTTPStatus
+from textwrap import dedent
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from collections import namedtuple, deque
 from threading import Thread, Lock
@@ -47,6 +48,8 @@ try:
 except ImportError:
     from importlib_metadata import version
 
+import docutils
+import docutils.core
 from chameleon import PageTemplate
 from colorzero import Color
 
@@ -117,7 +120,7 @@ def route(pattern, command='GET'):
     return decorator
 
 
-Function = namedtuple('Function', ('name', 'function', 'params'))
+Function = namedtuple('Function', ('name', 'description', 'function', 'params'))
 
 class Param(namedtuple('Param', ('label', 'input_type', 'default', 'min', 'max'))):
     __slots__ = () # workaround python issue #24931
@@ -146,8 +149,42 @@ class ParamFPS:
 
 
 def animation(name, **params):
+    """
+    Decorates a function as an animation generator to be presented in the
+    Create interface. The doc-string of the function is used as the description
+    and is expected to be in reStructuredText format (which will be rendered
+    into HTML).
+
+    Each of the parameters to the function must be defined as a keyword
+    argument to the decorator which is associated with one of the parameter
+    classes defined:
+
+    * :class:`ParamLEDCount` will pass the number of LEDs defined to the
+      specified parameter
+
+    * :class:`ParamPositions` will pass the mapping of LEDs indexes to detected
+      positions
+
+    * :class:`ParamFPS` will pass the FPS the animation will be shown at
+
+    * :class:`Param` is a generic user-specified parameter which will be
+      rendered in the HTML form with the given *label*, *input_type*,
+      *default*, *min*, and *max* values.
+    """
     def decorator(f):
-        HTTPRequestHandler.animations[f.__name__] = Function(name, f, params)
+        if f.__doc__:
+            overrides = {
+                'input_encoding':       'unicode',
+                'doctitle_xform':       False,
+                'initial_header_level': 2,
+                }
+            html = docutils.core.publish_parts(
+                source=dedent(f.__doc__), writer_name='html',
+                settings_overrides=overrides)['fragment']
+        else:
+            html = ''
+        HTTPRequestHandler.animations[f.__name__] = Function(
+            name, html, f, params)
         return f
     return decorator
 
@@ -245,7 +282,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             'store':          self.store,
             # "Sanitize" animations to make it JSON serializable
             'animations':     {
-                name: Function(anim.name, None, {
+                name: Function(anim.name, anim.description, None, {
                     pname: param
                     for pname, param in anim.params.items()
                     if isinstance(param, Param)

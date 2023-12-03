@@ -149,14 +149,36 @@ class Param(namedtuple('Param', (
             str(value))
 
 class ParamLEDCount:
+    """
+    Defines the associated parameter as taking the total number of LEDs on the
+    tree (an :class:`int`).
+    """
+    __slots__ = ()
     def value(self, request):
         return request.server.config.led_count
 
 class ParamLEDPositions:
+    """
+    Defines the associated parameter as taking the mapping of LED indexes to
+    :class:`~blinkenxmas.store.Position` instances.
+
+    .. warning::
+
+        Please be aware that not all LEDs may be included in the mapping. If an
+        LED was not detected during calibration (either because it is
+        persistently hidden or defective) then it will not be included in the
+        mapping.
+    """
+    __slots__ = ()
     def value(self, request):
         return request.store.positions
 
 class ParamFPS:
+    """
+    Defines the associated parameter as taking the frames-per-second that
+    animations are expected to be rendered for.
+    """
+    __slots__ = ()
     def value(self, request):
         return request.server.config.fps
 

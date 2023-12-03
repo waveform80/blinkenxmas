@@ -33,18 +33,18 @@ function escapeIdent(s) {
     else if (c.match(index == 0 ? firstChar : otherChar))
       return c;
     else
-      return ':' + c.charCodeAt(0).toString(16).padStart(4, '0');
+      return ':' + c.codePointAt(0).toString(16).padStart(8, '0');
   }).join('');
 }
 
 function unescapeIdent(s) {
-  let charRe = /:[0-9A-Fa-f]{4}|./g;
+  let charRe = /:[0-9A-Fa-f]{8}|./g;
   return Array.from(s.matchAll(charRe)).map((match) => {
     let c = match[0];
     if (c == '_')
       return ' ';
     else if (c[0] == ':')
-      return String.fromCharCode(Number.parseInt(c.substring(1), 16));
+      return String.fromCodePoint(Number.parseInt(c.substring(1), 16));
     else
       return c;
   }).join('');

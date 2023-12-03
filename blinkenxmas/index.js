@@ -44,7 +44,7 @@ function cancelManage(form) {
     (item) => {
       let link = document.createElement('a');
       link.href = '#';
-      link.dataset.preset = unescapeIdent(item.querySelector('input').id);
+      link.dataset.preset = item.querySelector('input').dataset.preset;
       link.textContent = link.dataset.preset;
       link.addEventListener('click',
         (evt) => doShow(link.dataset.preset))

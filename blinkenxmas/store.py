@@ -9,8 +9,8 @@ from collections.abc import MutableMapping
 class Position(namedtuple('Position', ('x', 'y', 'z', 'a', 'r'))):
     @classmethod
     def from_polar(cls, y, a, r):
-        x = r * m.sin(m.radians(a))
-        z = r * m.cos(m.radians(a))
+        x = (r * m.sin(m.radians(a)) + 1) / 2
+        z = (r * m.cos(m.radians(a)) + 1) / 2
         return Position(x, y, z, a, r)
 
     @classmethod

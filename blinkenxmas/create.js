@@ -54,17 +54,32 @@ function setupCreateForm(form) {
     // the bottom of the form
     let buttons = form.querySelector('.buttons');
     for (let param in params) {
-      let input = document.createElement('input');
-      input.name = param;
-      input.id = escapeIdent(param);
-      input.type = params[param][1];
-      if (param[2] !== null)
-        input.defaultValue = params[param][2];
-      if (param[3] !== null)
-        input.min = params[param][3];
-      if (param[4] !== null)
-        input.max = params[param][4];
       let label = document.createElement('label');
+      let input = null;
+      if (params[param][1] == 'select') {
+        input = document.createElement('select');
+        let choices = params[param][5];
+        input.name = param;
+        input.id = escapeIdent(param);
+        for (let choice in choices) {
+          let option = document.createElement('option');
+          option.value = choice;
+          option.textContent = choices[choice];
+          input.append(option);
+        }
+      }
+      else {
+        input = document.createElement('input');
+        input.name = param;
+        input.id = escapeIdent(param);
+        input.type = params[param][1];
+        if (param[2] !== null)
+          input.defaultValue = params[param][2];
+        if (param[3] !== null)
+          input.min = params[param][3];
+        if (param[4] !== null)
+          input.max = params[param][4];
+      }
       label.htmlFor = input.id;
       label.textContent = params[param][0];
       form.insertBefore(label, buttons);

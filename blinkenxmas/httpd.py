@@ -122,11 +122,24 @@ def route(pattern, command='GET'):
 
 Function = namedtuple('Function', ('name', 'description', 'function', 'params'))
 
-class Param(namedtuple('Param', ('label', 'input_type', 'default', 'min', 'max'))):
+class Param(namedtuple('Param', (
+        'label', 'input_type', 'default', 'min', 'max', 'choices'))):
+    """
+    Defines the associated parameter as being a user-configured value.
+
+    The *input_type* is used in the generated ``<input>`` element's "type"
+    parameter (if this is "select" then a ``<select>`` drop-down element is
+    generated instead). The *default*, *min*, and *max* parameters correspond
+    to the "default", "min", and "max" attributes of the ``<input>`` element.
+    Finally, the *choices* parameter is a mapping of valid identifiers to
+    labels used when *input_type* is "select".
+    """
     __slots__ = () # workaround python issue #24931
-    def __new__(cls, label, input_type, *, default=None, min=None, max=None):
+
+    def __new__(cls, label, input_type, *, default=None, min=None, max=None,
+                choices=None):
         return super(Param, cls).__new__(
-            cls, label, input_type, default, min, max)
+            cls, label, input_type, default, min, max, choices)
 
     def value(self, value):
         return (

@@ -8,6 +8,35 @@ from colorzero import Color, Lightness
 from .httpd import animation, Param, ParamLEDCount, ParamPositions, ParamFPS
 
 
+def scale(value, in_range, out_range):
+    """
+    Scales *value* from *in_range* to *out_range*. The ranges are expected to
+    be (min, max) tuples. Provided *value* is within *in_range*, the result
+    will be within *out_range*, scaled linearly.
+    """
+    ratio = (out_range[1] - out_range[0]) / (in_range[1] - in_range[0])
+    return ((value - in_range[0]) * ratio) + out_range[0]
+
+
+def range_of(it):
+    """
+    Returns a (minimum, maximum) tuple for the range of values in *it*,
+    utilizing a single pass. This can be slightly more efficient that calling
+    :func:`min` and :func:`max` separately on *it* depending on its size.
+    However, it may also be more efficient to :func:`sort` *it* and simply
+    access the first and last element, depending on circumstance.
+    """
+    min_ = max_ = None
+    for value in it:
+        if min_ is None:
+            min_ = max_ = value
+        elif value < min_:
+            min_ = value
+        elif value > max_:
+            max_ = value
+    return (min_, max_)
+
+
 def pairwise(it):
     """
     Given an iterable *it*, yields successive overlapping pairs. For example:
@@ -180,29 +209,14 @@ def simple_rainbow(led_count, count, saturation, value):
     ]]
 
 
-@animation('Rainbow',
-           led_count=ParamLEDCount(),
-           positions=ParamPositions(),
-           count=Param('# Rainbows', 'range', default=1, min=1, max=5),
-           saturation=Param('Saturation', 'range', default=10, min=1, max=10),
-           value=Param('Brightness', 'range', default=10, min=1, max=10))
-def rainbow(led_count, positions, count, saturation, value):
-    black = Color('black')
-    return [[
-        Color(h=positions[led].y, s=(saturation / 10), v=(value / 10))
-        if led in positions else black
-        for led in range(led_count)
-    ]]
-
-
-@animation('Rolling Rainbow',
+@animation('Rolling Simple Rainbow',
            led_count=ParamLEDCount(),
            fps=ParamFPS(),
            count=Param('# Rainbows', 'range', default=1, min=1, max=5),
            saturation=Param('Saturation', 'range', default=10, min=1, max=10),
            value=Param('Brightness', 'range', default=10, min=1, max=10),
            duration=Param('Duration', 'range', default=1, min=1, max=10))
-def rolling_rainbow(led_count, fps, count, saturation, value, duration):
+def rolling_simple_rainbow(led_count, fps, count, saturation, value, duration):
     frame_count = int(fps * duration)
     return [
         [
@@ -213,3 +227,21 @@ def rolling_rainbow(led_count, fps, count, saturation, value, duration):
         ]
         for frame in range(frame_count)
     ]
+
+
+@animation('Rainbow',
+           led_count=ParamLEDCount(),
+           positions=ParamPositions(),
+           count=Param('# Rainbows', 'range', default=1, min=1, max=5),
+           saturation=Param('Saturation', 'range', default=10, min=1, max=10),
+           value=Param('Brightness', 'range', default=10, min=1, max=10))
+def rainbow(led_count, positions, count, saturation, value):
+    black = Color('black')
+    y_range = range_of(pos.y for pos in positions.values())
+    return [[
+        Color(h=scale(positions[led].y, y_range, (0, 1)),
+              s=(saturation / 10),
+              v=(value / 10))
+        if led in positions else black
+        for led in range(led_count)
+    ]]

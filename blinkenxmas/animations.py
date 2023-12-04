@@ -398,6 +398,7 @@ def pride(led_count, positions, flag, saturation, lightness):
         colors = (Color('#ffd800'), Color('#8d02b1'))
         return [[
             colors[circle(positions[led])]
+                * Saturation(saturation / 10) * Lightness(lightness / 10)
             if led in positions else black
             for led in range(led_count)
         ]]

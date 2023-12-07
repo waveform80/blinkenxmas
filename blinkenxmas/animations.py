@@ -72,7 +72,11 @@ def preview(anim):
     *anim*.
     """
     for frame in anim:
-        print(''.join(f'{c:16m}#{c:0}' for c in frame))
+        print(''.join(
+            f'{c:16m}#{c:0}' if isinstance(c, Color) else
+            '{cs:16m}#{cs:0}'.format(cs=Color(c))
+            for c in frame
+        ))
 
 
 @animation('Solid Color',

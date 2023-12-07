@@ -218,53 +218,22 @@ def twinkle(led_count, fps, color, lit, speed, duration=10):
     black up to the specified color and back to black. The "Lit %" determines
     the number of LEDs that should be fully lit during any given frame. The
     "Speed" indicates how quickly the fade should occur.
-
-    .. warning::
-
-        This animation is currently broken (takes too long to generate on the
-        server).
     """
     frame_count = int(fps * duration)
     lit = led_count * lit // 50
-    black = Color('black')
+    fade_frames = fps * (11 - speed) // 20
+    fade_frames = (fade_frames * 2) + 1
 
-    # We start transposed with a list of lists where the outer list is the
-    # LEDs, and the inner the list of colors for that LED (the frame)
-    leds = [
-        [
-            black
-            for frame in range(frame_count)
-        ]
-        for led in range(led_count)
-    ]
-
-    # Set the frames that should be "on" to the appropriate lit proportion
-    for led in leds:
+    leds = np.zeros((frame_count + fade_frames, led_count), dtype=np.double)
+    fade = np.linspace(0, 1, (fade_frames // 2) + 2, dtype=np.double)[1:-1]
+    fade = np.concatenate((fade, [1], fade[::-1]))
+    for led in range(led_count):
         for frame in random.sample(range(frame_count), k=lit):
-            led[frame] = color * Lightness(0.5 + random.random() / 2)
+            leds[frame:frame + fade_frames, led] += fade / (1 + random.random())
+    leds[:fade_frames, :] += leds[frame_count:frame_count + fade_frames, :]
+    leds = leds[:frame_count, :].clip(0, 1)
 
-    # Calculate a weighted average color for each led in turn
-    window = fps * (11 - speed) // 10
-    weights = tuple(i / (window // 2) for i in range(1, (window // 2)))
-    weights = weights + (1,) + weights[::-1]
-    leds = [
-        [
-            # Summation of the weighted neighbours
-            sum((
-                # Weighting each component of the neighbouring LEDs
-                Color(*(component * weight for component in c))
-                # The sequence of neighbouring LEDs zipped with their
-                # respective weights
-                for c, weight in zip(neighbours, weights)
-            ), black)
-            for neighbours in wrap_window(led, len(weights))
-        ]
-        for led in leds
-    ]
-
-    # Transpose to list of lists where outer list is the frames, and the inner
-    # list is the frame of LEDs
-    return zip(*leds)
+    return [[color * Lightness(led) for led in frame] for frame in leds]
 
 
 @animation('Simple Rainbow',

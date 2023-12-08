@@ -2,6 +2,7 @@ import io
 import time
 import zlib
 import struct
+import logging
 from queue import Empty
 from threading import Thread, Event
 
@@ -91,6 +92,8 @@ def render(animation, fps, chunk_size=chunk_size):
 
 
 class MessageThread(Thread):
+    logger = logging.getLogger('mqtt')
+
     def __init__(self, queue, config):
         super().__init__(target=self.listen, daemon=True)
         self.queue = queue
@@ -116,6 +119,7 @@ class MessageThread(Thread):
     def listen(self):
         try:
             client = mqtt.Client(clean_session=True)
+            client.enable_logger(self.logger)
             client.connect(self.host, self.port, keepalive=120)
             while not self._stopping.wait(0):
                 try:

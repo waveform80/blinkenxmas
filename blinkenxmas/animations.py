@@ -224,16 +224,16 @@ def twinkle(led_count, fps, color, lit, speed, duration=10):
     fade_frames = fps * (11 - speed) // 20
     fade_frames = (fade_frames * 2) + 1
 
-    leds = np.zeros((frame_count + fade_frames, led_count), dtype=np.double)
-    fade = np.linspace(0, 1, (fade_frames // 2) + 2, dtype=np.double)[1:-1]
+    frames = np.zeros((frame_count + fade_frames, led_count), dtype=float)
+    fade = np.linspace(0, 1, (fade_frames // 2) + 2, dtype=float)[1:-1]
     fade = np.concatenate((fade, [1], fade[::-1]))
     for led in range(led_count):
         for frame in random.sample(range(frame_count), k=lit):
-            leds[frame:frame + fade_frames, led] += fade / (1 + random.random())
-    leds[:fade_frames, :] += leds[frame_count:frame_count + fade_frames, :]
-    leds = leds[:frame_count, :].clip(0, 1)
+            frames[frame:frame + fade_frames, led] += fade / (1 + random.random())
+    frames[:fade_frames, :] += frames[frame_count:frame_count + fade_frames, :]
+    frames = frames[:frame_count, :].clip(0, 1)
 
-    return [[color * Lightness(led) for led in frame] for frame in leds]
+    return [[color * Lightness(led) for led in frame] for frame in frames]
 
 
 @animation('Simple Rainbow',

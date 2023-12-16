@@ -294,6 +294,18 @@ def rainbow(led_count, positions, count, saturation, value):
            value=Param('Brightness', 'range', default=10, min=1, max=10),
            duration=Param('Duration', 'range', default=1, min=1, max=10))
 def rolling_simple_rainbow(led_count, fps, count, saturation, value, duration):
+    """
+    This displays a rainbow along all LEDs of the tree that rotates through all
+    hues. If you have multiple equal length strips of LEDs on your tree, it is
+    worth setting "# Rainbows" to the number of strips to obtain a continuous
+    rainbow up the height of the tree.
+
+    Please note this does *not* use the scanned coordinates of the LEDs (see
+    "Rainbow" instead), so the effect will only appear to be a rainbow over the
+    height of the tree if the LEDs are laid out in numeric order, and/or the
+    "# Rainbows" parameter equals the number of (equal length) strips running
+    up the tree.
+    """
     frame_count = int(fps * duration)
     return [
         [

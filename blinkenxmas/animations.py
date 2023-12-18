@@ -7,6 +7,7 @@ import numpy as np
 from colorzero import Color, Lightness, Saturation
 
 from .httpd import animation, Param, ParamLEDCount, ParamLEDPositions, ParamFPS
+from .store import Position
 
 
 def scale(value, in_range, out_range):
@@ -180,12 +181,13 @@ def sweep(led_count, fps, positions, angle, slant, color, duration):
     Please note this animation requires that you have run the calibration step
     to determine LED positions accurately.
     """
-    frame_count = int(fps * duration / 2)
+    frame_count = int(fps * duration)
     frames = np.zeros((frame_count, led_count), dtype=float)
+    null_pos = Position.from_cartesian(0, 2, 0) # off the top of the tree
     pos = np.asarray([
         (pos.x, pos.y, pos.z)
         for led in range(led_count)
-        for pos in (positions[led],)
+        for pos in (positions[led] if led in positions else null_pos,)
     ], dtype=float)
     slant = m.radians(slant)
     angle = m.radians(angle)
@@ -196,21 +198,22 @@ def sweep(led_count, fps, positions, angle, slant, color, duration):
     # line, hence D is the array holding the value of d for each frame. We then
     # use distance of a point to the plane, abs(ax+by+cz-d)/sqrt(a^2+b^2+c^2),
     # to determine the distance of each LED to the plane, scale it by 10 and
-    # invert it to determine the brightness of that LED in the frame.
+    # invert it to determine the brightness of that LED in the frame
     abc = np.asarray([
         m.sin(slant) * m.cos(angle),  # a
         m.cos(slant),                 # b
         m.sin(slant) * m.sin(angle),  # c
     ], dtype=float)
     sqrsum = (abc**2).sum()
+    # We sweep from -0.1 to 1.1 so that LEDs will actually fade to black; the
+    # plane sweeps "off the end" far enough that even LEDs at the extremes are
+    # no longer "close enough to the plane" to be lit
     D = np.fromiter((
-        -t * sqrsum
-        for t in np.linspace(0, 1, frame_count, endpoint=False)
+        t * sqrsum for t in np.linspace(-0.1, 1.1, frame_count, endpoint=False)
     ), dtype=float)
     for frame, d in enumerate(D):
         frames[frame, :] = (
-            1 - 10 * np.abs((abc * pos).sum(axis=1) - d) /
-            m.sqrt(sqrsum)
+            1 - 10 * (np.abs((abc * pos).sum(axis=1) - d) / m.sqrt(sqrsum))
         ).clip(0, 1)
 
     return [[color * Lightness(led) for led in frame] for frame in frames]

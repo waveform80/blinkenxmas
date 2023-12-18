@@ -143,7 +143,7 @@ ul#presets li a { display: block; }
 
 @media screen and (max-width: 52rem) {
     article,
-    section#message {
+    section#messages {
         align-self: stretch;
         width: auto;
         margin: 0 1rem;

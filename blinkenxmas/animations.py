@@ -1,4 +1,5 @@
 import random
+import math as m
 from itertools import tee
 from collections import deque
 
@@ -154,6 +155,65 @@ def simple_sweep(led_count, fps, color, duration):
         ]
         for frame in range(frame_count)
     ]
+
+
+@animation('Plane Sweep',
+           led_count=ParamLEDCount(),
+           fps=ParamFPS(),
+           positions=ParamLEDPositions(),
+           angle=Param('Angle', 'range', default=0, min=0, max=359),
+           slant=Param('Slant', 'range', default=0, min=0, max=180),
+           color=Param('Color', 'color', default='#ffffff'),
+           duration=Param('Duration', 'range', default=1, min=1, max=10))
+def sweep(led_count, fps, positions, angle, slant, color, duration):
+    """
+    This animation sweeps a plane of the specified color through the tree at
+    the Angle and Slant specified.
+
+    The Slant represents the angle from the vertical that the plane moves
+    along. The default of 0° means vertically downwards through the tree, 90°
+    means horizontally through the tree, and 180° is vertically upwards. The
+    Angle dictates the rotation about the trunk (and thus is only really
+    meaningful when Slant is not near 0° or 180°). The Duration determines how
+    many seconds it takes for the color to sweep from one extreme to the other.
+
+    Please note this animation requires that you have run the calibration step
+    to determine LED positions accurately.
+    """
+    frame_count = int(fps * duration / 2)
+    frames = np.zeros((frame_count, led_count), dtype=float)
+    pos = np.asarray([
+        (pos.x, pos.y, pos.z)
+        for led in range(led_count)
+        for pos in (positions[led],)
+    ], dtype=float)
+    slant = m.radians(slant)
+    angle = m.radians(angle)
+
+    # Equation of the plane is ax + by + cz + d = 0. abc is a numpy array
+    # defining coefficients a, b, and c which are static throughout the
+    # animation. Coefficient d varies as the plane sweeps along the defined
+    # line, hence D is the array holding the value of d for each frame. We then
+    # use distance of a point to the plane, abs(ax+by+cz-d)/sqrt(a^2+b^2+c^2),
+    # to determine the distance of each LED to the plane, scale it by 10 and
+    # invert it to determine the brightness of that LED in the frame.
+    abc = np.asarray([
+        m.sin(slant) * m.cos(angle),  # a
+        m.cos(slant),                 # b
+        m.sin(slant) * m.sin(angle),  # c
+    ], dtype=float)
+    sqrsum = (abc**2).sum()
+    D = np.fromiter((
+        -t * sqrsum
+        for t in np.linspace(0, 1, frame_count, endpoint=False)
+    ), dtype=float)
+    for frame, d in enumerate(D):
+        frames[frame, :] = (
+            1 - 10 * np.abs((abc * pos).sum(axis=1) - d) /
+            m.sqrt(sqrsum)
+        ).clip(0, 1)
+
+    return [[color * Lightness(led) for led in frame] for frame in frames]
 
 
 @animation('Bounce',

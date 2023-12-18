@@ -120,7 +120,7 @@ class MessageThread(Thread):
         try:
             client = mqtt.Client(clean_session=True)
             client.enable_logger(self.logger)
-            client.connect(self.host, self.port, keepalive=120)
+            client.connect(self.host, self.port, keepalive=60)
             while not self._stopping.wait(0):
                 try:
                     frames = self.queue.get(timeout=0.9)

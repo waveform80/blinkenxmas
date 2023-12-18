@@ -109,8 +109,8 @@ def simple_gradient(led_count, color1, color2):
 @animation('Gradient',
            led_count=ParamLEDCount(),
            positions=ParamLEDPositions(),
-           bottom=Param('Bottom', 'color', default='#000000'),
-           top=Param('Top', 'color', default='#ffffff'))
+           top=Param('Top', 'color', default='#ffffff'),
+           bottom=Param('Bottom', 'color', default='#000000'))
 def gradient(led_count, positions, bottom, top):
     """
     This displays a gradient that fades from one color at the bottom of the

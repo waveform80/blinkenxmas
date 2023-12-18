@@ -127,12 +127,12 @@ def gradient(led_count, positions, bottom, top):
     ]]
 
 
-@animation('Sweep',
+@animation('Simple Sweep',
            led_count=ParamLEDCount(),
            fps=ParamFPS(),
            color=Param('Color', 'color', default='#ffffff'),
            duration=Param('Duration', 'range', default=1, min=1, max=10))
-def sweep(led_count, fps, color, duration):
+def simple_sweep(led_count, fps, color, duration):
     """
     This animation sweeps the specified color along the LEDs in numeric order.
     The Duration determines how many seconds it takes for the color to sweep

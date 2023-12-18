@@ -194,17 +194,13 @@ def animation(name, **params):
     argument to the decorator which is associated with one of the parameter
     classes defined:
 
-    * :class:`ParamLEDCount` will pass the number of LEDs defined to the
-      specified parameter
+    * :class:`ParamLEDCount`
 
-    * :class:`ParamLEDPositions` will pass the mapping of LEDs indexes to
-      detected positions
+    * :class:`ParamLEDPositions`
 
-    * :class:`ParamFPS` will pass the FPS the animation will be shown at
+    * :class:`ParamFPS`
 
-    * :class:`Param` is a generic user-specified parameter which will be
-      rendered in the HTML form with the given *label*, *input_type*,
-      *default*, *min*, and *max* values.
+    * :class:`Param`
     """
     def decorator(f):
         if f.__doc__:

@@ -132,9 +132,13 @@ function generateAnim(form) {
       body: JSON.stringify(params),
       cache: 'no-store',
     });
+    let tid = setTimeout(
+        () => showMessage('Please waiting, building animation'),
+        500);
     return fetch(req)
       .then((resp) => resp.text())
       .then((data) => {
+        clearTimeout(tid);
         dataArea.value = data;
         delete form.dataset.changed;
         return data;

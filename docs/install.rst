@@ -34,13 +34,13 @@ available from PyPI and can therefore be installed with the Python setuptools
 
 .. code-block:: console
 
-    $ pip install "blinkenxmas[server]"
+    $ pip install "blinkenxmas"
 
 On some platforms you may need to use a Python 3 specific alias of pip:
 
 .. code-block:: console
 
-    $ pip3 install "blinkenxmas[server]"
+    $ pip3 install "blinkenxmas"
 
 If you do not have either of these tools available, please install the Python
 `setuptools`_ package first.

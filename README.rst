@@ -73,6 +73,11 @@ one cares, Dave, it's a Christmas tree, not a nuclear reactor".
 And lo! "Dave" did flip the private switch and there was light! In all the
 colours of the unicorn vomit …
 
+.. image:: rainbow.jpg
+    :align: center
+    :alt: The 250 neopixies of the Asda 6ft Green Christmas Tree display a
+          tasteful rainbow over the height of the tree.
+
 .. _neopixies: https://en.wikipedia.org/wiki/Adafruit_Industries#NeoPixel
 .. _video from the prophet Matt Parker: https://www.youtube.com/watch?v=TvlpIojusBE
 .. _trigo-gnometry: https://en.wikipedia.org/wiki/List_of_trigonometric_identities

@@ -31,6 +31,9 @@ class HTTPHeaders(MutableMapping):
         for key, value in kwargs.items():
             self[key.replace('_', '-')] = value
 
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self._data!r})'
+
     @staticmethod
     def _http_name(s):
         try:

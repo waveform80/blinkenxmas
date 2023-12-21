@@ -102,34 +102,15 @@ function generateAnim(form) {
   let dataArea = form.elements['data'];
 
   if (animation && !!form.dataset.changed) {
-    // Build the parameters object
-    let params = {};
-    for (let elem of Array.from(form.elements)) {
-      switch (elem.nodeName) {
-        case 'LABEL':
-          continue;
-        case 'INPUT':
-          if (elem.type == 'button')
-            continue;
-          if (elem.name == 'name')
-            continue;
-          break;
-        case 'TEXTAREA':
-          if (elem.name == 'data')
-            continue;
-          break;
-        case 'SELECT':
-          if (elem.name == 'animation')
-            continue;
-          break;
-      }
-      params[elem.name] = elem.value;
-    }
+    let params = new FormData(form);
+    params.delete('name');
+    params.delete('data');
+    params.delete('animation');
 
     let req = new Request(`/animation/${encodeURIComponent(animation)}`, {
       method: 'POST',
       headers: new Headers({'Content-Type': 'application/json'}),
-      body: JSON.stringify(params),
+      body: JSON.stringify(Object.fromEntries(params.entries())),
       cache: 'no-store',
     });
     let tid = setTimeout(

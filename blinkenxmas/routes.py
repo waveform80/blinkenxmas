@@ -138,7 +138,6 @@ def generate_animation(request, name):
         })
         data = anim.function(**kwargs)
     except (KeyError, ValueError, TypeError) as e:
-        print(repr(e))
         return HTTPResponse(
             request, body=str(e), status_code=HTTPStatus.BAD_REQUEST)
     else:

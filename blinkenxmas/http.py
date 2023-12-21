@@ -677,3 +677,4 @@ class HTTPResponse:
                     self.request.end_headers()
                     transfer(self.stream, self.request.wfile, byterange=r)
                     self.request.wfile.write(b'\r\n')
+                self.request.wfile.write(b'--BOUNDARY--\r\n')

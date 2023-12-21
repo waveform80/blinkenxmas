@@ -1,6 +1,9 @@
 import io
+import tempfile
 import mimetypes
 import datetime as dt
+import email.parser
+import email.policy
 import email.utils as eut
 from pathlib import Path
 from http import HTTPStatus
@@ -144,6 +147,179 @@ def transfer(source, target, *, byterange=None):
                     with buf[:n] as read_buf:
                         write(read_buf)
                     length -= n
+
+
+def parse_content_value(s):
+    """
+    Parse the content of an HTTP Content-* header's value, *s*. The result is a
+    tuple of (value, attrs) where *value* is the principal value (the part
+    before the first semi-colon, if any), and *attrs* is a dictionary of
+    attributes that follow the principal value.
+    """
+    value, *attrs = (part.strip() for part in s.split(';'))
+    return value, {
+        key.strip().lower(): value.strip('"')
+        for attr in attrs
+        for key, value in (attr.split('='),)
+    }
+
+
+# This must be greater than 72 bytes to ensure the splitting algorithm can
+# operate with all valid boundary markers
+SPLIT_MULTIPART_BUFSIZE = 64 * 1024
+def split_multipart(request):
+    """
+    Given *request*, a :class:`~blinkenxmas.httpd.HTTPRequestHandler`, which
+    must have a Content-Type of multipart/*, yield each part of the multipart
+    body as a separate (headers, content) tuple. The *headers* are returned as
+    a :class:`HTTPHeaders` instance, and the *content* as a file-like object.
+    """
+
+    def get_boundary():
+        s = request.headers.get('Content-Type', '')
+        value, attrs = parse_content_value(s)
+        mime_type, mime_subtype = value.split('/', 1)
+        if mime_type != 'multipart':
+            raise ValueError(
+                f'MIME-type {s!r} is not a multipart/*')
+        try:
+            if not 1 <= len(attrs['boundary']) <= 70:
+                raise ValueError(
+                    f'Boundary definition in {s!r} has a silly length')
+            encoding = attrs.get('charset', 'utf-8')
+            return attrs['boundary'].encode(encoding)
+        except KeyError:
+            raise ValueError(f'Missing boundary definition in {s!r}')
+
+    def discard_and_fill(buf, size, discard):
+        # Discard bytes from the start of *buf*, moving later bytes back to the
+        # start. Then fill later bytes from request.rfile. Returns the new
+        # number of valid bytes present in buf
+        assert discard >= 0
+        if discard > 0:
+            if discard < size:
+                buf[:size - discard] = buf[discard:size]
+                size -= discard
+            else:
+                size = 0
+        assert size < len(buf)
+        return size + request.rfile.readinto(buf[size:])
+
+    boundary = b'--' + get_boundary()
+    parser = email.parser.BytesHeaderParser(policy=email.policy.HTTP)
+    buffer = bytearray(SPLIT_MULTIPART_BUFSIZE)
+    mem = memoryview(buffer)
+    size = 0
+    headers = content = None
+
+    size = discard_and_fill(mem, size, 0)
+    while size > 0:
+        try:
+            # Try and find the next multipart boundary
+            index = buffer.index(boundary, 0, size)
+        except ValueError:
+            # No multipart boundary found in the buffer. If content is None,
+            # we've yet to find a multipart boundary so everything so far is
+            # preamble and can be ignored. Otherwise...
+            if content is not None:
+                if size < len(boundary):
+                    # This is the degenerate case where we've reached the end
+                    # of the stream but there's no final marker; assume all
+                    # remaining content is part of the final part
+                    content.write(mem[:size])
+                    break
+                else:
+                    # Otherwise, dump the buffer to the content, and keep
+                    # len(boundary)-1 bytes within the buffer in case we had a
+                    # boundary prefix at the end
+                    keep = len(boundary) - 1
+                    content.write(mem[:size - keep])
+                    size = discard_and_fill(mem, size, size - keep)
+        else:
+            if content is not None:
+                content.write(mem[:index])
+                content.seek(0)
+                yield headers, content
+            content = None
+            index += len(boundary)
+            size = discard_and_fill(mem, size, index)
+            # Optional linear white-space is permitted after the boundary
+            index = 0
+            while index < size and mem[index] in (ord(b' '), ord(b'\t')):
+                index += 1
+            size = discard_and_fill(mem, size, index)
+            if size < 2 or mem[:2] == b'--':
+                break
+            content = tempfile.SpooledTemporaryFile(
+                max_size=SPLIT_MULTIPART_BUFSIZE)
+            if mem[:2] != b'\r\n':
+                raise ValueError('Invalid boundary found')
+            try:
+                index = buffer.index(b'\r\n\r\n', 0, size)
+            except IndexError:
+                # Headers are larger than len(buffer); this is potentially
+                # abusive (assuming len(buffer) is sane), so reject it
+                raise ValueError('Headers exceed buffer size')
+            else:
+                if index > 0:
+                    headers = HTTPHeaders(
+                        parser.parsebytes(mem[2:index + 4].tobytes()).items())
+                    size = discard_and_fill(mem, size, index + 4)
+                else:
+                    headers = HTTPHeaders()
+                    size = discard_and_fill(mem, size, 4)
+            # Only the first boundary found is permitted to have no CR-LF
+            # prefix (because the HTTP header parser has already eaten the
+            # preceding ones); subsequent boundaries *must* begin with it
+            if boundary[:2] == b'--':
+                boundary = b'\r\n' + boundary
+    if content is not None:
+        content.seek(0)
+        yield headers, content
+
+
+def parse_formdata(request):
+    """
+    Given *request*, a :class:`~blinkenxmas.httpd.HTTPRequestHandler`, which
+    must have a Content-Type of "multipart/form-data", split the multipart body
+    into its constituent parts, and return a :class:`dict` mapping form names
+    to their corresponding content.
+
+    Short text or binary values are returned as :class:`str` or :class:`bytes`
+    values respectively. Anything with a "filename" attribute, or which exceeds
+    a relatively large string size (currently 64KB) will be returned as a
+    file-like object.
+    """
+    value, attrs = parse_content_value(request.headers['Content-Type'])
+    if value != 'multipart/form-data':
+        raise ValueError(f'Invalid Content-Type: {value!r}')
+    query = {}
+    for headers, content in split_multipart(request):
+        try:
+            disposition = headers['Content-Disposition']
+        except KeyError:
+            continue
+        else:
+            disposition, attrs = parse_content_value(disposition)
+            if disposition != 'form-data':
+                continue
+            try:
+                name = attrs['name']
+            except KeyError:
+                continue
+            mime_type, attrs = parse_content_value(
+                headers.get('Content-Type', 'text/plain'))
+            is_short = content.seek(0, io.SEEK_END) <= SPLIT_MULTIPART_BUFSIZE
+            content.seek(0)
+            if mime_type.startswith('text/'):
+                content = io.TextIOWrapper(
+                    content, encoding=attrs.get('charset', 'utf-8'),
+                    errors='ignore')
+            if is_short and 'filename' not in attrs:
+                query[name] = content.read()
+            else:
+                query[name] = content
+    return query
 
 
 class DummyResponse:

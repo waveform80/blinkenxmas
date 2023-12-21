@@ -54,7 +54,7 @@ from chameleon import PageTemplate
 from colorzero import Color
 
 from . import cameras, store, calibrate
-from .http import HTTPResponse
+from .http import HTTPResponse, parse_formdata, parse_content_value
 
 
 def get_best_family(host, port):
@@ -415,18 +415,23 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                 self.query = urllib.parse.parse_qs(parts.query)
             elif self.command == 'POST':
                 try:
-                    if self.headers['Content-Type'] == 'application/x-www-form-urlencoded':
+                    content_type, attrs = parse_content_value(
+                        self.headers.get('Content-Type', ''))
+                    if content_type == 'application/x-www-form-urlencoded':
                         body = self.rfile.read(
                             int(self.headers['Content-Length'])
                             if 'Content-Length' in self.headers else
                             None).decode('utf-8', errors='ignore')
                         self.query = urllib.parse.parse_qs(body)
-                    elif self.headers['Content-Type'] == 'application/json':
+                    elif content_type == 'multipart/form-data':
+                        self.query = parse_formdata(self)
+                    elif content_type == 'application/json':
                         # If the body is JSON encoded; leave the handler or
                         # template to read it with the json() method
                         self.query = {}
                     else:
-                        raise ValueError('unexpected content type')
+                        raise ValueError(
+                            f'unexpected content type: {content_type}')
                 except (TypeError, ValueError):
                     return HTTPResponse(self, status_code=HTTPStatus.BAD_REQUEST)
             else:

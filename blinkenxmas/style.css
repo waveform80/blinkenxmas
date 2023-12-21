@@ -39,7 +39,6 @@ input, select, textarea {
 
 input[type=checkbox] {
   width: auto;
-  vertical-align: middle;
 }
 
 label {

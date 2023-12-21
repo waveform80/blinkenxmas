@@ -1,3 +1,30 @@
+"""
+The http module principally defines the :class:`HTTPResponse` class, and the
+associated :class:`DummyResponse` and :class:`HTTPHeaders` classes. These
+facilitate constructing a response to an HTTP request.
+
+:class:`HTTPResponse`, in particular, accepts a wide variety of inputs
+including file-like objects, :class:`pathlib.Path` instances, strings, or
+byte-strings and will attempt to handle determination of encodings, content
+types automatically. Furthermore, given the originating request, it will handle
+cache and range-request response headers implicitly.
+
+Several other functions are also provided for parsing HTTP Content- headers,
+and MIME multipart form-data.
+
+.. autoclass:: DummyResponse
+
+.. autoclass:: HTTPResponse
+
+.. autoclass:: HTTPHeaders
+
+.. autofunction:: parse_content_value
+
+.. autofunction:: split_multipart
+
+.. autofunction:: parse_formdata
+"""
+
 import io
 import tempfile
 import mimetypes

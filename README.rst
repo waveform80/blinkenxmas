@@ -27,8 +27,9 @@ he would wave his magic Pico a bit more [#wrong2]_. And so Dave set to work,
 and after much toil (and no small amount of "why is the tree dark? Can't you
 just make it one colour, again? That was fine!"), the tree was lit once more,
 but this time with all the colours of the rainbow! But the design was rough;
-mere anarchy loosed upon the innocent eyeballs of the viewer. And all who saw
-it did whisper, "it's very colourful, but in a unicorn vomit sort of a way".
+mere anarchy loosed upon the innocent eyeballs of the viewer [#sorry1]_. And
+all who saw it did whisper, "it's very colourful, but in a unicorn vomit sort
+of a way".
 
 And lo! A `message from the Prophet Parker`_ did appear.
 
@@ -41,7 +42,7 @@ content with a simple twinkling of the warm white lights that year.
 
 The season passed, the Asda 6ft Post-Lit Green Christmas Tree was packed away,
 and the neopixies returned to their drawer, awaiting their chance to shine like
-crazy tetrahedral carbon crystals once more.
+crazy tetrahedral carbon crystals once more [#sorry2]_.
 
 Time moved on, and in the waxing light of spring, the project appeared
 forgotten. The neopixies wept as the Pico was waved at other things, like
@@ -64,7 +65,7 @@ And so it came to pass that Dave procured
 `even <https://shop.pimoroni.com/products/5m-flexible-rgb-led-wire-50-rgb-leds-aka-neopixel-ws2812-sk6812?variant=40384556171347>`_
 `more <https://thepihut.com/products/adafruit-soft-flexible-wire-neopixel-strand-50-neopixels>`_
 neopixies, swelling their orchestra until it was full 250 strong. And though
-Dave was not disgruntled, he was far from gruntled [#sorry]_ that this was but
+Dave was not disgruntled, he was far from gruntled [#sorry3]_ that this was but
 half the count of `The Prophet Parker's most learned of trees`_. But no one
 else was listening. For the yousers were too busy plucking the fibres of the
 web to talk to the pie to talk to the mosquitto to talk to the picow to conduct
@@ -98,4 +99,9 @@ colours of unicorn vomit …
 
 .. [#wrong2] That's not getting any better, you know -- Ed
 
-.. [#sorry] With apologies to P.G. Wodehouse
+.. [#sorry1] With apologies to W.B. Yeats
+
+.. [#sorry2] With apologies to Pink Floyd
+
+.. [#sorry3] With no apologies at all to P.G. Wodehouse; damn you, that line's
+   too good not to steal!

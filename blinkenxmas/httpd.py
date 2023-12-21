@@ -1,7 +1,7 @@
 """
 The httpd module defines the :class:`HTTPServer`, :class:`HTTPRequestHandler`
 and :class:`HTTPThread` classes which together make up the HTTP server that
-hamstercam uses to talk to web clients.
+blinkenxmas uses to talk to web clients.
 
 It also defines the :func:`route` decorator used to associate handler functions
 with their HTTP virtual path (see :mod:`blinkenxmas.routes`).

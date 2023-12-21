@@ -55,7 +55,7 @@ function cancelManage(form) {
   create.classList.add('button');
   create.textContent = 'Create';
   let manage = document.createElement('input')
-  manage.type = 'input';
+  manage.type = 'button';
   manage.id = 'manage';
   manage.value = 'Manage';
   manage.addEventListener('click', (evt) => doManage(form));

@@ -126,14 +126,14 @@ def generate_animation(request, name):
     try:
         anim = request.animations[name]
         kwargs = {
-            name: anim.params[name].value(value)
-            for name, value in request.json().items()
-            if name in anim.params
-            and isinstance(anim.params[name], Param)
+            key: anim.params[key].value(value)
+            for key, value in request.json().items()
+            if key in anim.params
+            and isinstance(anim.params[key], Param)
         }
         kwargs.update({
-            name: param.value(request)
-            for name, param in anim.params.items()
+            key: param.value(request)
+            for key, param in anim.params.items()
             if not isinstance(param, Param)
         })
         data = anim.function(**kwargs)

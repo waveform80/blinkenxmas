@@ -148,14 +148,17 @@ class Param(namedtuple('Param', (
             Color(value) if self.input_type == 'color' else
             str(value))
 
+
 class ParamLEDCount:
     """
     Defines the associated parameter as taking the total number of LEDs on the
     tree (an :class:`int`).
     """
     __slots__ = ()
+
     def value(self, request):
         return request.server.config.led_count
+
 
 class ParamLEDPositions:
     """
@@ -170,8 +173,10 @@ class ParamLEDPositions:
         mapping.
     """
     __slots__ = ()
+
     def value(self, request):
         return request.store.positions
+
 
 class ParamFPS:
     """
@@ -179,6 +184,7 @@ class ParamFPS:
     animations are expected to be rendered for.
     """
     __slots__ = ()
+
     def value(self, request):
         return request.server.config.fps
 
@@ -214,8 +220,15 @@ def animation(name, **params):
                 settings_overrides=overrides)['fragment']
         else:
             html = ''
-        HTTPRequestHandler.animations[f.__name__] = Function(
-            name, html, f, params)
+        func = Function(name, html, f, params)
+        HTTPRequestHandler.animations[f.__name__] = func
+        # Sanitized version which can be JSON serialized
+        HTTPRequestHandler.animations_json[f.__name__] = Function(
+            func.name, func.description, None, {
+                pname: param
+                for pname, param in func.params.items()
+                if isinstance(param, Param)
+            })
         return f
     return decorator
 
@@ -280,6 +293,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     }
     routes = {}
     animations = {}
+    animations_json = {}
     calibration = {}
 
     def get_template(self, name):
@@ -311,15 +325,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             'led_count':      self.server.config.led_count,
             'calibration':    self.server.calibration,
             'store':          self.store,
-            # "Sanitize" animations to make it JSON serializable
-            'animations':     {
-                name: Function(anim.name, anim.description, None, {
-                    pname: param
-                    for pname, param in anim.params.items()
-                    if isinstance(param, Param)
-                })
-                for name, anim in self.animations.items()
-            },
+            'animations':     self.animations_json,
         }
         ns.update(kwargs)
         return ns

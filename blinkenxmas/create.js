@@ -117,9 +117,14 @@ function generateAnim(form) {
         () => showMessage('Please waiting, building animation'),
         500);
     return fetch(req)
-      .then((resp) => resp.text())
-      .then((data) => {
+      .then((resp) => {
         clearTimeout(tid);
+        if (resp.ok)
+          return resp.text();
+        else
+          throw new Error(resp.statusText);
+      })
+      .then((data) => {
         dataArea.value = data;
         delete form.dataset.changed;
         return data;

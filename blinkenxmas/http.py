@@ -26,7 +26,6 @@ and MIME multipart form-data.
 """
 
 import io
-import tempfile
 import mimetypes
 import datetime as dt
 import email.parser
@@ -36,6 +35,8 @@ from pathlib import Path
 from http import HTTPStatus
 from contextlib import suppress, closing
 from collections.abc import Mapping, MutableMapping
+
+from .compat import SpooledTemporaryFile
 
 
 class HTTPHeaders(MutableMapping):
@@ -194,6 +195,85 @@ def parse_content_value(s):
 # This must be greater than 72 bytes to ensure the splitting algorithm can
 # operate with all valid boundary markers
 SPLIT_MULTIPART_BUFSIZE = 64 * 1024
+class FixedBuffer:
+    def __init__(self, source, size=SPLIT_MULTIPART_BUFSIZE, read_limit=0):
+        self.source = source
+        self._buffer = bytearray(size)
+        self._mem = memoryview(self._buffer)
+        self._read_limit = read_limit
+        self._read = 0
+        self._valid = 0
+
+    @property
+    def size(self):
+        """
+        The size (in bytes) of the internal buffer.
+        """
+        return len(self._mem)
+
+    @property
+    def read(self):
+        """
+        The number of bytes read from the :attr:`source`.
+        """
+        return self._read
+
+    @property
+    def valid(self):
+        """
+        The number of valid bytes at currently present in the buffer.
+        """
+        return self._valid
+
+    @property
+    def data(self):
+        """
+        The valid bytes currently contained in the buffer.
+        """
+        return self._mem[:self._valid]
+
+    def index(self, substring):
+        """
+        Attempt to find *substring* within the valid bytes of the buffer. If
+        not found, :exc:`ValueError` is raised.
+        """
+        return self._buffer.index(substring, 0, self._valid)
+
+    def discard(self, discard):
+        """
+        Remove *discard* bytes from the start of the buffer, moving later bytes
+        back to the start.
+        """
+        # Discard bytes from the start of mem, moving later bytes back to the
+        # start, then fill later bytes from request.rfile
+        assert discard >= 0
+        if discard > 0:
+            if discard < self._valid:
+                self._mem[:self._valid - discard] = self._mem[discard:self._valid]
+                self._valid -= discard
+            else:
+                self._valid = 0
+
+    def fill(self):
+        """
+        Fill the end of the buffer from the :attr:`source`. If the
+        :attr:`read_limit` was specified on construction, it will not attempt
+        to read beyond the limit.
+        """
+        assert self._valid < len(self._mem)
+        if self._read_limit == 0:
+            read = self.source.readinto(self._mem[self._valid:])
+        elif self._read < self._read_limit:
+            limit = min(
+                len(self._mem),
+                self._valid + (self._read_limit - self._read))
+            read = self.source.readinto(self._mem[self._valid:limit])
+        else:
+            read = 0
+        self._read += read
+        self._valid += read
+
+
 def split_multipart(request):
     """
     Given *request*, a :class:`~blinkenxmas.httpd.HTTPRequestHandler`, which
@@ -218,83 +298,72 @@ def split_multipart(request):
         except KeyError:
             raise ValueError(f'Missing boundary definition in {s!r}')
 
-    def discard_and_fill(buf, size, discard):
-        # Discard bytes from the start of *buf*, moving later bytes back to the
-        # start. Then fill later bytes from request.rfile. Returns the new
-        # number of valid bytes present in buf
-        assert discard >= 0
-        if discard > 0:
-            if discard < size:
-                buf[:size - discard] = buf[discard:size]
-                size -= discard
-            else:
-                size = 0
-        assert size < len(buf)
-        return size + request.rfile.readinto(buf[size:])
-
     boundary = b'--' + get_boundary()
+    buffer = FixedBuffer(
+        source=request.rfile,
+        read_limit=int(request.headers.get('Content-Length', '0')))
     parser = email.parser.BytesHeaderParser(policy=email.policy.HTTP)
-    buffer = bytearray(SPLIT_MULTIPART_BUFSIZE)
-    mem = memoryview(buffer)
-    size = 0
     headers = content = None
 
-    size = discard_and_fill(mem, size, 0)
-    while size > 0:
+    buffer.fill()
+    while buffer.valid > 0:
         try:
             # Try and find the next multipart boundary
-            index = buffer.index(boundary, 0, size)
+            index = buffer.index(boundary)
         except ValueError:
             # No multipart boundary found in the buffer. If content is None,
             # we've yet to find a multipart boundary so everything so far is
             # preamble and can be ignored. Otherwise...
             if content is not None:
-                if size < len(boundary):
+                if buffer.valid < len(boundary):
                     # This is the degenerate case where we've reached the end
                     # of the stream but there's no final marker; assume all
                     # remaining content is part of the final part
-                    content.write(mem[:size])
+                    content.write(buffer.data)
                     break
                 else:
                     # Otherwise, dump the buffer to the content, and keep
                     # len(boundary)-1 bytes within the buffer in case we had a
                     # boundary prefix at the end
                     keep = len(boundary) - 1
-                    content.write(mem[:size - keep])
-                    size = discard_and_fill(mem, size, size - keep)
+                    content.write(buffer.data[:-keep])
+                    buffer.discard(buffer.valid - keep)
+                    buffer.fill()
         else:
             if content is not None:
-                content.write(mem[:index])
+                content.write(buffer.data[:index])
                 content.seek(0)
                 yield headers, content
             content = None
             index += len(boundary)
-            size = discard_and_fill(mem, size, index)
+            buffer.discard(index)
+            buffer.fill()
             # Optional linear white-space is permitted after the boundary
             index = 0
-            while index < size and mem[index] in (ord(b' '), ord(b'\t')):
+            while index < buffer.valid and buffer.data[index] in (ord(b' '), ord(b'\t')):
                 index += 1
-            size = discard_and_fill(mem, size, index)
-            if size < 2 or mem[:2] == b'--':
+            buffer.discard(index)
+            buffer.fill()
+            if buffer.valid < 2 or buffer.data[:2] == b'--':
                 break
-            content = tempfile.SpooledTemporaryFile(
-                max_size=SPLIT_MULTIPART_BUFSIZE)
-            if mem[:2] != b'\r\n':
+            content = SpooledTemporaryFile(max_size=SPLIT_MULTIPART_BUFSIZE)
+            if buffer.data[:2] != b'\r\n':
                 raise ValueError('Invalid boundary found')
             try:
-                index = buffer.index(b'\r\n\r\n', 0, size)
+                index = buffer.index(b'\r\n\r\n')
             except IndexError:
                 # Headers are larger than len(buffer); this is potentially
                 # abusive (assuming len(buffer) is sane), so reject it
                 raise ValueError('Headers exceed buffer size')
             else:
                 if index > 0:
-                    headers = HTTPHeaders(
-                        parser.parsebytes(mem[2:index + 4].tobytes()).items())
-                    size = discard_and_fill(mem, size, index + 4)
+                    headers = HTTPHeaders(parser.parsebytes(
+                        buffer.data[2:index + 4].tobytes()).items())
+                    buffer.discard(index + 4)
                 else:
                     headers = HTTPHeaders()
-                    size = discard_and_fill(mem, size, 4)
+                    buffer.discard(4)
+                buffer.fill()
             # Only the first boundary found is permitted to have no CR-LF
             # prefix (because the HTTP header parser has already eaten the
             # preceding ones); subsequent boundaries *must* begin with it

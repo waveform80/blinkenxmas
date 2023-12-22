@@ -109,8 +109,7 @@ function generateAnim(form) {
 
     let req = new Request(`/animation/${encodeURIComponent(animation)}`, {
       method: 'POST',
-      headers: new Headers({'Content-Type': 'application/json'}),
-      body: JSON.stringify(Object.fromEntries(params.entries())),
+      body: params,
       cache: 'no-store',
     });
     let tid = setTimeout(

@@ -127,7 +127,7 @@ def generate_animation(request, name):
         anim = request.animations[name]
         kwargs = {
             key: anim.params[key].value(value)
-            for key, value in request.json().items()
+            for key, value in request.query.items()
             if key in anim.params
             and isinstance(anim.params[key], Param)
         }

@@ -73,12 +73,18 @@ function setupCreateForm(form) {
         input.name = param;
         input.id = escapeIdent(param);
         input.type = params[param][1];
-        if (param[2] !== null)
-          input.defaultValue = params[param][2];
-        if (param[3] !== null)
-          input.min = params[param][3];
-        if (param[4] !== null)
-          input.max = params[param][4];
+        if (params[param][1] == 'checkbox') {
+          if (param[2] !== null)
+              input.checked = params[param][2];
+        }
+        else {
+          if (param[2] !== null)
+            input.defaultValue = params[param][2];
+          if (param[3] !== null)
+            input.min = params[param][3];
+          if (param[4] !== null)
+            input.max = params[param][4];
+        }
       }
       label.htmlFor = input.id;
       label.textContent = params[param][0];

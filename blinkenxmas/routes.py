@@ -125,12 +125,21 @@ def generate_animation(request, name):
     """
     try:
         anim = request.animations[name]
+        # Convert parameter values from those present in form
         kwargs = {
             key: anim.params[key].value(value)
             for key, value in request.query.items()
             if key in anim.params
             and isinstance(anim.params[key], Param)
         }
+        # Convert None for values missing from the submitted form
+        kwargs.update({
+            key: param.value(None)
+            for key, param in anim.params.items()
+            if isinstance(param, Param)
+            and key not in request.query
+        })
+        # Fill out non-form parameters
         kwargs.update({
             key: param.value(request)
             for key, param in anim.params.items()

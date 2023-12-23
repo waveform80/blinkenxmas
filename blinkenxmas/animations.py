@@ -155,9 +155,10 @@ def sweep_by_index(led_count, fps, color, bounce, speed):
            positions=ParamLEDPositions(),
            angle=Param('Angle', 'range', default=0, min=0, max=359),
            slant=Param('Slant', 'range', default=0, min=0, max=180),
+           planes=Param('Planes', 'range', default=1, min=1, max=5),
            color=Param('Color', 'color', default='#ffffff'),
-           speed=Param('Speed', 'range', default=1, min=1, max=10))
-def sweep_by_pos(led_count, fps, positions, angle, slant, color, speed):
+           speed=Param('Speed', 'range', default=5, min=1, max=10))
+def sweep_by_pos(led_count, fps, positions, angle, slant, planes, color, speed):
     """
     This animation sweeps a plane of the specified color through the tree at
     the Angle and Slant specified.
@@ -166,8 +167,11 @@ def sweep_by_pos(led_count, fps, positions, angle, slant, color, speed):
     The default of 0° means vertically downwards through the tree, 90° means
     horizontally through the tree, and 180° is vertically upwards. Angle
     dictates the rotation about the trunk (and thus is only really meaningful
-    when Slant is not near 0° or 180°). Speed determines how quickly the color
-    sweeps from one extreme to the other.
+    when Slant is not near 0° or 180°).
+
+    Planes determines how many planes simultaneously sweep through the tree.
+    Speed determines how quickly the color sweeps from one extreme to the
+    other.
 
     Please note this animation requires that you have run the calibration step
     to determine LED positions accurately.
@@ -175,12 +179,17 @@ def sweep_by_pos(led_count, fps, positions, angle, slant, color, speed):
     duration = 11 - speed
     frame_count = int(fps * duration)
     frames = np.zeros((frame_count, led_count), dtype=float)
+    one_sweep = frames.copy()
     null_pos = Position.from_cartesian(0, 2, 0) # off the top of the tree
     pos = np.asarray([
         (pos.x, pos.y, pos.z)
         for led in range(led_count)
         for pos in (positions[led] if led in positions else null_pos,)
     ], dtype=float)
+    y_range = (
+        pos[:, 1].min(),
+        pos[:, 1].max(where=pos[:, 1] < 2, initial=0)
+    )
     slant = m.radians(slant)
     angle = m.radians(angle)
 
@@ -197,16 +206,23 @@ def sweep_by_pos(led_count, fps, positions, angle, slant, color, speed):
         m.sin(slant) * m.sin(angle),  # c
     ], dtype=float)
     sqrsum = (abc**2).sum()
-    # We sweep from -0.1 to 1.1 so that LEDs will actually fade to black; the
-    # plane sweeps "off the end" far enough that even LEDs at the extremes are
-    # no longer "close enough to the plane" to be lit
+    # We sweep from y_min-0.1 to y_max+0.1 so that LEDs will actually fade to
+    # black; the plane sweeps "off the end" far enough that even LEDs at the
+    # extremes are no longer "close enough to the plane" to be lit
     D = np.fromiter((
-        t * sqrsum for t in np.linspace(-0.1, 1.1, frame_count, endpoint=False)
+        t * sqrsum
+        for t in np.linspace(y_range[0] - 0.1, y_range[1] + 0.1,
+                             frame_count, endpoint=False)
     ), dtype=float)
     for frame, d in enumerate(D):
-        frames[frame, :] = (
+        one_sweep[frame, :] = (
             1 - 10 * (np.abs((abc * pos).sum(axis=1) - d) / m.sqrt(sqrsum))
         ).clip(0, 1)
+
+    offsets = np.linspace(0, frame_count, planes, endpoint=False, dtype=int)
+    for offset in offsets:
+        frames[...] += np.roll(one_sweep, offset, axis=0)
+    frames = frames.clip(0, 1)
 
     return [[color * Lightness(led) for led in frame] for frame in frames]
 

@@ -146,6 +146,7 @@ class Param(namedtuple('Param', (
             int(value) if self.input_type == 'range' else
             float(value) if self.input_type == 'number' else
             Color(value) if self.input_type == 'color' else
+            bool(value) if self.input_type == 'checkbox' else
             str(value))
 
 

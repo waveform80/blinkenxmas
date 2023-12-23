@@ -49,25 +49,6 @@ def pairwise(it):
     return zip(a, b)
 
 
-def wrap_window(it, n):
-    """
-    Given an iterable *it*, yields a sliding window of size *n* over that
-    sequence. The final yields will wrap around to the start of the sequence.
-    For example: wrap_window('ABCDEF', 3) --> ABC BCD CDE DEF EFA FAB
-    """
-    d = deque(maxlen=n)
-    buf = []
-    for i in it:
-        d.append(i)
-        if len(d) == n:
-            yield tuple(d)
-        else:
-            buf.append(i)
-    while buf:
-        d.append(buf.pop(0))
-        yield tuple(d)
-
-
 def preview(anim):
     """
     On a true-color capable terminal, print a line per frame of the specified

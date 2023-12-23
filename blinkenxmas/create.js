@@ -4,9 +4,17 @@ function initCreateForm(form) {
     if ((evt.target.nodeName != 'BUTTON') && (evt.target !== dataArea))
       form.dataset.changed = 1;
   });
+  form.elements['name'].addEventListener('input', (evt) => createOrUpdate(form));
   form.elements['animation'].addEventListener('change', (evt) => setupCreateForm(form));
   form.elements['preview'].addEventListener('click', (evt) => doPreview(form));
   form.elements['create'].addEventListener('click', (evt) => doCreate(form));
+}
+
+function createOrUpdate(form) {
+  if (presets.includes(form.elements['name'].value))
+    form.elements['create'].value = 'Update';
+  else
+    form.elements['create'].value = 'Create';
 }
 
 function setupCreateForm(form) {
@@ -45,6 +53,7 @@ function setupCreateForm(form) {
     let params = animations[animation][3];
 
     nameInput.defaultValue = animations[animation][0];
+    createOrUpdate(form);
     if (animations[animation][1]) {
       descElem.innerHTML = animations[animation][1];
       descElem.hidden = false;

@@ -28,6 +28,7 @@
 
   <div tal:omit-tag="1" metal:fill-slot="scripts">
     <script>var animations=${structure: json(animations)};</script>
+    <script>var presets=${structure: json(list(store.presets))};</script>
     <script src="/messages.js"></script>
     <script src="/create.js"></script>
     <script>initCreateForm(document.forms[0]);</script>

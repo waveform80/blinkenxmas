@@ -26,6 +26,15 @@ def get_messages(request):
         body=json.dumps(request.server.messages.drain()))
 
 
+@route('/presets.json', 'GET')
+def get_presets(request):
+    """
+    This handler returns the list of defined presets as a JSON array.
+    """
+    return HTTPResponse(request, mime_type='application/json',
+                        body=json.dumps(list(request.store.presets)))
+
+
 @route('/preset/<name>', 'GET')
 def get_preset(request, name):
     """

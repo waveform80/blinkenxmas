@@ -54,7 +54,7 @@
         </tr>
         <tr tal:condition="config.camera_type == 'picamera'">
           <td>Rotation</td>
-          <td>${config.camera_rotation}</td>
+          <td>${config.camera_rotation}°</td>
         </tr>
         <tr>
           <td>LEDs</td>

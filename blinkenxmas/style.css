@@ -45,6 +45,7 @@ canvas#preview-image {
 }
 
 input, select, textarea {
+    font-family: sans-serif;
     font-size: 1rem;
     margin-top: 0;
     width: 100%;

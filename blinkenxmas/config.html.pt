@@ -5,7 +5,6 @@
   </div>
 
   <article metal:fill-slot="content">
-    <p>Configuration details:</p>
     <table>
       <thead><tr><th>Setting</th><th>Value</th></tr></thead>
       <tbody>
@@ -73,7 +72,7 @@
     </table>
     <p class="buttons">
       <a class="button" href="index.html">Home</a>
-      <a tal:condition="request.server.camera" class="button" href="capture.html">
+      <a tal:attributes="href 'capture.html' if request.server.camera else None" class="button">
         <span tal:omit-tag="1" tal:condition="store.positions">Re-calibrate</span>
         <span tal:omit-tag="1" tal:condition="not store.positions">Calibrate</span>
       </a>

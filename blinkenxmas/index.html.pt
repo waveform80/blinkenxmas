@@ -19,6 +19,7 @@
         <a class="button" id="create" href="create.html">Create</a>
         <!-- TODO Implement manage.html for no-js operation -->
         <a class="button" id="manage" href="manage.html">Manage</a>
+        <a class="button" id="config" href="config.html">Configuration</a>
       </p>
     </form>
   </article>

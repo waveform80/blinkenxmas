@@ -108,6 +108,26 @@ abbr {
     text-decoration: none;
 }
 
+table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+}
+
+table thead th {
+    background: var(--link-base);
+    color: var(--link-fore);
+    text-align: left;
+    padding: 0.5rem;
+}
+
+table tbody td { padding: 0.25rem 0.5rem; }
+
+table thead th:first-child { border-radius: 5px 0 0 0; }
+table thead th:last-child { border-radius: 0 5px 0 0; }
+table tbody tr:nth-child(odd) td { background-color: var(--row-odd); }
+table tbody tr:nth-child(even) td { background-color: var(--row-even); }
+
 header {
     background: #b3deb1;
     background: linear-gradient(

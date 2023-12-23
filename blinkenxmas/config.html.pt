@@ -1,0 +1,92 @@
+<div metal:use-macro="layout">
+  <div tal:omit-tag="1" metal:fill-slot="title">Configuration</div>
+  <div tal:omit-tag="1" metal:fill-slot="head">
+    <meta name="description" content="Blinken' Xmas configuration details" />
+  </div>
+
+  <article metal:fill-slot="content">
+    <p>Configuration details:</p>
+    <table>
+      <thead><tr><th>Setting</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Web Server Version</td>
+          <td>${request.server_version}</td>
+        </tr>
+        <tr>
+          <td>Web Server Address</td>
+          <td>${config.httpd_bind}:${config.httpd_port}</td>
+        </tr>
+        <tr>
+          <td>Database Schema Version</td>
+          <td>${store.schema_version}</td>
+        </tr>
+        <tr>
+          <td>Database Path</td>
+          <td>${config.db}</td>
+        </tr>
+        <tr>
+          <td>MQTT Broker Address</td>
+          <td>${config.broker_address}:${config.broker_port}</td>
+        </tr>
+        <tr>
+          <td>MQTT Topic</td>
+          <td>${config.topic}</td>
+        </tr>
+        <tr>
+          <td>Camera</td>
+          <td>${config.camera_type}</td>
+        </tr>
+        <tr tal:condition="config.camera_type == 'gstreamer'">
+          <td>Camera Device</td>
+          <td>${config.camera_device}</td>
+        </tr>
+        <tr tal:condition="config.camera_type == 'files'">
+          <td>Camera Path</td>
+          <td>${config.camera_path}</td>
+        </tr>
+        <tr tal:condition="config.camera_type != 'none'">
+          <td>Capture Resolution</td>
+          <td>${'x'.join(str(axis) for axis in config.camera_capture)}</td>
+        </tr>
+        <tr tal:condition="config.camera_type != 'none'">
+          <td>Preview Resolution</td>
+          <td>${'x'.join(str(axis) for axis in config.camera_preview)}</td>
+        </tr>
+        <tr tal:condition="config.camera_type == 'picamera'">
+          <td>Rotation</td>
+          <td>${config.camera_rotation}</td>
+        </tr>
+        <tr>
+          <td>LEDs</td>
+          <td>${config.led_count} (${' + '.join(str(len(s)) for s in config.led_strips)})</td>
+        </tr>
+        <tr>
+          <td>Calibrated Positions</td>
+          <td>${len(store.positions)} (${round(len(store.positions) * 100 / config.led_count, 1)}%)</td>
+        </tr>
+        <tr>
+          <td>Framerate</td>
+          <td>${config.fps}fps</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="buttons">
+      <a class="button" href="index.html">Home</a>
+      <a tal:condition="request.server.camera" class="button" href="capture.html">
+        <span tal:omit-tag="1" tal:condition="store.positions">Re-calibrate</span>
+        <span tal:omit-tag="1" tal:condition="not store.positions">Calibrate</span>
+      </a>
+    </p>
+  </article>
+
+  <div tal:omit-tag="1" metal:fill-slot="scripts">
+    <script>var animations=${structure: json(animations)};</script>
+    <script>var presets=${structure: json(list(store.presets))};</script>
+    <script src="/messages.js"></script>
+    <script src="/create.js"></script>
+    <script>initCreateForm(document.forms[0]);</script>
+    <script>showMessages();</script>
+  </div>
+</div>
+

@@ -291,10 +291,10 @@ def rainbow_by_index(led_count, count, saturation, value):
     tree.
 
     Please note this does *not* use the scanned coordinates of the LEDs (see
-    "Rainbow" instead), so the effect will only appear to be a rainbow over the
-    height of the tree if the LEDs are laid out in numeric order, and/or the
-    "# Rainbows" parameter equals the number of (equal length) strips running
-    up the tree.
+    "Rainbow (by position)" instead), so the effect will only appear to be a
+    rainbow over the height of the tree if the LEDs are laid out in numeric
+    order, and/or the "# Rainbows" parameter equals the number of (equal
+    length) strips running up the tree.
     """
     return [[
         Color(h=led * count / led_count, s=(saturation / 10), v=(value / 10))
@@ -343,10 +343,10 @@ def scrolling_rainbow_by_index(led_count, fps, count, saturation, value, duratio
     rainbow up the height of the tree.
 
     Please note this does *not* use the scanned coordinates of the LEDs (see
-    "Rainbow" instead), so the effect will only appear to be a rainbow over the
-    height of the tree if the LEDs are laid out in numeric order, and/or the
-    "# Rainbows" parameter equals the number of (equal length) strips running
-    up the tree.
+    "Scrolling Rainbow (by position)" or "Spinning Rainbow" instead), so the
+    effect will only appear to be a rainbow over the height of the tree if the
+    LEDs are laid out in numeric order, and/or the "# Rainbows" parameter
+    equals the number of (equal length) strips running up the tree.
     """
     frame_count = int(fps * duration)
     return [

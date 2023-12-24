@@ -141,7 +141,9 @@ def generate_animation(request, name):
             if key in anim.params
             and isinstance(anim.params[key], Param)
         }
-        # Convert None for values missing from the submitted form
+        # Convert None for values missing from the submitted form; this is
+        # principally to support controls like "checkbox" which are absent from
+        # the submitted dataset when unchecked
         kwargs.update({
             key: param.value(None)
             for key, param in anim.params.items()

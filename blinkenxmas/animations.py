@@ -101,8 +101,8 @@ def gradient_by_pos(led_count, positions, bottom, top):
     run the calibration step to determine LED positions accurately.
     """
     black = Color('black')
-    indexes = np.linspace(*range_of(pos.y for pos in positions.values()))
-    gradient = list(top.gradient(bottom, steps=20))
+    indexes = np.linspace(*range_of(pos.y for pos in positions.values()), 50)
+    gradient = list(top.gradient(bottom, steps=50))
     return [[
         gradient[indexes.searchsorted(positions[led].y)]
         if led in positions else black

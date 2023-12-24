@@ -64,6 +64,11 @@ html_title = f'{project} {version} Documentation'
 html_static_path = ['_static']
 manpages_url = 'https://manpages.ubuntu.com/manpages/jammy/en/man{section}/{page}.{section}.html'
 
+# Hack to make wide tables work properly in RTD
+# See https://github.com/snide/sphinx_rtd_theme/issues/117 for details
+def setup(app):
+    app.add_css_file('style_override.css')
+
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_engine = 'xelatex'

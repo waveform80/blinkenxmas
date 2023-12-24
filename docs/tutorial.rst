@@ -7,6 +7,31 @@ tree, with multiple strands of neopixels attached to the Pico, and a Raspberry
 Pi with a camera module for the server to perform calibration on the positions.
 
 
+Skills List
+===========
+
+You will need to be comfortable doing the following:
+
+* Soldering, unless you buy a Pico WH with the headers pre-soldered
+
+* Crimping, unless all your LED strips have connectors suitable for a
+  breadboard pre-crimped onto them
+
+* Wiring a mains power lead to a power supply; this just means some wire in
+  some screw terminals, but you need to be confident you know which wires are
+  live, neutral, and ground. If you're not confident (and/or competent!) in
+  this, *please* get help from someone who is.
+
+* SSH'ing to a Linux command line, *preferably* using pub-key authentication
+
+* Running commands at a Linux command line
+
+* Editing a text configuration file from the Linux command line. Or at very
+  least being able to scp it off to a machine where you edit it and scp it
+  back, but given that there'll be some user switching involved you are *much*
+  better off just being able to edit things at the command line
+
+
 Shopping List
 =============
 
@@ -85,9 +110,11 @@ guesstimate that anything 80W+ should be sufficient.
 
 .. warning::
 
-    Please note that most of these supplies do not come with mains cables. You
-    will need to be comfortable wiring your own mains cable to this (kids: get
-    an adult to supervise)
+    Please note that most of these supplies do not come with mains cables. This
+    is why I included being comfortable with wiring mains cables to a power
+    supply in the skills list at the top. You will need to be confident that
+    you know which leads are live, neutral, and ground, when wiring this thing
+    up.
 
 
 Pi Setup
@@ -165,7 +192,7 @@ the end [#legacy]_:
 
 .. TODO Add the rest of config.txt and highlight these lines
 
-.. code-block:: conf
+.. code-block:: ini
 
     [all]
     start_x=1
@@ -192,7 +219,40 @@ strictly necessary and after a little while you should be able to just SSH to
 Pico Setup
 ==========
 
-Foo
+As on the Pi, the first thing to do with the Pico is get some software onto it.
+
+.. warning::
+
+    You are about to erase everything on your Pico W. If you've got any code
+    saved on there that you want to preserve, take a copy of it first.
+
+The first thing to load is a special MicroPython build which includes
+Pimoroni's fabulous "plasma" library. Grab the latest build from the
+`pimoroni-pico releases`_ page (for reference, I'm using 1.21.0, but I would
+hope later versions should work too). Specifically, you'll want the
+:file:`pimoroni-picow-vXXXX-micropython.uf2` build, for example
+`pimoroni-picow-v1.21.0-micropython.uf2
+<https://github.com/pimoroni/pimoroni-pico/releases/download/v1.21.0/pimoroni-picow-v1.21.0-micropython.uf2>`_.
+
+Find a micro-USB cable suitable for connecting your Pico W to your computer,
+but don't connect it just yet! Plug one end of the cable into your computer,
+then hold down the "BOOTSEL" button on the Pico W while inserting the other end
+of the cable into the Pico W. Continue holding the button for about a second
+after you've inserted the cable. This procedure puts the Pico into a mode where
+you can re-flash it.
+
+Shortly after, you should see the drive "RPI-RP2" appear. Copy the
+pimoroni-pico firmware you downloaded (the
+:file:`pimoroni-pico-vXXXX-micropython.uf2` file) to this drive. It should take
+a few seconds to copy, then a brief time later you should see the drive
+disappear again. This indicates the Pico W has accepted the firmware and has
+rebooted into MicroPython.
+
+
+Pico, meet Pi!
+==============
+
+Unplug the Pico W from your computer, and plug it into your Raspberry Pi.
 
 ----
 
@@ -207,6 +267,7 @@ Foo
 .. _my job: https://waldorf.waveform.org.uk/pages/about.html
 .. _rpi-imager: https://www.raspberrypi.com/software/
 .. _Avahi's mDNS: https://en.wikipedia.org/wiki/Multicast_DNS
+.. _pimoroni-pico releases: https://github.com/pimoroni/pimoroni-pico/releases
 
 .. [#pi5] Note this set up has *not* been tested on a Raspberry Pi 5, on
    which the legacy camera stack does not work. The gstreamer camera stack
@@ -217,7 +278,7 @@ Foo
    work on this model (but again, I should add a libcamera based option).
 
 .. [#webcam] Note that web-cams typically have *much* lower resolutions than
-   Raspberry Pi camera modules, and higher resolutions are much better for
+   Raspberry Pi camera modules, and higher resolutions are better for
    calibration.
 
 .. [#othermcu] This project won't work out of the box on other microcontrollers

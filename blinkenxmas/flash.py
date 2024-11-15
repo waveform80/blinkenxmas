@@ -19,7 +19,13 @@ except ImportError:
     from importlib import resources
 
 from serial.tools import list_ports
-from mpremote import pyboard
+# NOTE: The mpremote SerialTransport API is in flux. Currently it's call
+# compatible with the old Pyboard interface, but no guarantees for the future.
+# We may wind up having to shim this or requiring a base version of mpremote
+try:
+    from mpremote.transport_serial import SerialTransport
+except ImportError:
+    from mpremote.pyboard import Pyboard as SerialTransport
 
 from .config import get_config, get_parser, get_pico_config
 
@@ -48,9 +54,9 @@ def main(args=None):
         if not options.port.is_char_device():
             raise RuntimeError('serial port is not a character device')
 
-        pyb = pyboard.Pyboard(str(options.port), baudrate=115200)
+        board = SerialTransport(str(options.port), baudrate=115200)
         try:
-            pyb.enter_raw_repl()
+            board.enter_raw_repl()
             try:
                 with tempfile.TemporaryDirectory() as tmp_name:
                     tmp_path = Path(tmp_name)
@@ -66,12 +72,12 @@ def main(args=None):
                     (tmp_path / 'config.py').write_text(get_pico_config(config))
                     for file in tmp_path.iterdir():
                         print(f'Copying {file.name}')
-                        pyb.fs_put(str(file), file.name)
+                        board.fs_put(str(file), file.name)
             finally:
-                if pyb.in_raw_repl:
-                    pyb.exit_raw_repl()
+                if board.in_raw_repl:
+                    board.exit_raw_repl()
         finally:
-            pyb.close()
+            board.close()
 
     except KeyboardInterrupt:
         print('Interrupted', file=sys.stderr)

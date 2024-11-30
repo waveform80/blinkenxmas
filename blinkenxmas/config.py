@@ -111,6 +111,16 @@ def rotation(s):
 
 
 def strips(s):
+    """
+    Convert the :class:`str` *s*, which must contain a comma-separated list of
+    integers, into an iterable of :class:`range` objects, each containing a
+    number of elements specified by the input string. For example:
+
+        >>> list(strips('1,2,3'))
+        [range(0, 2), range(1, 3), range(3, 6)]
+        >>> list(strips('50,100'))
+        [range(0, 50), range(50, 150)]
+    """
     start = 0
     for count in map(int, s.split(',')):
         yield range(start, start + count)
@@ -119,10 +129,10 @@ def strips(s):
 
 def port(s):
     """
-    Convert the string *s* into a port number. The string may either contain
-    an integer representation (in which case the conversion is trivial, or
-    a port name, in which case ``getservbyname`` will be used to convert it
-    to a port number (usually via NSS).
+    Convert the :class:`str` *s* into a port number. *s* may contain an integer
+    representation (in which case the conversion is trivial), or a :class:`str`
+    containing a registered port name, in which case ``getservbyname`` will be
+    used to convert it to a port number (usually via NSS).
     """
     try:
         return int(s)
@@ -131,7 +141,6 @@ def port(s):
             return socket.getservbyname(s)
         except OSError:
             raise ValueError(f'invalid service name or port number: {s}')
-
 
 
 def get_parser(config, **kwargs):

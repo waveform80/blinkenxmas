@@ -577,13 +577,16 @@ class HTTPThread(Thread):
     entry, and stop it (re-raising any exception that occurred during
     execution) on exit. This is the recommended method of running this thread.
 
-    :param queue.Queue queue:
-        The queue to submit animations to for transmission to the broker
-
     :param argparse.Namespace config:
         The application configuration
+
+    :param Messages messages:
+        A buffer for messages to be relayed to the user
+
+    :param queue.Queue queue:
+        The queue to submit animations to for transmission to the broker
     """
-    def __init__(self, queue, config):
+    def __init__(self, config, messages, queue):
         super().__init__(target=self.serve, daemon=True)
         mimetypes.init()
         HTTPServer.address_family, addr = get_best_family(
@@ -591,7 +594,7 @@ class HTTPThread(Thread):
         self.httpd = HTTPServer(addr[:2], HTTPRequestHandler)
         self.httpd.queue = queue
         self.httpd.config = config
-        self.httpd.messages = Messages()
+        self.httpd.messages = messages
         self.httpd.camera = {
             'none':      lambda config: None,
             'files':     cameras.FilesSource,

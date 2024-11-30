@@ -122,8 +122,9 @@ def route(pattern, command='GET'):
 
 Function = namedtuple('Function', ('name', 'description', 'function', 'params'))
 
+
 class Param(namedtuple('Param', (
-        'label', 'input_type', 'default', 'min', 'max', 'choices'))):
+        'label', 'input_type', 'default', 'min', 'max', 'choices', 'suffix'))):
     """
     Defines the associated parameter as being a user-configured value.
 
@@ -137,9 +138,9 @@ class Param(namedtuple('Param', (
     __slots__ = () # workaround python issue #24931
 
     def __new__(cls, label, input_type, *, default=None, min=None, max=None,
-                choices=None):
+                choices=None, suffix=None):
         return super(Param, cls).__new__(
-            cls, label, input_type, default, min, max, choices)
+            cls, label, input_type, default, min, max, choices, suffix)
 
     def value(self, value):
         return (

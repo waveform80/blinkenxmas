@@ -91,11 +91,18 @@ class ConfigArgumentParser(ArgumentParser):
 
 
 def resolution(s):
+    """
+    Convert the string *s* into a tuple of (width, height).
+    """
     width, height = (int(i) for i in s.lower().split('x', 1))
     return width, height
 
 
 def rotation(s):
+    """
+    Convert the string *s* into a rotation in degrees. Values which are not
+    multiples of 90 are rejected with :exc:`ValueError`.
+    """
     r = int(s) % 360
     if r not in (0, 90, 180, 270):
         raise ValueError(f'invalid rotation {s}; must be multiple of 90')
@@ -109,14 +116,21 @@ def strips(s):
         start += count
 
 
-def port(service):
+def port(s):
+    """
+    Convert the string *s* into a port number. The string may either contain
+    an integer representation (in which case the conversion is trivial, or
+    a port name, in which case ``getservbyname`` will be used to convert it
+    to a port number (usually via NSS).
+    """
     try:
-        return int(service)
+        return int(s)
     except ValueError:
         try:
-            return socket.getservbyname(service)
+            return socket.getservbyname(s)
         except OSError:
-            raise ValueError(f'invalid service name or port number: {service}')
+            raise ValueError(f'invalid service name or port number: {s}')
+
 
 
 def get_parser(config, **kwargs):

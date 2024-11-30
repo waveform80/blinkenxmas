@@ -26,9 +26,9 @@ except ImportError:
 # The locations to attempt to read the configuration from
 XDG_CONFIG_HOME = Path(os.environ.get('XDG_CONFIG_HOME', '~/.config'))
 CONFIG_LOCATIONS = (
+    Path('/usr/local/etc/blinkenxmas.conf'),
     Path('/etc/blinkenxmas.conf'),
     Path(XDG_CONFIG_HOME / 'blinkenxmas.conf'),
-    Path('~/.blinkenxmas.conf'),
 )
 
 # The set of keys within the configuration that represent paths and thus need

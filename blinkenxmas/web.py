@@ -60,9 +60,10 @@ def main(args=None):
             raise RuntimeError(
                 'No LED strips defined; please edit the configuration file')
         queue = Queue()
+        messages = httpd.Messages()
         with (
-            mqtt.MessageThread(queue, config) as message_task,
-            httpd.HTTPThread(queue, config) as httpd_task,
+            mqtt.MessageThread(config, queue) as message_task,
+            httpd.HTTPThread(config, messages, queue) as httpd_task,
         ):
             while True:
                 httpd_task.join(1)

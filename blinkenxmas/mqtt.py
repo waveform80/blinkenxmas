@@ -94,7 +94,7 @@ def render(animation, fps, chunk_size=chunk_size):
 class MessageThread(Thread):
     logger = logging.getLogger('mqtt')
 
-    def __init__(self, queue, config):
+    def __init__(self, config, queue):
         super().__init__(target=self.listen, daemon=True)
         self.queue = queue
         self.host = config.broker_address

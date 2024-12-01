@@ -1,4 +1,6 @@
 # Usual Python stuff
+.coverage
+build/
 *.egg-info/
 __pycache__/
 

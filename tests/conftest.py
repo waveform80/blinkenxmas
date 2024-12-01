@@ -20,14 +20,35 @@ from blinkenxmas import routes
 
 
 @pytest.fixture()
-def config(request, tmp_path):
+def config(request):
     result = argparse.Namespace()
 
-    result.db = str(tmp_path / '/presets.db')
-    result.production = False
     result.broker_adddress = 'broker'
     result.broker_port = 1883
     result.topic = 'blinkenxmas'
+
+    result.led_strips = [range(0, 50), range(50, 100), range(100, 150)]
+    result.led_count = 150
+    result.fps = 60
+
+    return result
+
+
+@pytest.fixture()
+def web_config(request, config, tmp_path):
+    result = config
+
+    result.httpd_bind = '127.0.0.1'
+    result.httpd_port = 8000
+    result.production = False
+    result.db = str(tmp_path / 'presets.db')
+
+    result.camera_type = 'none'
+    result.camera_path = str(tmp_path)
+    result.camera_device = '/dev/video0'
+    result.camera_capture = (960, 720)
+    result.camera_preview = (640, 480)
+    result.camera_rotation = 0
 
     return result
 
@@ -51,13 +72,12 @@ def no_routes(request):
 
 @pytest.fixture()
 def server_factory(request):
-    def factory(config, messages=None, preview=None, recordings=None,
-                recorder=None):
+    def factory(config, messages=None, queue=None):
         if messages is None:
             messages = mock.Mock()
-        return HTTPThread(
-            config, messages=messages, preview=preview,
-            recordings=recordings, recorder=recorder)
+        if queue is None:
+            queue = mock.Mock()
+        return HTTPThread(config, messages, queue)
     return factory
 
 

@@ -514,6 +514,7 @@ FOO\r
 Content-Range: bytes 6-8/13\r
 \r
 BAZ\r
+--BOUNDARY--\r
 """.encode('utf-8')
 
 
@@ -540,6 +541,7 @@ Content-Type: text/plain\r
 Content-Range: bytes 6-8/13\r
 \r
 BAZ\r
+--BOUNDARY--\r
 """.encode('utf-8')
 
 

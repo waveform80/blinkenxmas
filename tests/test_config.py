@@ -90,7 +90,7 @@ def test_configargparser_bad_grouped_opts():
 
 
 def test_port():
-    with mock.patch('hamstercam.config.socket') as socket:
+    with mock.patch('blinkenxmas.config.socket') as socket:
         def myget(s):
             try:
                 return {
@@ -117,69 +117,9 @@ def test_boolean():
         boolean('foo')
 
 
-def test_duration():
-    assert duration('1d, 6h') == relativedelta(days=1, hours=6)
-    assert duration('1 month') == relativedelta(months=1)
-    assert duration('1hr 30mins 5secs') == relativedelta(hours=1, minutes=30, seconds=5)
-    assert duration('1yr, 1m, 1wk, 1d, 1hr, 1mi, 1s, 1ms, 1us') == relativedelta(years=1, months=1, days=8, hours=1, minutes=1, seconds=1, microseconds=1001)
-    with pytest.raises(ValueError):
-        duration('foo')
-
-
-def test_disk_space():
-    assert disk_space('25%') == 0.25
-    assert disk_space('1MB') == 1000000
-    assert disk_space('12345678') == 12345678
-    assert disk_space('123B') == 123
-    with pytest.raises(ValueError):
-        disk_space('foo')
-    with pytest.raises(ValueError):
-        disk_space('250%')
-    with pytest.raises(ValueError):
-        disk_space('-1MB')
-
-
-def test_schedule():
-    assert schedule('') == {
-        (weekday, hour): Recorder.on_motion
-        for weekday in range(1, 8)
-        for hour in range(24)
-    }
-    assert schedule('* * on-motion') == {
-        (weekday, hour): Recorder.on_motion
-        for weekday in range(1, 8)
-        for hour in range(24)
-    }
-    assert schedule('* * on-motion, * 09-10 always, Sat-Sun * never') == {
-        (weekday, hour):
-            Recorder.never if 6 <= weekday <= 7 else
-            Recorder.always if 9 <= hour <= 10 else
-            Recorder.on_motion
-        for weekday in range(1, 8)
-        for hour in range(24)
-    }
-    assert schedule(['* * on-motion', '* 9 always', 'Sat * never']) == {
-        (weekday, hour):
-            Recorder.never if weekday == 6 else
-            Recorder.always if hour == 9 else
-            Recorder.on_motion
-        for weekday in range(1, 8)
-        for hour in range(24)
-    }
-    assert schedule("""
-        * * on-motion
-        Mon-Fri 9-17 never
-        """) == {
-        (weekday, hour):
-            Recorder.never if 1 <= weekday <= 5 and 9 <= hour <= 17 else
-            Recorder.on_motion
-        for weekday in range(1, 8)
-        for hour in range(24)
-    }
-
-
 def test_get_parser(capsys):
-    parser = get_parser(description="Foo!")
+    config = get_config()
+    parser = get_parser(config, description="Foo!")
     with suppress(SystemExit):
         parser.parse_args(['--help'])
     help_text = capsys.readouterr()
@@ -191,31 +131,30 @@ def test_get_parser(capsys):
 def test_get_config():
     config = get_config()
     assert set(config.sections()) == {
-        'camera',
-        'gpio',
-        'motion',
-        'recordings',
-        'storage',
+        'mqtt',
         'web',
+        'wifi',
+        'pico',
+        'camera',
     }
 
 
 def test_get_config_path_resolution(tmp_path):
-    mock_conf = tmp_path / 'hamstercam.conf'
+    mock_conf = tmp_path / 'blinkenxmas.conf'
     (tmp_path / 'videos').mkdir()
-    with mock.patch('hamstercam.config.CONFIG_LOCATIONS', [mock_conf]):
+    with mock.patch('blinkenxmas.config.CONFIG_LOCATIONS', [mock_conf]):
         mock_conf.write_text(dedent("""
-            [storage]
-            min_free = 10%
-            path = videos
+            [web]
+            port = 8000
+            database = presets.db
             """))
         config = get_config()
-        assert config['storage']['path'] == str(tmp_path / 'videos')
+        assert config['web']['database'] == str(tmp_path / 'presets.db')
 
 
 def test_get_bad_config(tmp_path):
-    mock_conf = tmp_path / 'hamstercam.conf'
-    with mock.patch('hamstercam.config.CONFIG_LOCATIONS', [mock_conf]):
+    mock_conf = tmp_path / 'blinkenxmas.conf'
+    with mock.patch('blinkenxmas.config.CONFIG_LOCATIONS', [mock_conf]):
         mock_conf.write_text(dedent("""
             [bad_section]
             path = ~/videos

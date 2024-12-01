@@ -24,8 +24,8 @@ def test_get_best_family():
             get_best_family('foo', 8000)
 
 
-def test_httpd_exception(config, server_factory, no_routes):
-    server = server_factory(config)
+def test_httpd_exception(web_config, server_factory, no_routes):
+    server = server_factory(web_config)
     server.httpd.socket = mock.Mock(server.httpd.socket, autospec=True)
     server.httpd.socket.getsockname.side_effect = socket.gaierror()
     with pytest.raises(socket.gaierror):
@@ -33,9 +33,9 @@ def test_httpd_exception(config, server_factory, no_routes):
             pass
 
 
-def test_static_HEAD(config, server_factory, no_routes, client_factory):
+def test_static_HEAD(web_config, server_factory, no_routes, client_factory):
     style_css = resources.files('blinkenxmas') / 'style.css'
-    with server_factory(config) as server:
+    with server_factory(web_config) as server:
         client = client_factory(server)
         client.request('HEAD', '/style.css')
         resp = client.getresponse()
@@ -46,10 +46,10 @@ def test_static_HEAD(config, server_factory, no_routes, client_factory):
         assert int(resp.headers['Content-Length']) == style_css.stat().st_size
 
 
-def test_static_GET(config, server_factory, no_routes, client_factory):
+def test_static_GET(web_config, server_factory, no_routes, client_factory):
     style_css = resources.files('blinkenxmas') / 'style.css'
     expected = style_css.read_bytes()
-    with server_factory(config) as server:
+    with server_factory(web_config) as server:
         client = client_factory(server)
         client.request('GET', '/style.css')
         resp = client.getresponse()
@@ -60,10 +60,10 @@ def test_static_GET(config, server_factory, no_routes, client_factory):
         assert int(resp.headers['Content-Length']) == len(expected)
 
 
-def test_static_GET_cached(config, server_factory, no_routes, client_factory):
+def test_static_GET_cached(web_config, server_factory, no_routes, client_factory):
     style_css = resources.files('blinkenxmas') / 'style.css'
     expected = style_css.read_bytes()
-    with server_factory(config) as server:
+    with server_factory(web_config) as server:
         client = client_factory(server)
         client.request('GET', '/style.css', headers={
             'If-Modified-Since': eut.format_datetime(
@@ -74,10 +74,10 @@ def test_static_GET_cached(config, server_factory, no_routes, client_factory):
         assert resp.headers['Content-Type'] == 'text/css'
 
 
-def test_static_ignores_POST(config, server_factory, no_routes, client_factory):
+def test_static_ignores_POST(web_config, server_factory, no_routes, client_factory):
     style_css = resources.files('blinkenxmas') / 'style.css'
     expected = style_css.read_bytes()
-    with server_factory(config) as server:
+    with server_factory(web_config) as server:
         client = client_factory(server)
         client.request('POST', '/style.css', headers={
             'Content-Type': 'application/x-www-form-urlencoded'})
@@ -86,10 +86,10 @@ def test_static_ignores_POST(config, server_factory, no_routes, client_factory):
         assert resp.status == 404
 
 
-def test_static_bad_POST(config, server_factory, no_routes, client_factory):
+def test_static_bad_POST(web_config, server_factory, no_routes, client_factory):
     style_css = resources.files('blinkenxmas') / 'style.css'
     expected = style_css.read_bytes()
-    with server_factory(config) as server:
+    with server_factory(web_config) as server:
         client = client_factory(server)
         client.request('POST', '/style.css', headers={
             'Content-Type': 'application/json'})
@@ -98,8 +98,8 @@ def test_static_bad_POST(config, server_factory, no_routes, client_factory):
         assert resp.status == 400
 
 
-def test_static_not_found(config, server_factory, no_routes, client_factory):
-    with server_factory(config) as server:
+def test_static_not_found(web_config, server_factory, no_routes, client_factory):
+    with server_factory(web_config) as server:
         client = client_factory(server)
         client.request('GET', '/i-dont-exist.css')
         resp = client.getresponse()
@@ -107,8 +107,8 @@ def test_static_not_found(config, server_factory, no_routes, client_factory):
         assert resp.status == 404
 
 
-def test_template_HEAD(config, server_factory, no_routes, client_factory):
-    with server_factory(config) as server:
+def test_template_HEAD(web_config, server_factory, no_routes, client_factory):
+    with server_factory(web_config) as server:
         client = client_factory(server)
         client.request('HEAD', '/index.html')
         resp = client.getresponse()
@@ -118,9 +118,9 @@ def test_template_HEAD(config, server_factory, no_routes, client_factory):
         assert resp.headers['Content-Type'] == 'text/html'
 
 
-def test_template_GET_empty_index(config, server_factory, no_routes,
+def test_template_GET_empty_index(web_config, server_factory, no_routes,
                                   client_factory):
-    with server_factory(config) as server:
+    with server_factory(web_config) as server:
         client = client_factory(server)
         client.request('GET', '/index.html')
         resp = client.getresponse()
@@ -132,29 +132,8 @@ def test_template_GET_empty_index(config, server_factory, no_routes,
         assert not find(('<h2>', 'Recordings', '</h2>'), body)
 
 
-def test_template_GET_page_2(config, server_factory, no_routes, client_factory,
-                             recordings_factory):
-    recordings = recordings_factory(30)
-    with server_factory(config, recordings=recordings) as server:
-        client = client_factory(server)
-        client.request('GET', '/index.html?page=2')
-        resp = client.getresponse()
-        body = list(split(resp))
-        assert resp.status == 200
-        assert 'immutable' not in resp.headers['Cache-Control']
-        assert resp.headers['Content-Type'] == 'text/html'
-        assert not find(('<p>', 'No recordings yet!', '</p>'), body)
-        assert find(('<h2>', 'Recordings', '</h2>'), body)
-        assert find((
-            '<ul id="pages">',
-            '<li>', 'Pages', '</li>',
-            '<li>', '<a href="?page=1">', '1', '</a>', '</li>',
-            '<li>', '<a class="selected" href="?page=2">', '2', '</a>', '</li>'
-        ), body)
-
-
-def test_route_HEAD(config, server_factory, no_routes, client_factory):
-    with server_factory(config) as server:
+def test_route_HEAD(web_config, server_factory, no_routes, client_factory):
+    with server_factory(web_config) as server:
         @route('/')
         def home_redir(request):
             return HTTPResponse(
@@ -170,8 +149,8 @@ def test_route_HEAD(config, server_factory, no_routes, client_factory):
         assert body == b''
 
 
-def test_route_PUT_json(config, server_factory, no_routes, client_factory):
-    with server_factory(config) as server:
+def test_route_PUT_json(web_config, server_factory, no_routes, client_factory):
+    with server_factory(web_config) as server:
         data = None
 
         @route('/config.json', 'PUT')
@@ -192,8 +171,8 @@ def test_route_PUT_json(config, server_factory, no_routes, client_factory):
         assert data == expected
 
 
-def test_route_DELETE(config, server_factory, no_routes, client_factory):
-    with server_factory(config) as server:
+def test_route_DELETE(web_config, server_factory, no_routes, client_factory):
+    with server_factory(web_config) as server:
         @route('/to-delete', 'DELETE')
         def configure(request):
             return HTTPResponse(request, status_code=HTTPStatus.NO_CONTENT)
@@ -206,9 +185,9 @@ def test_route_DELETE(config, server_factory, no_routes, client_factory):
         assert body == b''
 
 
-def test_route_PUT_json_bad_len(config, server_factory, no_routes,
+def test_route_PUT_json_bad_len(web_config, server_factory, no_routes,
                                 client_factory):
-    with server_factory(config) as server:
+    with server_factory(web_config) as server:
         data = None
 
         @route('/config.json', 'PUT')
@@ -234,10 +213,10 @@ def test_route_PUT_json_bad_len(config, server_factory, no_routes,
         assert data is None
 
 
-def test_route_broken_in_production(config, server_factory, no_routes,
+def test_route_broken_in_production(web_config, server_factory, no_routes,
                                     client_factory):
-    config.production = True
-    with server_factory(config) as server:
+    web_config.production = True
+    with server_factory(web_config) as server:
         @route('/')
         def home_redir(request):
             return HTTPResponse(
@@ -258,15 +237,15 @@ def test_route_broken_in_production(config, server_factory, no_routes,
         assert not server.join(0)
 
 
-def test_route_broken_in_development(config, server_factory, no_routes,
+def test_route_broken_in_development(web_config, server_factory, no_routes,
                                      client_factory):
-    config.production = False
+    web_config.production = False
 
     class BrokenRoute(Exception):
         pass
 
     with pytest.raises(BrokenRoute):
-        with server_factory(config) as server:
+        with server_factory(web_config) as server:
             @route('/')
             def home_redir(request):
                 return HTTPResponse(
@@ -285,9 +264,9 @@ def test_route_broken_in_development(config, server_factory, no_routes,
             assert not server.is_alive()
 
 
-def test_route_fallthru(config, server_factory, client_factory, no_routes):
+def test_route_fallthru(web_config, server_factory, client_factory, no_routes):
     config.production = True
-    with server_factory(config) as server:
+    with server_factory(web_config) as server:
         @route('/broken.html')
         def broken_route(request):
             return None

@@ -22,32 +22,46 @@ def get_web_parser():
     config = get_config()
     parser = get_parser(config, description=__doc__)
 
-    parser.add_argument(
-        '--httpd-bind', section='web', key='bind', metavar='ADDR',
+    web_section = parser.add_argument_group('web', section='web')
+    web_section.add_argument(
+        '--httpd-bind', key='bind', metavar='ADDR',
         help="the address on which to listen for HTTP requests. Default: "
         "%(default)s")
-    parser.add_argument(
-        '--httpd-port', section='web', key='port',
-        type=port, metavar='PORT',
+    web_section.add_argument(
+        '--httpd-port', key='port', type=port, metavar='PORT',
         help="the port to listen for HTTP requests. Default: %(default)s")
+    web_section.add_argument(
+        '--no-production', dest='production', section='web', key='production',
+        action='store_false')
+    web_section.add_argument(
+        '--production', section='web', key='production', action='store_true',
+        help="If specified, run in production mode where an internal server "
+        "error will not terminate the server and will not output a stack "
+        "trace (default: no)")
+    web_section.add_argument(
+        '--db', metavar='FILE', key='database',
+        help="the SQLite database to store presets in. Default: %(default)s")
 
-    parser.add_argument(
-        '--camera-type', section='camera', key='type', default='none',
-        choices={'none', 'files', 'picamera', 'gstreamer'}, help=SUPPRESS)
-    parser.add_argument(
-        '--camera-path', section='camera', key='path', type=Path, help=SUPPRESS)
-    parser.add_argument(
-        '--camera-device', section='camera', key='device',
-        default='/dev/video0', type=Path, help=SUPPRESS)
-    parser.add_argument(
-        '--camera-capture', section='camera', key='capture',
-        default='960x720', type=resolution, help=SUPPRESS)
-    parser.add_argument(
-        '--camera-preview', section='camera', key='preview',
-        default='640x480', type=resolution, help=SUPPRESS)
-    parser.add_argument(
-        '--camera-rotation', section='camera', key='rotate',
-        default='0', type=rotation, help=SUPPRESS)
+    camera_section = parser.add_argument_group(section='camera')
+    camera_section.add_argument(
+        '--camera-type', key='type', default='none',
+        choices={'none', 'files', 'picamera', 'gstreamer'},
+        help=SUPPRESS)
+    camera_section.add_argument(
+        '--camera-path', key='path', type=Path,
+        help=SUPPRESS)
+    camera_section.add_argument(
+        '--camera-device', key='device', default='/dev/video0', type=Path,
+        help=SUPPRESS)
+    camera_section.add_argument(
+        '--camera-capture', key='capture', default='960x720', type=resolution,
+        help=SUPPRESS)
+    camera_section.add_argument(
+        '--camera-preview', key='preview', default='640x480', type=resolution,
+        help=SUPPRESS)
+    camera_section.add_argument(
+        '--camera-rotation', key='rotate', default='0', type=rotation,
+        help=SUPPRESS)
 
     parser.set_defaults_from(config)
     return parser

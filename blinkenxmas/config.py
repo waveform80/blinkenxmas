@@ -139,6 +139,22 @@ class ConfigArgumentParser(ArgumentParser):
         }
 
 
+def port(s):
+    """
+    Convert the :class:`str` *s* into a port number. *s* may contain an integer
+    representation (in which case the conversion is trivial), or a :class:`str`
+    containing a registered port name, in which case ``getservbyname`` will be
+    used to convert it to a port number (usually via NSS).
+    """
+    try:
+        return int(s)
+    except ValueError:
+        try:
+            return socket.getservbyname(s)
+        except OSError:
+            raise ValueError(f'invalid service name or port number: {s}')
+
+
 def boolean(s):
     """
     Convert the string *s* to a :class:`bool`. A typical set of case
@@ -199,49 +215,22 @@ def strips(s):
         start += count
 
 
-def port(s):
-    """
-    Convert the :class:`str` *s* into a port number. *s* may contain an integer
-    representation (in which case the conversion is trivial), or a :class:`str`
-    containing a registered port name, in which case ``getservbyname`` will be
-    used to convert it to a port number (usually via NSS).
-    """
-    try:
-        return int(s)
-    except ValueError:
-        try:
-            return socket.getservbyname(s)
-        except OSError:
-            raise ValueError(f'invalid service name or port number: {s}')
-
-
 def get_parser(config, **kwargs):
     parser = ConfigArgumentParser(**kwargs)
     parser.add_argument(
         '--version', action='version', version=version('blinkenxmas'))
-    parser.add_argument(
-        '--db', metavar='FILE',
-        section='web', key='database',
-        help="the SQLite database to store presets in. Default: %(default)s")
-    parser.add_argument(
-        '--no-production', dest='production', section='web', key='production',
-        action='store_false')
-    parser.add_argument(
-        '--production', section='web', key='production', action='store_true',
-        help="If specified, run in production mode where an internal server "
-        "error will not terminate the server and will not output a stack "
-        "trace (default: no)")
-    parser.add_argument(
-        '--broker-address', section='mqtt', key='host', metavar='ADDR',
+
+    mqtt_section = parser.add_argument_group('mqtt', section='mqtt')
+    mqtt_section.add_argument(
+        '--broker-address', key='host', metavar='ADDR',
         help="the address on which to find the MQTT broker. Default: "
         "%(default)s")
-    parser.add_argument(
-        '--broker-port', section='mqtt', key='port',
-        type=port, metavar='ADDR',
-        help="the address on which to find the MQTT broker. Default: "
+    mqtt_section.add_argument(
+        '--broker-port', key='port', type=port, metavar='NUM',
+        help="the port on which to find the MQTT broker. Default: "
         "%(default)s")
-    parser.add_argument(
-        '--topic', section='mqtt', key='topic',
+    mqtt_section.add_argument(
+        '--topic', key='topic',
         help="the topic on which the Pico W is listening for messages. "
         "Default: %(default)s")
 

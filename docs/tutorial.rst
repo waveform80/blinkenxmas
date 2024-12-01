@@ -55,15 +55,14 @@ way:
 * A power supply for your Pi; micro-USB for models older than the 4B, USB-C for
   the 4B or later
 
-* A `Pico W`_ or a Pico WH; note you need the WiFi capable variant (not the
-  bare Pico), and that this project relies on the Pico's specific capabilities
-  [#othermcu]_
+* A `Pico W`_, or some variant thereof (including a `Pico 2W`_, `Pico Plus
+  2W`_, etc.); note you need a WiFi capable variant (not the bare Pico), and
+  that this project relies on the Pico's specific capabilities [#othermcu]_
 
-* A `breadboard`_, `stripboard`_, or `protoboard`_ large enough to mount your
-  Pico and all associated wiring
+* A `breadboard`_, `stripboard`_, or protoboard large enough to mount your Pico
+  and all associated wiring
 
-* `Jumper leads`_ for the breadboard (or solid-core wire for those that like
-  neatness!)
+* `Jumper leads`_ (breadboards only) or solid-core wire (all board types)
 
 * A 5V power supply capable of driving the Pico (easy) and all your neopixels
   (harder); a typical micro-USB supply is *not* going to cut the mustard here
@@ -159,8 +158,8 @@ Pi Setup
 We'll start with the Pi side of things as that's relatively easy. I'll be using
 `Ubuntu for the Raspberry Pi`_ rather than the more common RaspiOS mostly
 because it's what I'm more familiar with [#job]_. More specifically, I'll be
-using the 32-bit armhf variant because the legacy camera stack doesn't work on
-arm64 [#raspios]_.
+using the 32-bit armhf variant of 22.04 because the legacy camera stack doesn't
+work on arm64 [#raspios]_ or on the later versions of Ubuntu.
 
 #. Insert your SD card into your computer, download `rpi-imager`_ (if you
    haven't got it already), and start it.
@@ -226,9 +225,49 @@ following, changing the commented values as appropriate:
 Finally, open the :file:`config.txt` file and append the highlighted lines to
 the end [#legacy]_:
 
-.. TODO Add the rest of config.txt and highlight these lines
-
 .. code-block:: ini
+    :emphasize-lines: 43-44
+
+    [all]
+    kernel=vmlinuz
+    cmdline=cmdline.txt
+    initramfs initrd.img followkernel
+
+    [pi4]
+    max_framebuffers=2
+    arm_boost=1
+
+    [all]
+    # Enable the audio output, I2C and SPI interfaces on the GPIO header. As these
+    # parameters related to the base device-tree they must appear *before* any
+    # other dtoverlay= specification
+    dtparam=audio=on
+    dtparam=i2c_arm=on
+    dtparam=spi=on
+
+    # Comment out the following line if the edges of the desktop appear outside
+    # the edges of your display
+    disable_overscan=1
+
+    # If you have issues with audio, you may try uncommenting the following line
+    # which forces the HDMI output into HDMI mode instead of DVI (which doesn't
+    # support audio output)
+    #hdmi_drive=2
+
+    # Enable the serial pins
+    enable_uart=1
+
+    # Autoload overlays for any recognized cameras or displays that are attached
+    # to the CSI/DSI ports. Please note this is for libcamera support, *not* for
+    # the legacy camera stack
+    camera_auto_detect=1
+    display_auto_detect=1
+
+
+    [cm4]
+    # Enable the USB2 outputs on the IO board (assuming your CM4 is plugged into
+    # such a board)
+    dtoverlay=dwc2,dr_mode=host
 
     [all]
     start_x=1
@@ -263,26 +302,33 @@ As on the Pi, the first thing to do with the Pico is get some software onto it.
     saved on there that you want to preserve, take a copy of it first.
 
 The first thing to load is a special MicroPython build which includes
-Pimoroni's fabulous "plasma" library. Grab the latest build from the
-`pimoroni-pico releases`_ page (for reference, I'm using 1.21.0, but I would
-hope later versions should work too). Specifically, you'll want the
-:file:`pimoroni-picow-vXXXX-micropython.uf2` build, for example
-`pimoroni-picow-v1.21.0-micropython.uf2
-<https://github.com/pimoroni/pimoroni-pico/releases/download/v1.21.0/pimoroni-picow-v1.21.0-micropython.uf2>`_.
+Pimoroni's fabulous "plasma" library. One of the following should suffice,
+depending on your model of Pico:
 
-Find a micro-USB cable suitable for connecting your Pico W to your computer,
-but don't connect it just yet! Plug one end of the cable into your computer,
-then hold down the "BOOTSEL" button on the Pico W while inserting the other end
-of the cable into the Pico W. Continue holding the button for about a second
-after you've inserted the cable. This procedure puts the Pico into a mode where
-you can re-flash it.
+2040-based Pico W
+    `pimoroni-pico releases`_
+
+2350-based Pico 2W
+    `pimoroni-pico-rp2350 releases`_
+
+For reference, I've used pimoroni-pico 1.21.0 on a Pico W, and
+pimoroni-pico-rp2350 0.0.10 on a `Pico Plus 2W`_, but you should probably just
+grab the latest build for your specific board. The file should have a name
+something like :file:`{board}-{version}-pimoroni-micropython.uf2`.
+
+Find a cable suitable for connecting your Pico to your computer, but don't
+connect it just yet! Plug one end of the cable into your computer, then hold
+down the "BOOTSEL" button on the Pico while inserting the other end of the
+cable into the Pico. Continue holding the button for about a second after
+you've inserted the cable. This procedure puts the Pico into a mode where you
+can re-flash it.
 
 Shortly after, you should see the drive "RPI-RP2" appear. Copy the
 pimoroni-pico firmware you downloaded (the
-:file:`pimoroni-pico-vXXXX-micropython.uf2` file) to this drive. It should take
-a few seconds to copy, then a brief time later you should see the drive
-disappear again. This indicates the Pico W has accepted the firmware and has
-rebooted into MicroPython.
+:file:`{board}-{version}-pimoroni-micropython.uf2` file) to this drive. It
+should take a few seconds to copy, then a brief time later you should see the
+drive disappear again. This indicates the Pico has accepted the firmware and
+has rebooted into MicroPython.
 
 
 Pico, meet Pi!
@@ -294,7 +340,10 @@ Unplug the Pico W from your computer, and plug it into your Raspberry Pi.
 
 .. _3B+: https://www.raspberrypi.com/products/raspberry-pi-3-model-b-plus/
 .. _Pico W: https://www.raspberrypi.com/products/raspberry-pi-pico/
+.. _Pico 2W: https://www.raspberrypi.com/products/raspberry-pi-pico-2/
+.. _Pico Plus 2W: https://shop.pimoroni.com/products/pimoroni-pico-plus-2-w
 .. _breadboard: https://en.wikipedia.org/wiki/Breadboard
+.. _stripboard: https://en.wikipedia.org/wiki/Stripboard
 .. _63-line breadboard: https://shop.pimoroni.com/products/solderless-breadboard-830-point
 .. _Jumper leads: https://shop.pimoroni.com/products/jumper-jerky
 .. _50-LED strands of RGB WS2812 neopixels: https://shop.pimoroni.com/products/5m-flexible-rgb-led-wire-50-rgb-leds-aka-neopixel-ws2812-sk6812
@@ -304,6 +353,7 @@ Unplug the Pico W from your computer, and plug it into your Raspberry Pi.
 .. _rpi-imager: https://www.raspberrypi.com/software/
 .. _Avahi's mDNS: https://en.wikipedia.org/wiki/Multicast_DNS
 .. _pimoroni-pico releases: https://github.com/pimoroni/pimoroni-pico/releases
+.. _pimoroni-pico-rp2350 releases: https://github.com/pimoroni/pimoroni-pico-rp2350/releases
 
 .. [#pi5] Note this set up has *not* been tested on a Raspberry Pi 5, on
    which the legacy camera stack does not work. The gstreamer camera stack

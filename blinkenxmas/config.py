@@ -1,6 +1,7 @@
 import os
 import socket
 from pathlib import Path
+from contextlib import suppress
 from fnmatch import fnmatchcase
 from itertools import accumulate, chain
 from argparse import ArgumentParser, SUPPRESS
@@ -59,11 +60,44 @@ class ConfigArgumentParser(ArgumentParser):
         arguments are parsed, the value assigned to this argument will be
         copied to the associated configuration entry.
         """
+        return self._add_config_action(
+            *args, method=super().add_argument, section=section, key=key,
+            **kwargs)
+
+    def add_argument_group(self, title=None, description=None, section=None):
+        """
+        Adds a new argument group object and returns it.
+
+        The new argument group will likewise accept *section* and *key*
+        parameters on its :meth:`add_argument` method. The *section* parameter
+        will default to the value of the *section* parameter passed to this
+        method (but may be explicitly overridden).
+        """
+        group = super().add_argument_group(title=title, description=description)
+        def add_argument(*args, section=section, key=None,
+                         _add_arg=group.add_argument, **kwargs):
+            return self._add_config_action(
+                *args, method=_add_arg, section=section, key=key, **kwargs)
+        group.add_argument = add_argument
+        return group
+
+    def _add_config_action(self, *args, method, section, key, **kwargs):
+        assert callable(method), 'method must be a callable'
         if (section is None) != (key is None):
             raise ValueError('section and key must be specified together')
-        action = super().add_argument(*args, **kwargs)
+        try:
+            if kwargs['action'] in ('store_true', 'store_false'):
+                type = boolean
+        except KeyError:
+            type = kwargs.get('type', str)
+        action = method(*args, **kwargs)
         if key is not None:
-            self._config_map[action.dest] = (section, key)
+            with suppress(KeyError):
+                if self._config_map[action.dest] != (section, key, type):
+                    raise ValueError(
+                        'section and key must match for all equivalent dest '
+                        'values')
+            self._config_map[action.dest] = (section, key, type)
         return action
 
     def set_defaults_from(self, config):
@@ -72,8 +106,11 @@ class ConfigArgumentParser(ArgumentParser):
         entries in *config*.
         """
         kwargs = {
-            dest: config[section][key]
-            for dest, (section, key) in self._config_map.items()
+            dest:
+                config.getboolean(section, key)
+                if type is boolean else
+                config[section][key]
+            for dest, (section, key, type) in self._config_map.items()
             if section in config
             and key in config[section]
         }
@@ -86,8 +123,44 @@ class ConfigArgumentParser(ArgumentParser):
         *config*. Note that namespace values will be converted to :class:`str`
         implicitly.
         """
-        for dest, (section, key) in self._config_map.items():
-            self._config[section][key] = str(getattr(namespace, dest))
+        for dest, (section, key, type) in self._config_map.items():
+            config[section][key] = str(getattr(namespace, dest))
+
+    def of_type(self, type):
+        """
+        Return a set of (section, key) tuples listing all configuration items
+        which were defined as being of the specified *type* (with the *type*
+        keyword passed to :meth:`add_argument`.
+        """
+        return {
+            (section, key)
+            for section, key, item_type in self._config_map.values()
+            if item_type is type
+        }
+
+
+def boolean(s):
+    """
+    Convert the string *s* to a :class:`bool`. A typical set of case
+    insensitive strings are accepted: "yes", "y", "true", "t", and "1" are
+    converted to :data:`True`, while "no", "n", "false", "f", and "0" convert
+    to :data:`False`. Other values will result in :exc:`ValueError`.
+    """
+    try:
+        return {
+            'n':     False,
+            'no':    False,
+            'f':     False,
+            'false': False,
+            '0':     False,
+            'y':     True,
+            'yes':   True,
+            't':     True,
+            'true':  True,
+            '1':     True,
+        }[str(s).strip().lower()]
+    except KeyError:
+        raise ValueError(f'invalid boolean value: {s}')
 
 
 def resolution(s):

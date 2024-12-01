@@ -1,11 +1,10 @@
 import os
 import socket
 from pathlib import Path
-from string import Template
 from fnmatch import fnmatchcase
 from itertools import accumulate, chain
 from argparse import ArgumentParser, SUPPRESS
-from configparser import RawConfigParser, ConfigParser
+from configparser import ConfigParser
 
 # NOTE: The fallback comes first here as Python 3.7 incorporates
 # importlib.resources but at a version incompatible with our requirements.

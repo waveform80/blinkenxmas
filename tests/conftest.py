@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest import mock
 from functools import wraps
 from queue import Queue, Empty
-from collections import namedtuple
+from collections import namedtuple, deque
 from html.parser import HTMLParser
 from http.client import HTTPConnection
 
@@ -39,7 +39,7 @@ def web_config(request, config, tmp_path):
     result = config
 
     result.httpd_bind = '127.0.0.1'
-    result.httpd_port = 8000
+    result.httpd_port = 0
     result.production = False
     result.db = str(tmp_path / 'presets.db')
 
@@ -132,6 +132,13 @@ def split(stream):
                 yield parser.queue.get(block=False)
             except Empty:
                 break
+
+def window(it, n):
+    d = deque(maxlen=n)
+    for item in it:
+        d.append(item)
+        if len(d) == n:
+            yield tuple(d)
 
 def find(pattern, content):
     for seq in window(content, len(pattern)):

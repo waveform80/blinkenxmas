@@ -92,7 +92,7 @@ def test_static_bad_POST(web_config, server_factory, no_routes, client_factory):
     with server_factory(web_config) as server:
         client = client_factory(server)
         client.request('POST', '/style.css', headers={
-            'Content-Type': 'application/json'})
+            'Content-Type': 'application/binary'})
         resp = client.getresponse()
         assert not resp.read()
         assert resp.status == 400
@@ -128,8 +128,8 @@ def test_template_GET_empty_index(web_config, server_factory, no_routes,
         assert resp.status == 200
         assert 'immutable' not in resp.headers['Cache-Control']
         assert resp.headers['Content-Type'] == 'text/html'
-        assert find(('<p>', 'No recordings yet!', '</p>'), body)
-        assert not find(('<h2>', 'Recordings', '</h2>'), body)
+        assert find(('<p>', 'No presets defined yet!', '</p>'), body)
+        assert not find(('<p>', 'Select from one of the following presets:', '</p>'), body)
 
 
 def test_route_HEAD(web_config, server_factory, no_routes, client_factory):
@@ -265,7 +265,7 @@ def test_route_broken_in_development(web_config, server_factory, no_routes,
 
 
 def test_route_fallthru(web_config, server_factory, client_factory, no_routes):
-    config.production = True
+    web_config.production = True
     with server_factory(web_config) as server:
         @route('/broken.html')
         def broken_route(request):

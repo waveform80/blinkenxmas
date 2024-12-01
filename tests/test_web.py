@@ -2,14 +2,17 @@ from unittest import mock
 
 import pytest
 
+from blinkenxmas.httpd import Messages
 from blinkenxmas.web import *
 
 
 @pytest.fixture()
 def dummy_args(request):
-    return ['--source', 'dummy',
-            '--video-resolution', '640x360',
-            '--thumb-resolution', '320x180']
+    return ['--camera-type', 'none',
+            '--camera-capture', '640x480',
+            '--led-strips', '50,100',
+            '--led-count', '150',
+            '--fps', '60']
 
 
 def test_messages():
@@ -31,7 +34,7 @@ def test_main_help(capsys):
 
 
 def test_main_sigint(dummy_args):
-    with mock.patch('blinkenxmas.main.HTTPThread') as HTTPThread:
+    with mock.patch('blinkenxmas.httpd.HTTPThread') as HTTPThread:
         HTTPThread().__enter__().join.side_effect = KeyboardInterrupt()
         assert main(dummy_args) == 2
 
@@ -45,11 +48,3 @@ def test_main_bad_config(dummy_args):
         assert main(dummy_args + ['--lead-duration', '10s',
                                   '--min-duration', '10s',
                                   '--max-duration', '10s']) == 1
-
-
-def test_main_web_shutdown():
-    pass
-
-
-def test_main_gpio_config():
-    pass

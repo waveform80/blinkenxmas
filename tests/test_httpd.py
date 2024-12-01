@@ -150,6 +150,46 @@ def test_route_HEAD(web_config, server_factory, no_routes, client_factory):
         assert body == b''
 
 
+def test_route_GET_no_params(web_config, server_factory, no_routes,
+                             client_factory):
+    with server_factory(web_config) as server:
+        data = None
+
+        @route('/')
+        def home_redir(request):
+            nonlocal data
+            data = request.query
+            return HTTPResponse(
+                request, status_code=HTTPStatus.MOVED_PERMANENTLY,
+                headers={'Location': '/index.html'})
+
+        client = client_factory(server)
+        client.request('GET', '/')
+        resp = client.getresponse()
+        assert resp.status == 301
+        assert data == {}
+
+
+def test_route_GET_params(web_config, server_factory, no_routes,
+                          client_factory):
+    with server_factory(web_config) as server:
+        data = None
+
+        @route('/')
+        def home_redir(request):
+            nonlocal data
+            data = request.query
+            return HTTPResponse(
+                request, status_code=HTTPStatus.MOVED_PERMANENTLY,
+                headers={'Location': '/index.html'})
+
+        client = client_factory(server)
+        client.request('GET', '/?foo=bar')
+        resp = client.getresponse()
+        assert resp.status == 301
+        assert data == {'foo': 'bar'}
+
+
 def test_route_PUT_json(web_config, server_factory, no_routes, client_factory):
     with server_factory(web_config) as server:
         data = None
@@ -170,6 +210,62 @@ def test_route_PUT_json(web_config, server_factory, no_routes, client_factory):
         assert resp.status == 204
         assert body == b''
         assert data == expected
+
+
+def test_route_POST_json(web_config, server_factory, no_routes,
+                         client_factory):
+    with server_factory(web_config) as server:
+        data = None
+
+        @route('/config', command='POST')
+        def configure(request):
+            nonlocal data
+            data = request.query
+            return HTTPResponse(request, status_code=HTTPStatus.NO_CONTENT)
+
+        expected = {'foo': 1, 'bar': 2}
+        client = client_factory(server)
+        client.request('POST', '/config',
+                       body=json.dumps(expected),
+                       headers={'Content-Type': 'application/json'})
+        resp = client.getresponse()
+        body = resp.read()
+        assert resp.status == 204
+        assert body == b''
+        assert data == expected
+
+
+def test_route_POST_formdata(web_config, server_factory, no_routes,
+                             client_factory):
+    with server_factory(web_config) as server:
+        data = None
+
+        @route('/config', command='POST')
+        def configure(request):
+            nonlocal data
+            data = request.query.copy()
+            return HTTPResponse(request, status_code=HTTPStatus.NO_CONTENT)
+
+        body = """\
+--FOO\r
+Content-Disposition: form-data; name="foo"\r
+\r
+1\r
+--FOO\r
+Content-Disposition: form-data; name="bar"\r
+\r
+2\r
+--FOO--\r
+"""
+        client = client_factory(server)
+        client.request('POST', '/config',
+                       body=body,
+                       headers={'Content-Type': 'multipart/form-data; boundary=FOO'})
+        resp = client.getresponse()
+        body = resp.read()
+        assert resp.status == 204
+        assert body == b''
+        assert data == {'foo': '1', 'bar': '2'}
 
 
 def test_route_DELETE(web_config, server_factory, no_routes, client_factory):
@@ -277,6 +373,24 @@ def test_route_fallthru(web_config, server_factory, client_factory, no_routes):
         resp = client.getresponse()
         assert not resp.read()
         assert resp.status == 404
+
+
+def test_for_commands():
+    @for_commands('GET')
+    def get_handler():
+        pass
+
+    @for_commands('GET', 'POST')
+    def get_post_handler():
+        pass
+
+    @for_commands('DELETE')
+    def delete_handler():
+        pass
+
+    assert set(get_handler.commands) == {'GET', 'HEAD'}
+    assert set(get_post_handler.commands) == {'GET', 'POST', 'HEAD'}
+    assert set(delete_handler.commands) == {'DELETE'}
 
 
 def test_param_values():

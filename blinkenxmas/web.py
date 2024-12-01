@@ -75,10 +75,8 @@ def main(args=None):
                 'No LED strips defined; please edit the configuration file')
         queue = Queue()
         messages = httpd.Messages()
-        with (
-            mqtt.MessageThread(config, queue) as message_task,
-            httpd.HTTPThread(config, messages, queue) as httpd_task,
-        ):
+        with mqtt.MessageThread(config, queue) as message_task, \
+                httpd.HTTPThread(config, messages, queue) as httpd_task:
             while True:
                 httpd_task.join(1)
                 if not httpd_task.is_alive():

@@ -8,6 +8,7 @@ from unittest import mock
 import pytest
 
 from blinkenxmas.httpd import *
+from colorzero import Color
 from conftest import split, find
 
 
@@ -276,3 +277,22 @@ def test_route_fallthru(web_config, server_factory, client_factory, no_routes):
         resp = client.getresponse()
         assert not resp.read()
         assert resp.status == 404
+
+
+def test_param_values():
+    assert Param('Name', 'text').value('foo') == 'foo'
+    assert Param('Count', 'range', min=0, max=100).value('50') == 50
+    assert Param('Temperature', 'number', min=0, max=40).value('37.7') == 37.7
+    assert Param('Foreground', 'color').value('#fff') == Color('#fff')
+    assert Param('Locked', 'checkbox').value('') is False
+    assert Param('Locked', 'checkbox').value('locked') is True
+
+
+def test_special_param_values():
+    request = mock.Mock()
+    request.server.config.led_count = 50
+    request.store.positions = [(0, 0, 0) for i in range(50)]
+    request.server.config.fps = 60
+    assert ParamLEDCount().value(request) == 50
+    assert ParamFPS().value(request) == 60
+    assert all(pos == (0, 0, 0) for pos in ParamLEDPositions().value(request))

@@ -428,9 +428,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                     elif content_type == 'multipart/form-data':
                         self.query = parse_formdata(self)
                     elif content_type == 'application/json':
-                        # If the body is JSON encoded; leave the handler or
-                        # template to read it with the json() method
-                        self.query = {}
+                        self.query = self.json()
                     else:
                         raise ValueError(
                             f'unexpected content type: {content_type}')

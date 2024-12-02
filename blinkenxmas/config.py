@@ -252,8 +252,7 @@ def get_parser(config, **kwargs):
         ],
         help=SUPPRESS)
     parser.add_argument(
-        '--led-count', metavar='NUM', type=int,
-        default=sum(strip_counts, start=0),
+        '--led-count', metavar='NUM', type=int, default=sum(strip_counts, 0),
         help=SUPPRESS)
     parser.add_argument(
         '--fps', metavar='NUM', type=int, default=min((

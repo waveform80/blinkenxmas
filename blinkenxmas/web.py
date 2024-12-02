@@ -33,7 +33,7 @@ def get_web_parser():
         action='store_false')
     web_section.add_argument(
         '--production', section='web', key='production', action='store_true',
-        help="If specified, run in production mode where an internal server "
+        help="if specified, run in production mode where an internal server "
         "error will not terminate the server and will not output a stack "
         "trace (default: no)")
     web_section.add_argument(

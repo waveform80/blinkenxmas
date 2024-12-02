@@ -4,7 +4,7 @@ API Reference
 
 The Blinken' Xmas code tries to be as reasonably self-contained as possible, to
 avoid too many dependencies in order to make the packaging a bit easier and
-low-maintenance longevity a bit more likely!
+low-maintenance longevity a bit more likely.
 
 The following sections list the various modules in the Python code:
 
@@ -27,4 +27,4 @@ The following sections list the various modules in the Python code:
 
 I'm afraid the Pico-side code is (currently) largely undocumented. However, it
 is much simpler, and if you can understand the Pi-side of the code you'll
-easily handle the Pico side!
+easily handle the Pico side.

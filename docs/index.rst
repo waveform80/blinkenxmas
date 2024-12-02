@@ -29,6 +29,7 @@ Contents
     bxflash
     bxweb
     bxcli
+    blinkenxmas.conf
     api
     development
     changelog

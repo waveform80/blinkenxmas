@@ -4,7 +4,7 @@ After=network.target local-fs.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/bxweb
+ExecStart=/usr/local/bin/bxweb --production
 Restart=on-failure
 
 [Install]

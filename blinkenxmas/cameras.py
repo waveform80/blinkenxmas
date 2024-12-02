@@ -148,7 +148,7 @@ class FilesSource(AbstractSource):
 
 class PiCameraOutput:
     """
-    A :mod:`picamera` `custom output <Custom outputs>`_ used by
+    A :mod:`picamera` :ref:`custom output <custom_outputs>` used by
     :class:`PiCameraSource` to route preview frames to clients.
     """
     def __init__(self, source):

@@ -1,9 +1,3 @@
-"""
-The command line interface for the BlinkenXmas project. Provides a simple
-command line which can load or delete an existing preset, set all LEDs to a
-specific color, or set an individual LED to a specified color.
-"""
-
 import os
 import sys
 from queue import Queue
@@ -16,6 +10,10 @@ from .config import get_config, get_parser
 
 
 def get_cli_parser():
+    """
+    Return an :class:`~blinkenxmas.config.ConfigArgumentParser` instance for
+    handling the options of :program:`bxcli`.
+    """
     config = get_config()
     parser = get_parser(config, description=__doc__)
     parser.set_defaults(func=do_help)
@@ -24,9 +22,7 @@ def get_cli_parser():
 
     help_cmd = commands.add_parser(
         'help',
-        description="With no arguments, display the list of sub-commands. "
-        "If a command name is given, display the description and options for "
-        "that command",
+        description=do_help.__doc__,
         help="Display command help")
     help_cmd.add_argument(
         'cmd', nargs='?',
@@ -34,15 +30,13 @@ def get_cli_parser():
     help_cmd.set_defaults(func=do_help)
 
     off_cmd = commands.add_parser(
-        'off', aliases=['clear'],
-        description="Switch all LEDs off",
-        help="Switch all LEDs off")
+        'off', aliases=['clear'], description=do_off.__doc__,
+        help=do_off.__doc__)
     off_cmd.set_defaults(func=do_off)
 
     on_cmd = commands.add_parser(
-        'on', aliases=['all'],
-        description="Switch all LEDs on with the specified color",
-        help="Switch all LEDs to the specified color")
+        'on', aliases=['all'], description=do_on.__doc__,
+        help=do_on.__doc__)
     on_cmd.add_argument(
         'color', type=Color,
         help="The color to set all LEDs to; may be given as a common CSS3 "
@@ -50,9 +44,8 @@ def get_cli_parser():
     on_cmd.set_defaults(func=do_on)
 
     set_cmd = commands.add_parser(
-        'set',
-        description="Switch on a single LED to the specified color",
-        help="Switch one LED on to the specified color")
+        'set', description=do_set.__doc__,
+        help=do_set.__doc__)
     set_cmd.add_argument(
         'number', type=int,
         help="The number of the LED (from 1 to the number of LEDs) to light")
@@ -63,14 +56,12 @@ def get_cli_parser():
     set_cmd.set_defaults(func=do_set)
 
     list_cmd = commands.add_parser(
-        'list', aliases=['ls'],
-        description="List the names of all available presets",
+        'list', aliases=['ls'], description=do_list.__doc__,
         help="List all presets")
     list_cmd.set_defaults(func=do_list)
 
     show_cmd = commands.add_parser(
-        'show', aliases=['load'],
-        description="Load and display the specified preset",
+        'show', aliases=['load'], description=do_show.__doc__,
         help="Show a preset")
     show_cmd.add_argument(
         'preset',
@@ -83,6 +74,10 @@ def get_cli_parser():
 
 
 def do_help(config, queue):
+    """
+    With no arguments, display the list of sub-commands. If a command name is
+    given, display the description and options for that command
+    """
     parser = get_cli_parser()
     if 'cmd' in config and config.cmd is not None:
         parser.parse_args([config.cmd, '-h'])
@@ -91,14 +86,17 @@ def do_help(config, queue):
 
 
 def do_off(config, queue):
+    "Switch all LEDs off"
     queue.put([[]])
 
 
 def do_on(config, queue):
+    "Switch all LEDs on with the specified color"
     queue.put([[config.color.html] * config.led_count])
 
 
 def do_set(config, queue):
+    "Switch on a single LED to the specified color"
     black = Color('black')
     queue.put([[
         config.color.html if number == config.number else black
@@ -107,17 +105,20 @@ def do_set(config, queue):
 
 
 def do_list(config, queue):
+    "List the names of all available presets"
     store = Storage(config.db)
     for preset in store.presets:
         print(preset)
 
 
 def do_show(config, queue):
+    "Load and display the specified preset"
     store = Storage(config.db)
     queue.put(store.presets[config.preset])
 
 
 def main(args=None):
+    "Entry point for :program:`bxcli`"
     try:
         config = get_cli_parser().parse_args(args)
         if config.led_count == 0:

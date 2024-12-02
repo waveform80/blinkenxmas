@@ -25,8 +25,8 @@ def range_of(it):
     Returns a (minimum, maximum) tuple for the range of values in *it*,
     utilizing a single pass. This can be slightly more efficient that calling
     :func:`min` and :func:`max` separately on *it* depending on its size.
-    However, it may also be more efficient to :func:`sort` *it* and simply
-    access the first and last element, depending on circumstance.
+    However, it may also be more efficient to :meth:`~list.sort` *it* and
+    simply access the first and last element, depending on circumstance.
     """
     min_ = max_ = None
     for value in it:
@@ -52,7 +52,7 @@ def pairwise(it):
 def preview(anim):
     """
     On a true-color capable terminal, print a line per frame of the specified
-    *anim*.
+    *anim*. This is primarily intended as a debugging function.
     """
     for frame in anim:
         print(''.join(

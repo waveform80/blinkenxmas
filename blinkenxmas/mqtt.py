@@ -46,7 +46,7 @@ def render(animation, fps, chunk_size=chunk_size):
     For example, an animation that switches the first and second LEDs between
     red and blue at 1fps would be rendered as::
 
-        b"\x01\x02\x02\x00\xF8\x00\x01\x00\x00\x02\x00\x00\x00\x01\x00\x1F"
+        b"\\x01\\x02\\x02\\x00\\xF8\\x00\\x01\\x00\\x00\\x02\\x00\\x00\\x00\\x01\\x00\\x1F"
     """
     def convert(frames):
         # Convert HTML color codes into RGB565 representation
@@ -92,6 +92,20 @@ def render(animation, fps, chunk_size=chunk_size):
 
 
 class MessageThread(Thread):
+    """
+    The blinkenxmas MQTT thread class wraps an instance of
+    :class:`paho.mqtt.client.Client` in a :class:`~threading.Thread` for
+    background execution. Instances of this class may be used as a context
+    manager that will start the thread upon entry, and stop it (re-raising any
+    exception that occurred during execution) on exit. This is the recommended
+    method of running this thread.
+
+    :param argparse.Namespace config:
+        The application configuration
+
+    :param queue.Queue queue:
+        The queue to submit animations to for transmission to the broker
+    """
     logger = logging.getLogger('mqtt')
 
     def __init__(self, config, queue):
@@ -114,9 +128,18 @@ class MessageThread(Thread):
         self.stop()
 
     def stop(self):
+        """
+        Stop the MQTT background thread.
+        """
         self._stopping.set()
 
     def listen(self):
+        """
+        The "main" routine of the background thread. Retrieves animations from
+        the associated :class:`~queue.Queue`, calls :func:`render` to convert
+        them to :class:`bytes` strings, before posting them to the configured
+        MQTT broker.
+        """
         try:
             client = mqtt.Client(clean_session=True)
             client.enable_logger(self.logger)

@@ -1,9 +1,3 @@
-"""
-The HTTP server for the BlinkenXmas project. Provides a simple web-interface
-for building tree animations and serving them over MQTT to the Pico W connected
-to the blinkenlights on the tree.
-"""
-
 import os
 import sys
 from queue import Queue
@@ -19,6 +13,10 @@ from .config import (
 
 
 def get_web_parser():
+    """
+    Return an :class:`~blinkenxmas.config.ConfigArgumentParser` instance for
+    handling the options of :program:`bxweb`.
+    """
     config = get_config()
     parser = get_parser(config, description=__doc__)
 
@@ -68,6 +66,7 @@ def get_web_parser():
 
 
 def main(args=None):
+    "Entry point for :program:`bxweb`"
     try:
         config = get_web_parser().parse_args(args)
         if config.led_count == 0:

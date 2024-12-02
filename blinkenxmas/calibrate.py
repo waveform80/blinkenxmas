@@ -26,12 +26,23 @@ except ImportError:
 
 class PointNotFound(ValueError):
     """
-    Exception raised by the calibration engine when it cannot find an LED by
+    Exception raised by :class:`AngleScanner` when it cannot find an LED by
     comparison to a base unlit image.
     """
 
 
 def weighted_median(seq):
+    """
+    Given *seq*, a sequence of (item, weight) tuples, return the (item, weight)
+    tuple at the 50th percentile of the cumulative weights. This function is
+    specifically coded to return the item at *or immediately after* the median
+    to ensure that the returned item is a member of the original set (not an
+    average of two values).
+
+    This is technically a special case of the `weighted median`_.
+
+    .. _weighted median: https://en.wikipedia.org/wiki/Weighted_median
+    """
     items = sorted(seq, key=itemgetter(0))
     cum_weights = list(accumulate(weight for item, weight in items))
     try:

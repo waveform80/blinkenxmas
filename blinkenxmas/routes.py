@@ -21,6 +21,11 @@ def home(request):
 
 @route('/messages.json', 'GET')
 def get_messages(request):
+    """
+    Drains the :class:`~blinkenxmas.httpd.Messages` instance of all messages
+    and returns them in the body of the response as a JSON-encoded list of
+    strings.
+    """
     return HTTPResponse(
         request, mime_type='application/json',
         body=json.dumps(request.server.messages.drain()))
@@ -222,6 +227,11 @@ def calibration_preview(request):
 
 
 def scanner_for(request, angle):
+    """
+    Returns the :class:`~blinkenxmas.calibrate.AngleScanner` instance for
+    the specified *angle*, or raises :exc:`ValueError` if the current scanner
+    does not match the requested angle.
+    """
     scanner = request.server.calibration.scanner
     if scanner is None or scanner.angle != angle:
         raise ValueError(f'Scanner is not for {angle}')
@@ -347,6 +357,9 @@ def calibration_cancel(request):
 
 @route('/estimated.json', 'GET')
 def calibration_result(request):
+    """
+    TODO
+    """
     calculator = request.server.calibration.calculator
     return HTTPResponse(request, body=json.dumps({
         'positions': {
@@ -358,6 +371,9 @@ def calibration_result(request):
 
 @route('/commit.html', 'GET')
 def calibration_commit(request):
+    """
+    TODO
+    """
     calculator = request.server.calibration.calculator
     with request.store:
         request.store.positions.clear()

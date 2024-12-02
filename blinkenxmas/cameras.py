@@ -10,7 +10,18 @@ class AbstractSource:
     """
     An abstract camera source.
 
-    The *config* is the application configuration object.
+    The *config* is the application configuration object (a
+    :class:`~argparse.Namespace` instance).
+
+    .. attribute:: frame
+
+        The current preview frame's data. This is a :class:`bytes` string
+        containing the JPEG data of the frame.
+
+    .. attribute:: frame_ready
+
+        A :class:`~threading.Condition` which clients must wait upon to be
+        notified of a new JPEG available in :attr:`frame`.
     """
     def __init__(self, config):
         self._lock = Lock()
@@ -20,9 +31,8 @@ class AbstractSource:
 
     def start_preview(self, angle):
         """
-        Start a live preview from the camera, passing JPEG image frames to
-        the internal :meth:`_preview_frame` method. The *angle* is the current
-        angle of the tree.
+        Start a live preview from the camera, passing JPEG image frames to the
+        :attr:`frame` attribute. The *angle* is the current angle of the tree.
         """
         raise NotImplementedError
 
@@ -47,6 +57,11 @@ class AbstractSource:
                 self.frame_ready.notify_all()
 
     def add_client(self, client):
+        """
+        Called to add *client* (a :class:`~http.server.BaseHTTPRequestHandler`
+        instance) to the list of clients wanting to receive live preview frames
+        from the camera.
+        """
         with self._lock:
             if not self._clients:
                 angle = int(client.query.get('angle', '0'))
@@ -54,6 +69,11 @@ class AbstractSource:
             self._clients.append(client)
 
     def remove_client(self, client):
+        """
+        Called to remove *client* (a
+        :class:`~http.server.BaseHTTPRequestHandler` instance) from the list of
+        clients wanting to receive live preview frames from the camera.
+        """
         with self._lock:
             try:
                 self._clients.remove(client)
@@ -64,6 +84,22 @@ class AbstractSource:
 
 
 class FilesSource(AbstractSource):
+    """
+    This "camera" is primarily intended for testing purposes. It is implemented
+    simple as a list of JPEG files which must conform to the following naming
+    convention:
+
+    :file:`angle{A}_base.jpg`
+        The base "unlit" image of the tree at the specified angle *n* (in
+        degrees), where *A* is zero-padded to three digits. For example
+        ``angle090_base.jpg``.
+
+    :file:`angle{A}_led{L}.jpg`
+        The image of the tree at angle *A* (in degrees, zero-padded to three
+        digits) with LED at index *L* (zero-padded to three digits) lit bright
+        white. For example ``angle090_led049.jpg``.
+    """
+
     thread = None
     lock = Lock()
     stop = Event()
@@ -111,6 +147,10 @@ class FilesSource(AbstractSource):
 
 
 class PiCameraOutput:
+    """
+    A :mod:`picamera` `custom output <Custom outputs>`_ used by
+    :class:`PiCameraSource` to route preview frames to clients.
+    """
     def __init__(self, source):
         self.source = source
         self.frame = io.BytesIO()
@@ -128,6 +168,15 @@ class PiCameraOutput:
 
 
 class PiCameraSource(AbstractSource):
+    """
+    A camera implementation that uses the legacy :mod:`picamera` library.
+
+    .. warning::
+
+        Be warned that this will only work with Raspberry Pi models up to the
+        4B (specifically *not* the Pi 5), and only with legacy 32-bit versions
+        of RaspiOS or Ubuntu.
+    """
     lock = Lock()
     output = None
 
@@ -165,6 +214,15 @@ class PiCameraSource(AbstractSource):
 
 
 class GStreamerSource(AbstractSource):
+    """
+    A camera implementation based on `GStreamer`_.
+
+    This is primarily intended for use with USB web-cams. However, be warned
+    that most USB web-cams have terrible quality compared to proper camera
+    modules. You are *far* better off using a Pi camera module.
+
+    .. _GStreamer: https://gstreamer.freedesktop.org/
+    """
     Gst = None
     GstVideo = None
 

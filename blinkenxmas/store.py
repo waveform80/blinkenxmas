@@ -7,6 +7,10 @@ from collections.abc import MutableMapping
 
 
 class Position(namedtuple('Position', ('x', 'y', 'z', 'a', 'r'))):
+    """
+    TODO
+    """
+
     @classmethod
     def from_polar(cls, y, a, r):
         x = (r * m.sin(m.radians(a)) + 1) / 2
@@ -25,6 +29,10 @@ class Position(namedtuple('Position', ('x', 'y', 'z', 'a', 'r'))):
 
 
 class StoragePositions(MutableMapping):
+    """
+    TODO
+    """
+
     def __init__(self, connection):
         self._conn = connection
 
@@ -103,6 +111,10 @@ class StoragePositions(MutableMapping):
 
 
 class StoragePresets(MutableMapping):
+    """
+    TODO
+    """
+
     def __init__(self, connection):
         self._conn = connection
 
@@ -168,6 +180,10 @@ class StoragePresets(MutableMapping):
 
 
 class Storage:
+    """
+    TODO
+    """
+
     schema_version = 3
     logger = logging.getLogger('storage')
 

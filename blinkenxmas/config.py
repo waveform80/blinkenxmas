@@ -216,6 +216,13 @@ def strips(s):
 
 
 def get_parser(config, **kwargs):
+    """
+    Given *config*, a :class:`~configparser.ConfigParser` containing the stored
+    application configuration (presumably returned by :func:`get_config`), and
+    any keyword arguments that should be passed to the argument parser,
+    constructions and returns a :class:`ConfigArgumentParser` instance with the
+    command line parameters common to all the applications.
+    """
     parser = ConfigArgumentParser(**kwargs)
     parser.add_argument(
         '--version', action='version', version=version('blinkenxmas'))
@@ -260,9 +267,14 @@ def get_parser(config, **kwargs):
 
 
 def get_config():
-    # Load the default configuration from the project resources, defining the
-    # valid sections and keys from the default (amalgamating the example leds
-    # sections into a template "leds:*" section)
+    """
+    Load the default configuration from the project resources, defining the
+    valid sections and keys from the default (amalgamating the example leds
+    sections into a template "leds:\\*" section).
+
+    Returns a :class:`~configparser.ConfigParser` instance with the stored
+    configuration loaded.
+    """
     config = ConfigParser(
         delimiters=('=',), empty_lines_in_values=False, interpolation=None,
         converters={'list': lambda s: s.strip().splitlines()}, strict=False)
@@ -304,6 +316,11 @@ def get_config():
 
 
 def get_pico_config(config):
+    """
+    Given *config*, a :class:`~argparse.Namespace` instance containing the
+    active application configuration, returns a :class:`str` containing the
+    MicroPython code for the config.py module on the Pico.
+    """
     leds = [
         (
             config[section]['driver'],

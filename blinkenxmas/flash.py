@@ -1,7 +1,3 @@
-"""
-Flash the BlinkenXmas code to a Pico for use on an xmas tree.
-"""
-
 import os
 import sys
 import tempfile
@@ -31,12 +27,19 @@ from .config import get_config, get_parser, get_pico_config
 
 
 def default_port():
+    """
+    Attempts to determine the serial port on which the Pico is connected.
+    """
     for port in list_ports.comports():
         if port.vid is not None and port.pid is not None:
             return port.device
 
 
 def get_flash_parser(config):
+    """
+    Return an :class:`~blinkenxmas.config.ConfigArgumentParser` instance for
+    handling the options of :program:`bxflash`.
+    """
     parser = get_parser(config, description=__doc__)
 
     parser.add_argument(
@@ -48,6 +51,7 @@ def get_flash_parser(config):
 
 
 def main(args=None):
+    "Entry point for :program:`bxflash`."
     try:
         config = get_config()
         options = get_flash_parser(config).parse_args(args)
@@ -94,4 +98,3 @@ def main(args=None):
             pdb.post_mortem()
     else:
         return 0
-

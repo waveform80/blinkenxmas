@@ -55,6 +55,10 @@ autodoc_mock_imports = []
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3.11', None),
+    'colorzero': ('https://colorzero.readthedocs.io/en/latest', None),
+    'picamera': ('https://picamera.readthedocs.io/en/latest', None),
+    'chameleon': ('https://chameleon.readthedocs.io/en/latest', None),
+    'paho.mqtt': ('https://eclipse.dev/paho/files/paho.mqtt.python/html/', None),
 }
 
 # -- Options for HTML output ----------------------------------------------

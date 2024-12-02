@@ -1,24 +1,3 @@
-"""
-The httpd module defines the :class:`HTTPServer`, :class:`HTTPRequestHandler`
-and :class:`HTTPThread` classes which together make up the HTTP server that
-blinkenxmas uses to talk to web clients.
-
-It also defines the :func:`route` decorator used to associate handler functions
-with their HTTP virtual path (see :mod:`blinkenxmas.routes`).
-
-.. autoclass:: HTTPServer
-
-.. autoclass:: HTTPRequestHandler
-
-.. autoclass:: HTTPThread
-
-.. autofunction:: route
-
-.. autofunction:: get_best_family
-
-.. autofunction:: for_commands
-"""
-
 import re
 import json
 import socket
@@ -120,7 +99,32 @@ def route(pattern, command='GET'):
     return decorator
 
 
-Function = namedtuple('Function', ('name', 'description', 'function', 'params'))
+class Function(namedtuple('Function', (
+        'name', 'description', 'function', 'params'))):
+    """
+    Defines an animation function.
+
+    .. attribute:: name
+
+        The short title of the animation.
+
+    .. attribute:: description
+
+        An extended description of the animation detailing all the parameters
+        and the intended result. Typically derived from the function's
+        doc-string.
+
+    .. attribute:: function
+
+        The implementing callable function.
+
+    .. attribute:: params
+
+        A dict mapping each parameter name of :attr:`function` to
+        :class:`Param` instances (or the special classes like
+        :class:`ParamFPS`) indicating how to render the controls for each
+        parameter.
+    """
 
 
 class Param(namedtuple('Param', (
@@ -134,6 +138,31 @@ class Param(namedtuple('Param', (
     to the "default", "min", and "max" attributes of the ``<input>`` element.
     Finally, the *choices* parameter is a mapping of valid identifiers to
     labels used when *input_type* is "select".
+
+    .. attribute:: label
+
+        The content of the ``<label>`` to render with the parameter's
+        ``<input>`` element.
+
+    .. attribute:: input_type
+
+        The value of the ``<input>`` element's ``type`` parameter.
+
+    .. attribute:: min
+
+        The minimum value for ``range`` type inputs.
+
+    .. attribute:: max
+
+        The maximum value for ``range`` type inputs.
+
+    .. attribute:: choices
+
+        The set of valid selections for ``select`` type inputs.
+
+    .. attribute:: suffix
+
+        A text suffix to render after the input box.
     """
     __slots__ = () # workaround python issue #24931
 

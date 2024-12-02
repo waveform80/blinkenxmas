@@ -13,6 +13,11 @@ through all the hardware configuration, and software installation. If you want
 to hack on the project, it's pretty easy to add animations; see the
 :doc:`development` chapter on getting started.
 
+.. warning::
+
+    The documentation is still very incomplete...
+
+
 Contents
 ========
 

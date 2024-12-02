@@ -6,7 +6,7 @@ blinkenxmas.animations
 
 The :mod:`blinkenxmas.animations` module defines the animation functions
 available for generating presets. Specifically, any function decorated with the
-:func:`~blinkexmas.httpd.animation` decorator is registered as an available
+:func:`~blinkenxmas.httpd.animation` decorator is registered as an available
 animation in the interface.
 
 Animation functions can take an arbitrary set of

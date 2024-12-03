@@ -33,7 +33,7 @@ SUBDIRS:=
 DIST_WHEEL=dist/$(WHEEL_NAME)-$(VER)-py3-none-any.whl
 DIST_TAR=dist/$(NAME)-$(VER).tar.gz
 DIST_ZIP=dist/$(NAME)-$(VER).zip
-MAN_PAGES=
+MAN_PAGES=bxweb.1 bxcli.1 bxflash.1 blinkenxmas.conf.5
 
 
 # Default target

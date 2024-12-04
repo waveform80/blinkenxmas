@@ -2,6 +2,8 @@
 API Reference
 =============
 
+.. module:: blinkenxmas
+
 The Blinken' Xmas code tries to be as reasonably self-contained as possible, to
 avoid too many dependencies in order to make the packaging a bit easier and
 low-maintenance longevity a bit more likely.

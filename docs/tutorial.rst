@@ -26,10 +26,10 @@ You will need to be comfortable doing the following:
 
 * Running commands at a Linux command line
 
-* Editing a text configuration file from the Linux command line. Or at very
-  least being able to scp it off to a machine where you edit it and scp it
-  back, but given that there'll be some user switching involved you are *much*
-  better off just being able to edit things at the command line
+* Editing a text configuration file from the Linux command line using nano,
+  vim, or your favourite console text editor (you can try copying stuff back
+  and forth, but given there'll be some user switching involved you are *much*
+  better off just being able to edit things at the command line)
 
 
 Shopping List
@@ -79,7 +79,7 @@ way:
 
 In this tutorial I'll be using an `63-line breadboard`_ with two separate power
 rails which is probably overkill, but I don't like being cramped when wiring
-things! For the neopixels, I'll be using a `50-LED strands of RGB WS2812
+things! For the neopixels, I'll be using a `50-LED strand of RGB WS2812
 neopixels`_, and a 100-LED strand of GRB WS2812 neopixels because that's what
 was lying around!
 
@@ -87,20 +87,19 @@ was lying around!
 I have the Power!
 =================
 
-The power supply requires some consideration. The neopixels have a maximum
-output power of 0.24W per LED (at 5V). All told I've got 150 LEDs, so that's a
-total potential output of 150 × 0.24W = 36W, plus whatever's required for the
-Pico but frankly that'll be so minimal by comparison it's not worth worrying
-about!
+The power supply requires some consideration. Neopixels typically have a
+maximum output power of 0.24W per LED (at 5V). All told I've got 150 LEDs, so
+that's a total potential output of 150 × 0.24W = 36W, plus whatever's required
+for the Pico but frankly that'll be so minimal by comparison it's not worth
+worrying about!
 
 At 5V that's 36W ÷ 5V = 7.2A which is *way* beyond the maximum output of the
 typical micro-USB power supply used with Picos; these often top out at 1A or
 2A.
 
 We need something quite a bit bigger, and preferably with a decent amount of
-overhead (it's rarely a good idea to run power supplies near their limits).
-I'll be using an `5V 100W supply`_ which gives me 64W of head-room, but I'd
-guesstimate that anything 50W+ should be sufficient.
+overhead [#overhead]_. I'll be using an `5V 100W supply`_ which gives me 64W of
+head-room, but I'd guesstimate that anything 50W+ should be sufficient.
 
 .. image:: images/psu.*
     :align: center
@@ -111,8 +110,8 @@ guesstimate that anything 50W+ should be sufficient.
 .. warning::
 
     Please note that most of these supplies do not come with mains cables. This
-    is why I included being comfortable with wiring mains cables to a power
-    supply in the skills list at the top. You will need to be confident that
+    is why I included "being comfortable with wiring mains cables to a power
+    supply" in the skills list at the top. You will need to be confident that
     you know which leads are live, neutral, and ground, when wiring this thing
     up.
 
@@ -149,7 +148,7 @@ The moral of the story is: if you're planning to scale this beyond 150 LEDs,
 please take the time to calculate how much ampage you're going to push through
 your 5V wiring. If necessary, split the load across multiple supplies (most of
 these supplies have multiple outputs), or get thicker gauge wire. And maybe
-housing all this in a non-flammable box!
+stick all this in a non-flammable box!
 
 
 Pi Setup
@@ -367,6 +366,12 @@ Unplug the Pico W from your computer, and plug it into your Raspberry Pi.
    as it's using the Pico's PIOs to drive the neopixels. That said it's not
    hard to adjust the Pico's scripts (they're just MicroPython) so if anyone
    wants to try making it more generic, feel free!
+
+.. [#overhead] It's rarely a good idea to run power supplies near their limits.
+   Even if they do manage it, you'll often experience voltage drops which can
+   lead to brown-outs or crashes on your micro-controller. Such issues are
+   notoriously hard to debug, so give yourself some reasonable overhead on the
+   power supply.
 
 .. [#job] It's `my job`_ after all!
 

@@ -190,7 +190,7 @@ values as appropriate:
         wlan0:
           regulatory-domain: "GB"  # Replace with your country code
           dhcp4: true
-          optional: true
+          optional: false
           access-points:
             myhomewifi:            # Replace with your wifi SSID
               password: "S3kr1t"   # Replace with your wifi password
@@ -201,10 +201,6 @@ following, changing the commented values as appropriate:
 .. code-block:: yaml
 
     hostname: blinkenxmas
-
-    keyboard:
-      model: pc105
-      layout: gb            # Replace with keyboard country (e.g. "us")
 
     ssh_pwauth: false
     ssh_import_id:

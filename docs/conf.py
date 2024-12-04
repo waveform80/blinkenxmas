@@ -49,7 +49,7 @@ autodoc_member_order = 'groupwise'
 autodoc_default_options = {
     'members': True,
 }
-autodoc_mock_imports = []
+autodoc_mock_imports = ['serial', 'chameleon', 'colorzero', 'paho', 'mpremote']
 
 # -- Intersphinx configuration --------------------------------------------
 

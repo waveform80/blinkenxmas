@@ -54,7 +54,7 @@ autodoc_mock_imports = []
 # -- Intersphinx configuration --------------------------------------------
 
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3.11', None),
+    'python': ('https://docs.python.org/3.10', None),
     'colorzero': ('https://colorzero.readthedocs.io/en/latest', None),
     'picamera': ('https://picamera.readthedocs.io/en/latest', None),
     'chameleon': ('https://chameleon.readthedocs.io/en/latest', None),

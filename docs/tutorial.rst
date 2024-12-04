@@ -217,11 +217,12 @@ following, changing the commented values as appropriate:
     - avahi-daemon
     - blinkenxmas-server
 
-Finally, open the :file:`config.txt` file and append the highlighted lines to
-the end [#legacy]_:
+Finally, open the :file:`config.txt` file, comment out the camera and display
+auto-detect lines, and append the highlighted lines to the end to enable the
+legacy camera stack [#legacy]_:
 
 .. code-block:: ini
-    :emphasize-lines: 43-44
+    :emphasize-lines: 33-34,43-44
 
     [all]
     kernel=vmlinuz
@@ -255,8 +256,8 @@ the end [#legacy]_:
     # Autoload overlays for any recognized cameras or displays that are attached
     # to the CSI/DSI ports. Please note this is for libcamera support, *not* for
     # the legacy camera stack
-    camera_auto_detect=1
-    display_auto_detect=1
+    #camera_auto_detect=1
+    #display_auto_detect=1
 
 
     [cm4]
@@ -341,7 +342,7 @@ Unplug the Pico W from your computer, and plug it into your Raspberry Pi.
 .. _stripboard: https://en.wikipedia.org/wiki/Stripboard
 .. _63-line breadboard: https://shop.pimoroni.com/products/solderless-breadboard-830-point
 .. _Jumper leads: https://shop.pimoroni.com/products/jumper-jerky
-.. _50-LED strands of RGB WS2812 neopixels: https://shop.pimoroni.com/products/5m-flexible-rgb-led-wire-50-rgb-leds-aka-neopixel-ws2812-sk6812
+.. _50-LED strand of RGB WS2812 neopixels: https://shop.pimoroni.com/products/5m-flexible-rgb-led-wire-50-rgb-leds-aka-neopixel-ws2812-sk6812
 .. _5V 100W supply: https://www.amazon.co.uk/Baiyouli-Universal-Regulated-Switching-10W-300W/dp/B07D6R2ZBK
 .. _Ubuntu for the Raspberry Pi: https://ubuntu.com/raspberry-pi
 .. _my job: https://waldorf.waveform.org.uk/pages/about.html

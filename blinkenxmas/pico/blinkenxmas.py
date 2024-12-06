@@ -66,7 +66,7 @@ async def receive():
 
 
 async def blinkie(count):
-    led = machine.Pin(config.get('status-led', 'LED'), machine.Pin.OUT)
+    led = machine.Pin(config.get('status', 'LED'), machine.Pin.OUT)
     try:
         while True:
             for i in range(count):

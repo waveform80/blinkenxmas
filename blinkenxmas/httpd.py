@@ -465,12 +465,13 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
                     return HTTPResponse(self, status_code=HTTPStatus.BAD_REQUEST)
             else:
                 self.query = {}
-            self.query = {
-                key: value[0]
-                     if isinstance(value, list) and len(value) == 1 else
-                     value
-                for key, value in self.query.items()
-            }
+            if isinstance(self.query, dict):
+                self.query = {
+                    key: value[0]
+                         if isinstance(value, list) and len(value) == 1 else
+                         value
+                    for key, value in self.query.items()
+                }
 
             # Try various methods to render the path, using the first one that
             # successfully returns a response

@@ -59,10 +59,15 @@ way:
   2W`_, etc.); note you need a WiFi capable variant (not the bare Pico), and
   that this project relies on the Pico's specific capabilities [#othermcu]_
 
-* A `breadboard`_, `stripboard`_, or protoboard large enough to mount your Pico
-  and all associated wiring
+* A `breadboard`_ large enough to mount your Pico and all associated wiring
 
-* `Jumper leads`_ (breadboards only) or solid-core wire (all board types)
+* A momentary push-button suitable for mounting on a breadboard
+
+* A red LED
+
+* A 330Ω resistor
+
+* `Jumper leads`_ or solid-core wire
 
 * A 5V power supply capable of driving the Pico (easy) and all your neopixels
   (harder); a typical micro-USB supply is *not* going to cut the mustard here
@@ -84,8 +89,8 @@ neopixels`_, and a 100-LED strand of GRB WS2812 neopixels because that's what
 was lying around!
 
 
-I have the Power!
-=================
+I've got the Power!
+===================
 
 The power supply requires some consideration. Neopixels typically have a
 maximum output power of 0.24W per LED (at 5V). All told I've got 150 LEDs, so
@@ -114,6 +119,10 @@ head-room, but I'd guesstimate that anything 50W+ should be sufficient.
     supply" in the skills list at the top. You will need to be confident that
     you know which leads are live, neutral, and ground, when wiring this thing
     up.
+
+
+The Heat Is On
+==============
 
 Another thing to consider is heat in your wiring. The mains leads should be
 fine. At 240V, 100W is barely anything in amps: 100W ÷ 240V = 0.24A. However,
@@ -286,6 +295,68 @@ strictly necessary and after a little while you should be able to just SSH to
 ``ubuntu@blinkenxmas.local`` (the ``.local`` domain is because we're using
 `Avahi's mDNS`_ to find the Pi regardless of its IP address).
 
+All the necessary software should have been installed by cloud-init, so all
+that remains is for us to reconfigure things a little. Edit the
+:file:`/etc/blinkenxmas.conf` file changing the highlighted lines below
+(comments have been excluded for brevity):
+
+.. code-block:: ini
+    :emphasize-lines: 2,12-13,16,20-23,25-37
+
+    [mqtt]
+    host = blinkenxmas
+    port = 1883
+    topic = blinkenxmas
+
+    [web]
+    bind = 127.0.0.1
+    port = 8000
+    database = /var/cache/blinkenxmas/presets.db
+
+    [wifi]
+    ssid = your-ssid-here
+    password = your-wifi-password-here
+
+    [pico]
+    status = 22
+    error = reset
+
+    [camera]
+    type = picamera
+    capture = 2592x1944
+    preview = 640x480
+    rotate = 0
+
+    [leds:1]
+    driver = WS2812
+    count = 50
+    fps = 60
+    order = RGB
+    pin = 15
+
+    [leds:2]
+    driver = WS2812
+    count = 100
+    fps = 60
+    order = RGB
+    pin = 16
+
+.. note::
+
+    The file is owned by root, so you will need to use :manpage:`sudo(1)` with
+    your editor.
+
+With the file updated, we need to add the ``blinkenxmas`` user to the ``video``
+group so that it can access the Pi's camera, set the ``blinkenxmas`` site to be
+nginx's default, and restart the ``blinkenxmas-server`` service:
+
+.. code-block:: console
+
+    $ sudo adduser blinkenxmas video
+    $ cd /etc/nginx/sites-enabled
+    $ sudo ln -sf ../sites-available/blinkenxmas default
+    $ sudo systemctl restart blinkenxmas-server.service
+
 
 Pico Setup
 ==========
@@ -332,6 +403,32 @@ Pico, meet Pi!
 
 Unplug the Pico W from your computer, and plug it into your Raspberry Pi.
 
+
+Wiring
+======
+
+Now it's time to put your Pico together with the breadboard. You're aiming for
+the following layout where the neopixel on the left represents the start of the
+50 LED strip (connected to GPIO15), and the neopixel on the right (connected to
+GPIO16) represents the start of the 100 LED strip.
+
+.. image:: images/breadboard.*
+    :align: center
+    :alt: A breadboard diagram showing the layout of the Pico, neopixels, reset
+          button, status LED, and power rails
+
+The power cables off the top of the board are deliberately separate. The wires
+on the left supply power to the neopixels. The wires on the right supply power
+to the Pico (via VBUS and ground). These should either be connected to separate
+rails of your supply, or entirely separate supplies. In the latter case, run a
+cable between the negative rails on each side of the breadboard to ensure
+everything has a common ground.
+
+A momentary button connects the Pico's RUN pin to ground so that we can easily
+hard-reset the Pico if the software locks up for any reason. Finally, GPIO22
+connects to a 330Ω resistor, then an LED, then ground to provide a crude means
+for the Pico to report status to us (by blinking the LED in various patterns).
+
 ----
 
 .. _3B+: https://www.raspberrypi.com/products/raspberry-pi-3-model-b-plus/
@@ -339,7 +436,6 @@ Unplug the Pico W from your computer, and plug it into your Raspberry Pi.
 .. _Pico 2W: https://www.raspberrypi.com/products/raspberry-pi-pico-2/
 .. _Pico Plus 2W: https://shop.pimoroni.com/products/pimoroni-pico-plus-2-w
 .. _breadboard: https://en.wikipedia.org/wiki/Breadboard
-.. _stripboard: https://en.wikipedia.org/wiki/Stripboard
 .. _63-line breadboard: https://shop.pimoroni.com/products/solderless-breadboard-830-point
 .. _Jumper leads: https://shop.pimoroni.com/products/jumper-jerky
 .. _50-LED strand of RGB WS2812 neopixels: https://shop.pimoroni.com/products/5m-flexible-rgb-led-wire-50-rgb-leds-aka-neopixel-ws2812-sk6812

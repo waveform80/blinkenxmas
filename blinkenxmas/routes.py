@@ -99,7 +99,7 @@ def preview(request):
     the body of the request on the tree.
     """
     try:
-        data = request.json()
+        data = request.query
     except ValueError:
         return HTTPResponse(request, status_code=HTTPStatus.BAD_REQUEST)
     else:

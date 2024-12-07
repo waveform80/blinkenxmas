@@ -42,10 +42,7 @@ def get_presets(request):
 
 @route('/preset/<name>.json', 'GET')
 def get_preset(request, name):
-    """
-    This handler returns the animation frames for the named preset as a JSON
-    array.
-    """
+    "Returns the animation frames for the named preset as a JSON array."
     try:
         data = request.store.presets[name]
     except KeyError:
@@ -57,9 +54,7 @@ def get_preset(request, name):
 
 @route('/preset/<name>.json', 'DELETE')
 def del_preset(request, name):
-    """
-    This handler removes the named preset from the store.
-    """
+    "Removes the named preset from the store."
     try:
         del request.store.presets[name]
     except KeyError:
@@ -71,10 +66,7 @@ def del_preset(request, name):
 
 @route('/preset/<name>.json', 'PUT')
 def set_preset(request, name):
-    """
-    This handler replaces the named preset with the JSON data from the body of
-    the request.
-    """
+    "Replaces the named preset with the JSON data from the body of the request."
     try:
         data = request.json()
         # TODO Assert that the structure is correct (voluptuous?)
@@ -95,8 +87,8 @@ def set_preset(request, name):
 @route('/preview', 'POST')
 def preview(request):
     """
-    This handler previews the animation frames provided by the JSON array in
-    the body of the request on the tree.
+    Previews the animation frames provided by the JSON array in the body of the
+    request on the tree.
     """
     try:
         data = request.query
@@ -112,8 +104,8 @@ def preview(request):
 @route('/show/<name>', 'POST')
 def preview_preset(request, name):
     """
-    This handler retrieves the named preset from the store and sends its
-    animation frames to the tree.
+    Retrieves the named preset from the store and sends its animation frames to
+    the tree.
     """
     try:
         data = request.store.presets[name]
@@ -133,9 +125,9 @@ def preview_preset(request, name):
 @route('/animation/<name>', 'POST')
 def generate_animation(request, name):
     """
-    This handler calls the named animation function with parameters derived
-    from the JSON object in the request body, returning the generated animation
-    frames as a JSON array in the body of the response.
+    Calls the named animation function with parameters derived from the JSON
+    object in the request body, returning the generated animation frames as a
+    JSON array in the body of the response.
     """
     try:
         anim = request.animations[name]
@@ -174,11 +166,11 @@ def generate_animation(request, name):
 @route('/capture.html', 'GET')
 def calibration_positions(request):
     """
-    This handler runs at the start of calibration, and immediately after each
-    angle has been scanned. Ultimately it just falls through to the
-    :file:`capture.html.pt` template but before that, if LED positions from the
-    scan of an angle are present,  it will feed them to the calibration
-    algorithm to determine 3D positions of those LEDs.
+    Runs at the start of calibration, and immediately after each angle has been
+    scanned. Ultimately it just falls through to the :file:`capture.html.pt`
+    template but before that, if LED positions from the scan of an angle are
+    present,  it will feed them to the calibration algorithm to determine 3D
+    positions of those LEDs.
     """
     scanner = request.server.calibration.scanner
     if scanner is not None and scanner.progress == 1:
@@ -193,8 +185,8 @@ def calibration_positions(request):
 @route('/live-preview.mjpg', 'GET')
 def calibration_preview(request):
     """
-    This handler continually sends JPEG frames from the camera to the client to
-    provide the preview of the tree before the capture step.
+    Continually sends JPEG frames from the camera to the client to provide the
+    preview of the tree before the capture step.
     """
     #request.close_connection = False
     request.send_response(200)
@@ -241,12 +233,11 @@ def scanner_for(request, angle):
 @route('/angle<angle>_base.jpg', 'GET')
 def calibration_base(request, angle):
     """
-    This handler returns the :class:`~blinkenxmas.calibrate.AngleScanner`
-    instance for the specified angle. If none exists, one will be constructed,
-    which will implicitly capture the first image of the (unlit) tree at this
-    angle.
+    Obtains the :class:`~blinkenxmas.calibrate.AngleScanner` instance for the
+    specified angle. If none exists, one will be constructed, which will
+    implicitly capture the first image of the (unlit) tree at this angle.
 
-    The image of the unlit tree is returned as the response.
+    The "base" image of the unlit tree is returned as the response.
     """
     try:
         angle = int(angle, base=10)
@@ -265,10 +256,10 @@ def calibration_base(request, angle):
 @route('/angle<angle>_mask.json', 'GET')
 def calibration_mask(request, angle):
     """
-    This handler returns a JSON array containing the coordinates drawn by the
-    user around the outline of the tree at the specified angle. The coordinates
-    are (x, y) pairs of floating-point values where (0, 0) is the top left
-    of the base image, and (1, 1) is the bottom right of the image.
+    Returns a JSON array containing the coordinates drawn by the user around
+    the outline of the tree at the specified angle. The coordinates are (x, y)
+    pairs of floating-point values where (0, 0) is the top left of the base
+    image, and (1, 1) is the bottom right of the image.
     """
     try:
         angle = int(angle, base=10)
@@ -283,12 +274,12 @@ def calibration_mask(request, angle):
 @route('/angle<angle>_state.json', 'GET')
 def calibration_state(request, angle):
     """
-    This handler returns a JSON object containing information about the
-    progress and state of the (presumably ongoing) scan of the specified angle
-    of the tree. This is typically polled during the scan to display the
-    currently detected LEDs, and how confident the algorithm is in its
-    determination of their position. It also includes the mask coordinates in
-    case this is useful for display purposes.
+    Returns a JSON object containing information about the progress and state
+    of the (presumably ongoing) scan of the specified angle of the tree. This
+    is typically polled during the scan to display the currently detected LEDs,
+    and how confident the algorithm is in its determination of their position.
+    It also includes the mask coordinates in case this is useful for display
+    purposes.
 
     Again, coordinates are specified as (x, y) pairs of floating-point values
     between (0, 0) for the top left of the image, and (1, 1) for the bottom
@@ -311,12 +302,11 @@ def calibration_state(request, angle):
 @route('/calibrate.html', 'GET')
 def calibration_run(request):
     """
-    This handler ultimately falls through to the :file:`calibrate.html.pt`
-    template. Before doing so, however, it retrieves the
-    :class:`~blinkenxmas.calibrate.AngleScanner` instance for the specified
-    angle and starts the calibration scan. If mask data is passed (as a JSON
-    array) in the "mask" value of the query-string, it will be passed to the
-    scan method.
+    Falls through to the :file:`calibrate.html.pt` template. Before doing so,
+    however, it retrieves the :class:`~blinkenxmas.calibrate.AngleScanner`
+    instance for the specified angle and starts the calibration scan. If mask
+    data is passed (as a JSON array) in the "mask" value of the query-string,
+    it will be passed to the scan method.
     """
     try:
         angle = int(request.query['angle'])
@@ -338,8 +328,8 @@ def calibration_run(request):
 @route('/cancel.html', 'GET')
 def calibration_cancel(request):
     """
-    This handler cancels any on-going scan of the tree angle specified in the
-    "angle" value of the query-string.
+    Cancels any on-going scan of the tree angle specified in the "angle" value
+    of the query-string.
     """
     try:
         angle = int(request.query['angle'])

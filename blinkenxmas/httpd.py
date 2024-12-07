@@ -492,7 +492,8 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
 
     def json(self):
         """
-        Decode the body of the request as a JSON object.
+        Decode the body of the request as a JSON object. Note this handler can
+        be called once, and only once, as it reads the request body on-demand.
 
         .. warning::
 
@@ -506,6 +507,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             body_len = 0
         if body_len > 0:
             body = self.rfile.read(body_len)
+            self.headers['Content-Length'] = '0'
         else:
             raise ValueError('invalid Content-Length for JSON')
         return json.loads(body)

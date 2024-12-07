@@ -5,11 +5,13 @@
   </div>
 
   <article metal:fill-slot="content">
-    <p tal:condition="not store.presets">No presets defined yet!</p>
-    <p tal:condition="not store.presets" class="buttons">
-      <a class="button" href="create.html">Create</a>
-      <a tal:condition="request.server.camera" class="button" href="capture.html">Calibrate</a>
-    </p>
+    <div tal:condition="not store.presets">
+      <p>No presets defined yet!</p>
+      <p class="buttons">
+        <a class="button" id="create" href="create.html">Create</a>
+        <a class="button" id="config" href="config.html">Configuration</a>
+      </p>
+    </div>
     <form tal:condition="store.presets">
       <p>Select from one of the following presets:</p>
       <ul id="presets">

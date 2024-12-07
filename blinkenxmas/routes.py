@@ -84,6 +84,27 @@ def set_preset(request, name):
     return HTTPResponse(request, status_code=code, headers=headers)
 
 
+@route('/remove', 'POST')
+def remove(request):
+    "Removes the presets listed in the 'name' of the query."
+    try:
+        presets = request.query['name']
+    except KeyError:
+        return HTTPResponse(self, status_code=HTTPStatus.BAD_REQUEST)
+    if not isinstance(presets, list):
+        presets = [presets]
+    for name in presets:
+        try:
+            del request.store.presets[name]
+        except KeyError:
+            pass
+        else:
+            request.server.messages.show(f'Removed preset {name}')
+    return HTTPResponse(
+        request, status_code=HTTPStatus.SEE_OTHER,
+        headers={'Location': '/index.html'})
+
+
 @route('/preview', 'POST')
 def preview(request):
     """

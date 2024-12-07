@@ -90,14 +90,10 @@ def preview(request):
     Previews the animation frames provided by the JSON array in the body of the
     request on the tree.
     """
-    try:
-        data = request.query
-    except ValueError:
-        return HTTPResponse(request, status_code=HTTPStatus.BAD_REQUEST)
-    else:
-        # TODO Assert that the structure is correct (voluptuous?)
-        request.server.queue.put(data)
-        return HTTPResponse(request, status_code=HTTPStatus.NO_CONTENT)
+    data = request.query
+    # TODO Assert that the structure is correct (voluptuous?)
+    request.server.queue.put(data)
+    return HTTPResponse(request, status_code=HTTPStatus.NO_CONTENT)
 
 
 @route('/show/<name>', 'GET')

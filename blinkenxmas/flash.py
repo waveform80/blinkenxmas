@@ -1,6 +1,7 @@
 import os
 import sys
 import tempfile
+from time import sleep
 from queue import Queue
 from pathlib import Path
 from shutil import copyfile
@@ -60,6 +61,12 @@ def main(args=None):
 
         board = SerialTransport(str(options.port), baudrate=115200)
         try:
+            # Spam Ctrl+C on the console to cancel the running script, and
+            # any error handlers it invokes
+            board.serial.write(b'\r\x03\x03')
+            sleep(0.25)
+            board.serial.write(b'\r\x03\x03')
+            sleep(0.25)
             board.enter_raw_repl()
             try:
                 with tempfile.TemporaryDirectory() as tmp_name:

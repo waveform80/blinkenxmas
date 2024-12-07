@@ -107,7 +107,10 @@ class StoragePositions(MutableMapping):
     def __delitem__(self, led):
         sql = "DELETE FROM positions WHERE led = ?"
         with self._conn:
-            self._conn.execute(sql, (led,))
+            cur = self._conn.cursor()
+            cur.execute(sql, (led,))
+            if cur.rowcount < 1:
+                raise KeyError(led)
 
 
 class StoragePresets(MutableMapping):
@@ -176,7 +179,10 @@ class StoragePresets(MutableMapping):
     def __delitem__(self, preset):
         sql = "DELETE FROM presets WHERE name = ?"
         with self._conn:
-            self._conn.execute(sql, (preset,))
+            cur = self._conn.cursor()
+            cur.execute(sql, (preset,))
+            if cur.rowcount < 1:
+                raise KeyError(preset)
 
 
 class Storage:

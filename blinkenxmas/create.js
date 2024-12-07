@@ -168,7 +168,7 @@ function doCreate(form) {
   generateAnim(form)
     .then((data) => {
       let name = form.elements['name'].value;
-      let req = new Request(`/preset/${encodeURIComponent(name)}`, {
+      let req = new Request(`/preset/${encodeURIComponent(name)}.json`, {
         method: 'PUT',
         headers: new Headers({'Content-Type': 'application/json'}),
         body: data,

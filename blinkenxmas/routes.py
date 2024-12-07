@@ -40,7 +40,7 @@ def get_presets(request):
                         body=json.dumps(list(request.store.presets)))
 
 
-@route('/preset/<name>', 'GET')
+@route('/preset/<name>.json', 'GET')
 def get_preset(request, name):
     """
     This handler returns the animation frames for the named preset as a JSON
@@ -55,7 +55,7 @@ def get_preset(request, name):
                             body=json.dumps(data))
 
 
-@route('/preset/<name>', 'DELETE')
+@route('/preset/<name>.json', 'DELETE')
 def del_preset(request, name):
     """
     This handler removes the named preset from the store.
@@ -69,7 +69,7 @@ def del_preset(request, name):
         return HTTPResponse(request, status_code=HTTPStatus.NO_CONTENT)
 
 
-@route('/preset/<name>', 'PUT')
+@route('/preset/<name>.json', 'PUT')
 def set_preset(request, name):
     """
     This handler replaces the named preset with the JSON data from the body of

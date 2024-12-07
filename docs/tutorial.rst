@@ -82,11 +82,16 @@ way:
   connectors attached, if not you may need to solder and/or crimp some on
   yourself
 
+* A box made of a non-flammable material large enough to house the power
+  supply, breadboard, and all associated wiring
+
+* Some cable glands large enough to accommodate at least the mains cable
+
 In this tutorial I'll be using an `63-line breadboard`_ with two separate power
 rails which is probably overkill, but I don't like being cramped when wiring
 things! For the neopixels, I'll be using a `50-LED strand of RGB WS2812
 neopixels`_, and a 100-LED strand of GRB WS2812 neopixels because that's what
-was lying around!
+was lying around.
 
 
 I've got the Power!
@@ -96,7 +101,7 @@ The power supply requires some consideration. Neopixels typically have a
 maximum output power of 0.24W per LED (at 5V). All told I've got 150 LEDs, so
 that's a total potential output of 150 × 0.24W = 36W, plus whatever's required
 for the Pico but frankly that'll be so minimal by comparison it's not worth
-worrying about!
+worrying about.
 
 At 5V that's 36W ÷ 5V = 7.2A which is *way* beyond the maximum output of the
 typical micro-USB power supply used with Picos; these often top out at 1A or
@@ -191,6 +196,7 @@ editor and replace the contents with the following, changing the commented
 values as appropriate:
 
 .. code-block:: yaml
+    :emphasize-lines: 5,9-10
 
     network:
       version: 2
@@ -207,6 +213,7 @@ Next, open the :file:`user-data` file and replace the contents with the
 following, changing the commented values as appropriate:
 
 .. code-block:: yaml
+    :emphasize-lines: 5
 
     hostname: blinkenxmas
 
@@ -231,7 +238,7 @@ auto-detect lines, and append the highlighted lines to the end to enable the
 legacy camera stack [#legacy]_:
 
 .. code-block:: ini
-    :emphasize-lines: 33-34,43-44
+    :emphasize-lines: 33-34,42-43
 
     [all]
     kernel=vmlinuz
@@ -267,7 +274,6 @@ legacy camera stack [#legacy]_:
     # the legacy camera stack
     #camera_auto_detect=1
     #display_auto_detect=1
-
 
     [cm4]
     # Enable the USB2 outputs on the IO board (assuming your CM4 is plugged into
@@ -338,7 +344,7 @@ that remains is for us to reconfigure things a little. Edit the
     driver = WS2812
     count = 100
     fps = 60
-    order = RGB
+    order = GRB
     pin = 16
 
 .. note::
@@ -397,11 +403,22 @@ should take a few seconds to copy, then a brief time later you should see the
 drive disappear again. This indicates the Pico has accepted the firmware and
 has rebooted into MicroPython.
 
+Unplug the Pico W from your computer, and plug it into your Raspberry Pi. Now
+run the :program:`bxflash` application to copy the Blinken' Xmas script to the
+Pico:
 
-Pico, meet Pi!
-==============
+.. code-block:: console
 
-Unplug the Pico W from your computer, and plug it into your Raspberry Pi.
+    $ bxflash
+    Copying mqtt_as.py
+    Copying config.py
+    Copying blinkenxmas.py
+    Copying main.py
+    Copying leds.py
+    Copying animation.py
+
+At this point all the software installation on both Pi and Pico is done. Time
+to move onto the hardware.
 
 
 Wiring
@@ -418,16 +435,79 @@ GPIO16) represents the start of the 100 LED strip.
           button, status LED, and power rails
 
 The power cables off the top of the board are deliberately separate. The wires
-on the left supply power to the neopixels. The wires on the right supply power
-to the Pico (via VBUS and ground). These should either be connected to separate
-rails of your supply, or entirely separate supplies. In the latter case, run a
-cable between the negative rails on each side of the breadboard to ensure
-everything has a common ground.
+on the left rails supply power to the neopixels. The wires on the right rails
+supply power to the Pico (via VBUS and ground). These should either be
+connected to separate rails of your supply, or entirely separate supplies. In
+the latter case, run a cable between the negative rails on each side of the
+breadboard to ensure everything has a common ground.
 
 A momentary button connects the Pico's RUN pin to ground so that we can easily
 hard-reset the Pico if the software locks up for any reason. Finally, GPIO22
 connects to a 330Ω resistor, then an LED, then ground to provide a crude means
 for the Pico to report status to us (by blinking the LED in various patterns).
+
+.. note::
+
+    Why not use the LED built into the Pico? Or the reset button present on the
+    Pico Plus 2W? Ultimately the Pico and its (bulky) power supply are going to
+    be housed in some sort of box to keep small fingers from poking around near
+    mains electricity. Unless that box is transparent, it's going to be
+    difficult to see the Pico's own LED. Also, while "turning it off and on
+    again" is certainly an option for resetting the Pico, a simple momentary
+    button is even easier.
+
+    In my current setup, the reset button and status LED are combined into a
+    single nice, big, `illuminated button`_ attached to the housing.
+
+This is also the point where you will need to make sure your neopixel strips
+have some suitable connections to the breadboard. At its most basic, soldering
+some solid-core wire onto the terminals can work. However, where possible I'd
+recommend either purchasing sets with pins pre-soldered (although these can be
+quite difficult to come by), or buying a set of crimpers and connectors to make
+your own connectors (preferably with some heat-shrink for insulation):
+
+.. image:: images/crimped_connector.*
+    :align: center
+    :alt: A crimped three-pin connector for a neopixel strip
+
+Ideally, you want your neopixel connector to stand off from the breadboard so
+that it can sit outside your box, and to be irreversible so that you can't mix
+up the +5V and ground lines. Typically, wiring for WS2812 (3-pin) neopixels
+places the data pin in the middle with the +5V and ground lines either side. In
+the picture above, the +5V line is red, the data line is green, and the ground
+line is white. The connector on the right can only be mated one way around, so
+provided the connections on the breadboard are correct, you will be unable to
+connect your neopixel strip the wrong way around.
+
+With the breadboard populated, wire the +5V and ground rails to the relevant
+connectors on your power supply.
+
+
+Housing and installation
+========================
+
+With the breadboard fully populated, it's time to install everything in a box.
+Prepare a mains cable for the power supply, and install it through an
+appropriately sized cable gland in the box for strain relief. Attach the power
+supply to the interior of the box by whatever means is convenient. Typical
+plastic project boxes may have screw-mount points pre-moulded inside them, but
+it's also fine to drill through most such boxes and attach screws to mount the
+power supply. Just be sure that any ventilation holes on the power supply
+remain uncovered.
+
+Mount the breadboard within the box. Most breadboards have a self-adhesive
+backing that is convenient for this purpose. Again, ensure you do not cover
+ventilation holes on the power supply, and keep any bare conductors on the
+breadboard away from the power supply. Ideally, your box should be large enough
+to accommodate power supply and breadboard side by side, but if yours is not
+ensure there is adequate separation to avoid any shorts, and to allow free air
+flow over the power supply.
+
+Make some holes for the neopixel connectors. Cable glands may be used here, but
+aren't as important as for the mains cable which definitely requires strain
+relief.
+
+
 
 ----
 
@@ -446,6 +526,7 @@ for the Pico to report status to us (by blinking the LED in various patterns).
 .. _Avahi's mDNS: https://en.wikipedia.org/wiki/Multicast_DNS
 .. _pimoroni-pico releases: https://github.com/pimoroni/pimoroni-pico/releases
 .. _pimoroni-pico-rp2350 releases: https://github.com/pimoroni/pimoroni-pico-rp2350/releases
+.. _illuminated button: https://thepihut.com/products/rugged-metal-pushbutton-with-blue-led-ring
 
 .. [#pi5] Note this set up has *not* been tested on a Raspberry Pi 5, on
    which the legacy camera stack does not work. The gstreamer camera stack
@@ -477,10 +558,10 @@ for the Pico to report status to us (by blinking the LED in various patterns).
    almost certainly have to use the gstreamer configuration (unless I get
    around to writing that libcamera backend …)
 
+.. [#legacy] These options enable the legacy camera stack on the Pi. If you're
+   going to be using gstreamer instead, skip this step.
+
 .. [#sshkeys] If you don't have this configured, you *can* comment out the
    ``ssh_import_id`` section and enable ``ssh_pwauth`` instead but I would
    strongly advise getting SSH keys configured on GitHub instead. It'll make
    things so much easier for you in future (and is much more secure)!
-
-.. [#legacy] These options enable the legacy camera stack on the Pi. If you're
-   going to be using gstreamer instead, skip this step.

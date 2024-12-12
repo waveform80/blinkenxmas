@@ -3,6 +3,13 @@ Changelog
 =========
 
 
+Release 0.5 (2024-12-12)
+========================
+
+* Fix missing manage page template
+* More work on the tutorial
+
+
 Release 0.4 (2024-12-07)
 ========================
 

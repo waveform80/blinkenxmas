@@ -8,8 +8,8 @@ because it's what I'm more familiar with [#job]_. More specifically, I'll be
 using the 32-bit armhf variant of 22.04 because the legacy camera stack doesn't
 work on arm64 [#raspios]_ or on the later versions of Ubuntu.
 
-#. Insert your SD card into your computer, download `rpi-imager`_ (if you
-   haven't got it already), and start it.
+#. Insert your :term:`SD card` into your computer, download `rpi-imager`_ (if
+   you haven't got it already), and start it.
 
 #. Select "CHOOSE DEVICE" and pick your model of Pi from the list (I'll be
    picking "Raspberry Pi 3" which includes the 3B+).
@@ -23,11 +23,11 @@ work on arm64 [#raspios]_ or on the later versions of Ubuntu.
    about customizing the first-time configuration because we're going to do
    some of that manually to have ``cloud-init`` handle all the installation.
 
-Once the card is flashed, remove it from your computer, then re-insert it. You
-should see the boot partition (named "system-boot") appear. Open this, and look
-for the file named :file:`network-config`. Open this in your favoured text
-editor and replace the contents with the following, changing the commented
-values as appropriate:
+Once the :term:`SD card` is flashed, remove it from your computer, then
+re-insert it. You should see the boot partition (named "system-boot") appear.
+Open this, and look for the file named :file:`network-config`. Open this in
+your favoured text editor and replace the contents with the following, changing
+the commented values as appropriate:
 
 .. code-block:: yaml
     :emphasize-lines: 5,9-10
@@ -118,15 +118,15 @@ legacy camera stack [#legacy]_:
     start_x=1
     gpu_mem=128
 
-This should configure the Pi to connect to your WiFi network, import your SSH
-keys from your GitHub username [#sshkeys]_, and install everything necessary on
-the first boot. Speaking of which...
+This should configure the Pi to connect to your WiFi network, import your
+:term:`SSH` keys from your GitHub username [#sshkeys]_, and install everything
+necessary on the first boot. Speaking of which...
 
 
 First boot
 ==========
 
-#. Eject the SD card from your computer, and insert it in your Pi
+#. Eject the :term:`SD card` from your computer, and insert it in your Pi
 
 #. Connect the camera module to your Pi
 

@@ -3,9 +3,9 @@ Requirements
 
 You will need to be comfortable doing the following:
 
-* Soldering, unless you buy a Pico WH with the headers pre-soldered
+* Soldering, unless you buy a :term:`Pico` WH with the headers pre-soldered
 
-* Crimping, unless all your LED strips have connectors suitable for a
+* Crimping, unless all your :term:`LED` strips have connectors suitable for a
   breadboard pre-crimped onto them
 
 * Wiring a mains power lead to a power supply; this just means some wire in
@@ -13,14 +13,14 @@ You will need to be comfortable doing the following:
   live, neutral, and ground. If you're not confident (and/or competent!) in
   this, *please* get help from someone who is.
 
-* SSH'ing to a Linux command line, *preferably* using pub-key authentication
+* Using :term:`SSH`, *preferably* using pub-key authentication
 
 * Running commands at a Linux command line
 
-* Editing a text configuration file from the Linux command line using nano,
-  vim, or your favourite console text editor (you can try copying stuff back
-  and forth, but given there'll be some user switching involved you are *much*
-  better off just being able to edit things at the command line)
+* Editing a text configuration file from the Linux command line using ``nano``,
+  ``vim``, or your favourite console text editor (you can try copying stuff
+  back and forth, but given there'll be some user switching involved you are
+  *much* better off just being able to edit things at the command line)
 
 
 Shopping List
@@ -35,48 +35,52 @@ way:
 
 * A WiFi capable network
 
-* A Raspberry Pi; I'm using a `3B+`_ but any model [#pi5]_ with a CSI camera
-  port should work
+* A Raspberry Pi; I'm using a `3B+`_ but any model [#pi5]_ with a :term:`CSI`
+  camera port should work
 
 * A camera for your Pi; I'm using an old v1 camera module, but you can use
   later models [#v3]_ too or even a web-cam [#webcam]_
 
-* An SD card for your Pi; I'm using a spare 32GB SanDisk Ultra card
+* An :term:`SD card` for your Pi; I'm using a spare 32GB SanDisk Ultra card
 
 * A power supply for your Pi; micro-USB for models older than the 4B, USB-C for
   the 4B or later
 
 * A `Pico W`_, or some variant thereof (including a `Pico 2W`_, `Pico Plus
   2W`_, etc.); note you need a WiFi capable variant (not the bare Pico), and
-  that this project relies on the Pico's specific capabilities [#othermcu]_
+  that this project relies on the :term:`Pico`'s specific capabilities
+  [#othermcu]_
 
 * A `breadboard`_ large enough to mount your Pico and all associated wiring
 
 * A momentary push-button suitable for mounting on a breadboard
 
-* A red LED
+* A red :term:`LED`
 
 * A 330Ω resistor
 
 * `Jumper leads`_ or solid-core wire
 
-* A 5V power supply capable of driving the Pico (easy) and all your neopixels
-  (harder); a typical micro-USB supply is *not* going to cut the mustard here
-  but I'll go into more details below
+* A 5V power supply capable of driving the :term:`Pico` (easy) and all your
+  neopixels (harder); a typical micro-USB supply is *not* going to cut the
+  mustard here but I'll go into more details below
 
-* As many strands of WS2812 or APA102 compatible neopixels as you can
-  reasonably fit on your tree; note these do not have to be the same model, RGB
-  ordering, or length
+* As many strands of WS2812 or APA102 compatible :term:`neopixels <neopixel>`
+  as you can reasonably fit on your tree; note these do not have to be the same
+  model, RGB ordering, or length
 
-* Whatever attachments you need to connect your neopixels to your Pico or your
-  carrier board; if you're lucky your strands will already have compatible
-  connectors attached, if not you may need to solder and/or crimp some on
-  yourself
+* Whatever attachments you need to connect your neopixels to your :term:`Pico`
+  or your carrier board; if you're lucky your strands will already have
+  compatible connectors attached, if not you may need to solder and/or crimp
+  some on yourself
 
 * A box made of a non-flammable material large enough to house the power
   supply, breadboard, and all associated wiring
 
-* Some cable glands large enough to accommodate at least the mains cable
+* Some cable glands large enough to accommodate at least the mains cable, and
+  optionally the neopixel cables
+
+* A couple of cable ties
 
 In this tutorial I'll be using an `63-line breadboard`_ with two separate power
 rails which is probably overkill, but I don't like being cramped when wiring

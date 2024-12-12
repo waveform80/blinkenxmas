@@ -3,10 +3,10 @@ I've got the Power!
 ===================
 
 The power supply requires some consideration. Neopixels typically have a
-maximum output power of 0.24W per LED (at 5V). All told I've got 150 LEDs, so
-that's a total potential output of 150 × 0.24W = 36W, plus whatever's required
-for the Pico but frankly that'll be so minimal by comparison it's not worth
-worrying about.
+maximum output power of 0.24W per :term:`LED` (at 5V). All told I've got 150
+LEDs, so that's a total potential output of 150 × 0.24W = 36W, plus whatever's
+required for the Pico but frankly that'll be so minimal by comparison it's not
+worth worrying about.
 
 At 5V that's 36W ÷ 5V = 7.2A which is *way* beyond the maximum output of the
 typical micro-USB power supply used with Picos; these often top out at 1A or
@@ -49,7 +49,7 @@ this! The first year I got this working, I used 150 LEDs, as we are in this
 tutorial. The next year, I scaled it up to 250 LEDs thinking "there's more than
 enough headroom in the power supply", but not considering the heating situation
 on the 5V side of things. 250 × 0.24W = 60W. 60W ÷ 5V = 12A. Pushing 12A
-through 24AWG cable causes things to get *hot*:
+through 24:term:`AWG` cable causes things to get *hot*:
 
 .. image:: images/el_scorchio.*
     :align: center

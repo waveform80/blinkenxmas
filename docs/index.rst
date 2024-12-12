@@ -30,6 +30,8 @@ Contents
     development
     changelog
     license
+    glossary
+
 
 Indices and tables
 ==================

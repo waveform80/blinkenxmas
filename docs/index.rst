@@ -24,12 +24,8 @@ Contents
 .. toctree::
     :maxdepth: 1
 
-    install
     tutorial
-    bxflash
-    bxweb
-    bxcli
-    blinkenxmas.conf
+    applications
     api
     development
     changelog

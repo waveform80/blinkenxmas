@@ -3,6 +3,15 @@ Changelog
 =========
 
 
+Release 0.4 (2024-12-07)
+========================
+
+* Fixed bug in bxflash so that it works even if the firmware is already running
+  on the Pico W
+* Re-wrote the preset removal page so it's much simpler
+* More work on the tutorial
+
+
 Release 0.3 (2024-12-05)
 ========================
 

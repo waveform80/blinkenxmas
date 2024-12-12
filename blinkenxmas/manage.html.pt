@@ -1,0 +1,28 @@
+<div metal:use-macro="layout">
+  <div tal:omit-tag="1" metal:fill-slot="title">Manage Presets</div>
+  <div tal:omit-tag="1" metal:fill-slot="head">
+    <meta name="description" content="Remove unwanted Blinken' Xmas presets" />
+  </div>
+
+  <article metal:fill-slot="content">
+    <form method="POST" action="remove">
+      <p>Check the presets you wish to remove:</p>
+      <ul id="presets">
+        <li tal:repeat="preset store.presets">
+          <input type="checkbox" name="name" value="${preset}" id="${preset}" />
+          <label for="${preset}">${preset}</label>
+        </li>
+      </ul>
+      <p class="buttons">
+        <input type="submit" value="Remove" />
+        <a class="button" href="index.html">Cancel</a>
+      </p>
+    </form>
+  </article>
+
+  <div metal:fill-slot="scripts" tal:omit-tag="1">
+    <script src="/messages.js"></script>
+    <script>showMessages();</script>
+  </div>
+</div>
+

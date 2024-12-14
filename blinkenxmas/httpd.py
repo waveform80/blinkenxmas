@@ -162,7 +162,9 @@ class Param(namedtuple('Param', (
 
     .. attribute:: choices
 
-        The set of valid selections for ``select`` type inputs.
+        A :class:`dict` defining the valid selections for ``select`` type
+        inputs. The values of the dictionary represent the labels for each
+        option value.
 
     .. attribute:: suffix
 

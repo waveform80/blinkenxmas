@@ -148,6 +148,10 @@ class Param(namedtuple('Param', (
 
         The value of the ``<input>`` element's ``type`` parameter.
 
+    .. attribute:: default
+
+        The default value of the input.
+
     .. attribute:: min
 
         The minimum value for ``range`` type inputs.

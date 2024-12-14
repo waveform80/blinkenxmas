@@ -1,4 +1,7 @@
 import io
+import os
+import base64
+import hashlib
 import mimetypes
 import datetime as dt
 import email.parser
@@ -488,10 +491,12 @@ class HTTPResponse:
     :param dict headers:
         Additional headers to include in the response.
     """
+    etags = {}
+
     def __init__(self, request, body=None, *, status_code=HTTPStatus.OK,
                  content_length=None, accept_ranges=True, filename=None,
                  mime_type=None, encoding=None, last_modified=None,
-                 headers=None):
+                 etag=None, headers=None):
         self.request = request
         self.accept_ranges = accept_ranges
         self.status_code = HTTPStatus(status_code)
@@ -511,19 +516,25 @@ class HTTPResponse:
                 with suppress(AttributeError):
                     filename = self.stream.name
 
-        if (
-            content_length is None and self.stream is not None and
-            self.stream.seekable()
-        ):
-            content_length = self.stream.seek(0, io.SEEK_END)
-            self.stream.seek(0)
         if mime_type is None and filename is not None:
             mime_type, encoding = mimetypes.guess_type(filename)
-        if last_modified is None and filename is not None:
-            with suppress(FileNotFoundError, PermissionError):
-                last_modified = dt.datetime.fromtimestamp(
-                    Path(filename).stat().st_mtime_ns / 1_000_000_000,
-                    tz=dt.timezone.utc)
+        if self.stream is not None:
+            if last_modified is None:
+                with suppress(io.UnsupportedOperation, PermissionError):
+                    fd = self.stream.fileno()
+                    last_modified = dt.datetime.fromtimestamp(
+                        os.fstat(fd).st_mtime_ns / 1_000_000_000,
+                        tz=dt.timezone.utc)
+            if self.stream.seekable():
+                if content_length is None:
+                    pos = self.stream.tell()
+                    content_length = self.stream.seek(0, io.SEEK_END) - pos
+                    self.stream.seek(pos)
+                if etag is None and filename is not None:
+                    etag = self._get_etag(
+                        (filename, content_length, last_modified))
+                elif etag is False:
+                    etag = None
 
         if content_length is not None:
             self.headers['Content-Length'] = content_length
@@ -534,6 +545,8 @@ class HTTPResponse:
         if last_modified is not None:
             self.headers['Last-Modified'] = eut.format_datetime(
                 last_modified, usegmt=True)
+        if etag is not None:
+            self.headers['ETag'] = f'W/"{etag}"'
 
     def __repr__(self):
         headers = '\n'.join(
@@ -574,12 +587,31 @@ class HTTPResponse:
             etag = self.headers['ETag']
             if_none_match = {
                 tag.strip()
-                for tag in self.request.headers['If-None-Match'].split(',')
+                for tag in self.request.headers.get(
+                    'If-None-Match', '').split(',')
             }
         except KeyError:
             return False
         else:
             return etag in if_none_match
+
+    def _get_etag(self, key):
+        try:
+            return HTTPResponse.etags[key]
+        except KeyError:
+            if self.stream is None or not self.stream.seekable():
+                return None
+            pos = self.stream.tell()
+            sha = hashlib.sha1()
+            while True:
+                buf = self.stream.read(65536)
+                if not buf:
+                    break
+                sha.update(buf)
+            self.stream.seek(pos)
+            result = base64.b64encode(sha.digest()).decode("ascii")
+            HTTPResponse.etags[key] = result
+            return result
 
     def check_cached(self):
         """

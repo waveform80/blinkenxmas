@@ -399,9 +399,8 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             return None
         else:
             return HTTPResponse(
-                self, body=body, last_modified=self.static_modified,
-                filename=path,
-                headers={'Cache-Control': 'max-age=31536000, immutable'})
+                self, body=body, filename=path,
+                headers={'Cache-Control': 'max-age=86400'})
 
     @for_commands('GET', 'POST')
     def try_template(self):
@@ -422,7 +421,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
         namespace = self.get_template_ns()
         body = template.render(**namespace)
         return HTTPResponse(
-            self, body=body, last_modified=namespace['now'],
+            self, body=body, last_modified=namespace['now'], etag=False,
             filename=path, headers={'Cache-Control': 'no-cache'})
 
     def get_response(self):

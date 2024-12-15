@@ -73,6 +73,28 @@ def one_color(led_count, color):
     return [[color for led in range(led_count)]]
 
 
+@animation('Calibration',
+           led_count=ParamLEDCount(),
+           positions=ParamLEDPositions(),
+           found_color=Param('Found', 'color', default='#00ff00'),
+           missing_color=Param('Missing', 'color', default='#ff0000'))
+def calibration(led_count, positions, found_color, missing_color):
+    """
+    This "animation" shows which LEDs were found during calibration and which
+    were not by assigning them different colors. This is primarily useful for
+    debugging your setup. Your are advised to use two non-black colors so that
+    you can check for unlit LEDs, which may be a result of bad connections,
+    broken LEDs, or bad configuration of the strand lengths.
+
+    Please note this animation requires that you have run the calibration step
+    or all LEDs (exception bad ones) will simply appear in the "missing" color.
+    """
+    return [[
+        found_color if led in positions else missing_color
+        for led in range(led_count)
+    ]]
+
+
 @animation('Gradient (by index)',
            led_count=ParamLEDCount(),
            color1=Param('From', 'color', default='#000000'),

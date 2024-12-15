@@ -246,6 +246,11 @@ def animation(name, **params):
     * :class:`Param`
     """
     def decorator(f):
+        invalid_names = {'name', 'data', 'animation'} & params.keys()
+        if invalid_names:
+            raise ValueError(
+                f'invalid parameter name(s) in {f!r}: '
+                f'{", ".join(invalid_names)}')
         if f.__doc__:
             overrides = {
                 'input_encoding':       'unicode',
@@ -347,6 +352,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             'url':            urllib.parse.quote,
             'json':           json.dumps,
             'request':        self,
+            'messages':       self.server.messages,
             'config':         self.server.config,
             'now':            dt.datetime.now(tz=dt.timezone.utc),
             'datetime':       dt.datetime,

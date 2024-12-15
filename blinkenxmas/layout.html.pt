@@ -15,9 +15,15 @@
       <a class="logo" href="/"><div></div><h1>Blinken' Xmas</h1></a>
     </header>
 
-    <section id="messages"></section>
+    <section id="messages">
+      <div tal:repeat="message messages.drain()"><a href="${request.path}"
+          onclick="hideMessage(event)">x</a>
+        <p>${message}</p>
+      </div>
+    </section>
     <article metal:define-slot="content"></article>
     <div metal:define-slot="scripts" />
+    <script src="/messages.js"></script>
   </body>
 </html>
 </foo>

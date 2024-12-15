@@ -26,9 +26,7 @@
   </article>
 
   <div metal:fill-slot="scripts" tal:omit-tag="1">
-    <script src="/messages.js"></script>
     <script src="/index.js"></script>
     <script tal:condition="store.presets">initIndexForm(document.forms[0]);</script>
-    <script>showMessages();</script>
   </div>
 </div>

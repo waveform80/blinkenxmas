@@ -23,10 +23,8 @@
   </article>
 
   <div tal:omit-tag="1" metal:fill-slot="scripts">
-    <script src="/messages.js"></script>
     <script src="/globals.js"></script>
     <script src="/create.js"></script>
     <script>initCreateForm(document.forms[0]);</script>
-    <script>showMessages();</script>
   </div>
 </div>

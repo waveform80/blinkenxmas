@@ -6,25 +6,32 @@
 
   <article metal:fill-slot="content">
     <p>
-    <span tal:condition="calibration.calculator.angles">You have
-      ${len(calibration.calculator.angles)} angle(s) of the tree scanned so
-      far. To continue calibration,</span>
-    <span tal:condition="not calibration.calculator.angles">
-      <span tal:condition="store.positions">Calibration is complete
-        (${len(store.positions)} LED positions stored in the database). If you
-        wish to re-calibrate,</span>
-      <span tal:condition="not store.positions">Calibration is required for
-        certain animations to operate correctly. To start calibration,</span>
+    <span tal:omit-tag="1" tal:condition="calibration.calculator.angles">You
+      have scanned angle(s)
+      ${', '.join(f'{a}°' for a in calibration.calculator.angles)}
+      of the tree so far. To continue calibration,</span>
+    <span tal:omit-tag="1" tal:condition="not calibration.calculator.angles">
+      <span tal:omit-tag="1" tal:condition="store.positions">Calibration is
+        complete (${len(store.positions)} LED positions stored in the
+        database). If you wish to re-calibrate,</span>
+      <span tal:omit-tag="1" tal:condition="not store.positions">Calibration is
+        required for certain animations to operate correctly. To start
+        calibration,</span>
     </span>
-    enter the angle of the tree below and select "Capture". Otherwise,
-    select "Cancel" to return to the main page.</p>
+    enter the angle of the tree below, select "Preview" and try to align the
+    tree within the frame so that it is roughly vertical and in the middle of
+    the frame, then select "Capture". Otherwise, select "Cancel" to return to
+    the main page.</p>
 
     <p tal:condition="len(calibration.calculator.positions)">To finish
     calibration and commit the 3D positions currently calculated, select
     "Commit".</p>
 
-    <form action="/mask.html" method="get" class="grid">
-      <img id="preview-image" src="/no-preview.png" />
+    <form action="/mask.html" method="GET" class="grid">
+      <div id="preview-area">
+        <img id="preview-image" src="/no-preview.png" />
+        <img id="overlay-image" src="/alignment.svg" />
+      </div>
       <label for="angle">Tree Angle</label>
       <input type="number" id="angle" name="angle"
         value="0" min="0" max="355" step="5" required />
@@ -40,8 +47,8 @@
 
     <p>The angle is a relative measure. You should start by calibrating "angle
     zero", i.e. the "normal" position of your tree. Once calibration of this
-    angle is complete, rotate your tree by a measured amount about the axis
-    running through its trunk and calibrate the new angle.</p>
+    angle is complete, rotate your tree clockwise by a measured amount about
+    the axis running through its trunk and calibrate the new angle.</p>
 
     <p>You will likely need 4 or 5 scans of different angles to accurately plot
     the position of all LEDs on your tree. Remember that not all LEDs will be
@@ -53,9 +60,7 @@
   </article>
 
   <div tal:omit-tag="1" metal:fill-slot="scripts">
-    <script src="/messages.js"></script>
     <script src="/calibrate.js"></script>
     <script>initCaptureForm(document.forms[0]);</script>
-    <script>showMessages();</script>
   </div>
 </div>

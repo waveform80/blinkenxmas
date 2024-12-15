@@ -303,7 +303,7 @@ def calibration_base(request, angle):
     The "base" image of the unlit tree is returned as the response.
     """
     try:
-        angle = int(angle, base=10)
+        angle = int(angle, base=10) % 360
     except ValueError:
         return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
     try:
@@ -325,7 +325,7 @@ def calibration_mask(request, angle):
     image, and (1, 1) is the bottom right of the image.
     """
     try:
-        angle = int(angle, base=10)
+        angle = int(angle, base=10) % 360
         scanner = scanner_for(request, angle)
     except ValueError:
         return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
@@ -349,7 +349,7 @@ def calibration_state(request, angle):
     right.
     """
     try:
-        angle = int(angle, base=10)
+        angle = int(angle, base=10) % 360
         scanner = scanner_for(request, angle)
     except ValueError:
         return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)

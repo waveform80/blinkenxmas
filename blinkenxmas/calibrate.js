@@ -143,10 +143,11 @@ function startPreview(evt) {
     let form = document.forms[0];
     let angle = parseInt(form.elements['angle'].value);
     let previewBtn = form.querySelector('#preview');
+    let overlayImg = form.querySelector('#overlay-image');
 
-    // XXX: Set angle correctly
     form.querySelector('#preview-image').src =
         `/live-preview.mjpg?angle=${angle}`;
+    overlayImg.style.display = 'block';
     previewBtn.removeEventListener('click', startPreview);
     previewBtn.addEventListener('click', stopPreview);
     previewBtn.value = 'Stop';
@@ -155,8 +156,10 @@ function startPreview(evt) {
 function stopPreview(evt) {
     let form = document.forms[0];
     let previewBtn = form.querySelector('#preview');
+    let overlayImg = form.querySelector('#overlay-image');
 
     form.querySelector('#preview-image').src = '/no-preview.png';
+    overlayImg.style.display = 'none';
     previewBtn.removeEventListener('click', stopPreview);
     previewBtn.addEventListener('click', startPreview);
     previewBtn.value = 'Preview';

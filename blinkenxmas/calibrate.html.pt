@@ -8,7 +8,8 @@
     <p>Calibration for angle ${angle}° running, please wait. During this
     process you should see each LED on the tree illuminating in turn, while the
     camera captures it. This can take a while; please try to ensure people
-    &amp; pets stay out of the way while the procedure is running!</p>
+    &amp; pets stay out of the way while the procedure is running, and do not
+    move the camera or the tree!</p>
 
     <form class="grid">
       <img id="preview-image" src="/angle${str(angle).rjust(3, '0')}_base.jpg" />

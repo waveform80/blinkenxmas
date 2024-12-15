@@ -345,7 +345,6 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     }
     routes = {}
     animations = {}
-    calibration = {}
 
     def get_template(self, name):
         """

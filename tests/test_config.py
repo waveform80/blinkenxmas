@@ -129,14 +129,20 @@ def test_get_parser(capsys):
 
 
 def test_get_config():
-    config = get_config()
-    assert set(config.sections()) == {
-        'mqtt',
-        'web',
-        'wifi',
-        'pico',
-        'camera',
-    }
+    ignore = {p.expanduser().resolve() for p in CONFIG_LOCATIONS}
+    def no_system_config(filename, mode='r', **kwargs):
+        if filename.resolve() in ignore:
+            raise FileNotFoundError(filename)
+        return open(filename, mode, **kwargs)
+    with mock.patch('configparser.open', no_system_config):
+        config = get_config()
+        assert set(config.sections()) == {
+            'mqtt',
+            'web',
+            'wifi',
+            'pico',
+            'camera',
+        }
 
 
 def test_get_config_path_resolution(tmp_path):

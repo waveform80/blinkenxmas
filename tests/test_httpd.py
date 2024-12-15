@@ -42,7 +42,7 @@ def test_static_HEAD(web_config, server_factory, no_routes, client_factory):
         resp = client.getresponse()
         assert resp.status == 200
         assert resp.read() == b''
-        assert 'immutable' in resp.headers['Cache-Control']
+        assert 'max-age' in resp.headers['Cache-Control']
         assert resp.headers['Content-Type'] == 'text/css'
         assert int(resp.headers['Content-Length']) == style_css.stat().st_size
 
@@ -56,7 +56,7 @@ def test_static_GET(web_config, server_factory, no_routes, client_factory):
         resp = client.getresponse()
         assert resp.status == 200
         assert resp.read() == expected
-        assert 'immutable' in resp.headers['Cache-Control']
+        assert 'max-age' in resp.headers['Cache-Control']
         assert resp.headers['Content-Type'] == 'text/css'
         assert int(resp.headers['Content-Length']) == len(expected)
 
@@ -115,7 +115,7 @@ def test_template_HEAD(web_config, server_factory, no_routes, client_factory):
         resp = client.getresponse()
         assert resp.status == 200
         assert resp.read() == b''
-        assert 'immutable' not in resp.headers['Cache-Control']
+        assert 'max-age' not in resp.headers['Cache-Control']
         assert resp.headers['Content-Type'] == 'text/html'
 
 
@@ -127,7 +127,7 @@ def test_template_GET_empty_index(web_config, server_factory, no_routes,
         resp = client.getresponse()
         body = list(split(resp))
         assert resp.status == 200
-        assert 'immutable' not in resp.headers['Cache-Control']
+        assert 'max-age' not in resp.headers['Cache-Control']
         assert resp.headers['Content-Type'] == 'text/html'
         assert find(('<p>', 'No presets defined yet!', '</p>'), body)
         assert not find(('<p>', 'Select from one of the following presets:', '</p>'), body)

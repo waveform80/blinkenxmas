@@ -75,6 +75,7 @@ def server_factory(request):
     def factory(config, messages=None, queue=None):
         if messages is None:
             messages = mock.Mock()
+            messages.drain.return_value = []
         if queue is None:
             queue = mock.Mock()
         return HTTPThread(config, messages, queue)

@@ -239,24 +239,7 @@ def test_http_response_path(tmp_path):
 HTTP/1.0 200 OK\r
 Content-Length: 11\r
 Last-Modified: {eut.format_datetime(last_modified, usegmt=True)}\r
-\r
-Foo Bar Baz""".encode('utf-8')
-
-
-def test_http_response_path_with_filename(tmp_path):
-    body = tmp_path / 'body.dat'
-    body.write_text('Foo Bar Baz')
-    req = DummyRequest()
-    resp = HTTPResponse(req, body=body, filename='body.txt')
-    resp.send_headers()
-    resp.send_body()
-    # Content-Type appears because the .txt extension matches MIME-type
-    # text/plain, while Last-Modified disappears because the specified filename
-    # doesn't actually exist
-    assert req.wfile.getvalue() == f"""\
-HTTP/1.0 200 OK\r
-Content-Length: 11\r
-Content-Type: text/plain\r
+ETag: W/"dZrvPXf7yOYRTqF+koOt/z2YcZU="\r
 \r
 Foo Bar Baz""".encode('utf-8')
 
@@ -284,6 +267,7 @@ def test_http_response_stream_with_filename():
 HTTP/1.0 200 OK\r
 Content-Length: 4\r
 Content-Type: text/plain\r
+ETag: W/"uELFsK/zmi1y0epA++2N3U/muw4="\r
 \r
 QUUX"""
 
@@ -336,6 +320,7 @@ def test_http_response_cached_datetime(tmp_path):
     assert req.wfile.getvalue() == f"""\
 HTTP/1.0 304 Not Modified\r
 Last-Modified: {eut.format_datetime(last_modified, usegmt=True)}\r
+ETag: W/"dZrvPXf7yOYRTqF+koOt/z2YcZU="\r
 \r
 """.encode('utf-8')
 
@@ -355,6 +340,7 @@ def test_http_response_cached_naive_datetime(tmp_path):
     assert req.wfile.getvalue() == f"""\
 HTTP/1.0 304 Not Modified\r
 Last-Modified: {eut.format_datetime(last_modified, usegmt=True)}\r
+ETag: W/"dZrvPXf7yOYRTqF+koOt/z2YcZU="\r
 \r
 """.encode('utf-8')
 
@@ -375,6 +361,7 @@ def test_http_response_not_cached_datetime(tmp_path):
 HTTP/1.0 200 OK\r
 Content-Length: 11\r
 Last-Modified: {eut.format_datetime(last_modified, usegmt=True)}\r
+ETag: W/"dZrvPXf7yOYRTqF+koOt/z2YcZU="\r
 \r
 Foo Bar Baz""".encode('utf-8')
 

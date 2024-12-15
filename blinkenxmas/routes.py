@@ -3,7 +3,7 @@ import json
 from http import HTTPStatus
 from urllib.parse import quote
 
-from .httpd import route, Param
+from .httpd import route, Function, Param, HTTPRequestHandler
 from .http import HTTPResponse, DummyResponse
 from .calibrate import AngleScanner
 
@@ -31,11 +31,26 @@ def get_messages(request):
         body=json.dumps(request.server.messages.drain()))
 
 
+@route('/animations.json', 'GET')
+def get_animations(request):
+    "Returns the list of defined animations as a JSON map."
+    return HTTPResponse(
+        request, mime_type='application/json',
+        body=json.dumps({
+            # Can't JSON serialize the actual functions ...
+            fkey: func._replace(function=None, params={
+                pkey: param
+                for pkey, param in func.params.items()
+                # ... or parameters which aren't tuples (e.g. ParamFPS)
+                if isinstance(param, Param)
+            })
+            for fkey, func in request.animations.items()
+        }))
+
+
 @route('/presets.json', 'GET')
 def get_presets(request):
-    """
-    This handler returns the list of defined presets as a JSON array.
-    """
+    "Returns the list of defined presets as a JSON array."
     return HTTPResponse(request, mime_type='application/json',
                         body=json.dumps(list(request.store.presets)))
 
@@ -139,38 +154,69 @@ def preview_preset(request, name):
                 headers={'Location': '/index.html'})
 
 
+def generate_animation(request, anim_name, params):
+    anim = HTTPRequestHandler.animations[anim_name]
+    kwargs = {
+        key: anim.params[key].value(value)
+        for key, value in params.items()
+        if key in anim.params
+        and isinstance(anim.params[key], Param)
+    }
+    # Convert None for values missing from the submitted form; this is
+    # principally to support controls like "checkbox" which are absent from
+    # the submitted dataset when unchecked
+    kwargs.update({
+        key: param.value(None)
+        for key, param in anim.params.items()
+        if isinstance(param, Param)
+        and key not in params
+    })
+    # Fill out non-form parameters
+    kwargs.update({
+        key: param.value(request)
+        for key, param in anim.params.items()
+        if not isinstance(param, Param)
+    })
+    return anim.function(**kwargs)
+
+
+@route('/create', 'POST')
+def create_animation(request):
+    """
+    Given a preset name, an animation function name, and a set of parameters,
+    calls the specified animation function with the specified parameter values,
+    and creates a named preset with the resulting data.
+    """
+    try:
+        params = request.query.copy()
+        name = params.pop('name')
+        anim = params.pop('animation')
+        data = generate_animation(request, anim, params)
+    except (KeyError) as e:
+        return HTTPResponse(
+            request, body=str(e), status_code=HTTPStatus.BAD_REQUEST)
+    else:
+        # TODO Assert that the structure is correct (voluptuous?)
+        data = [[led.html for led in frame] for frame in data]
+        if name in request.store.presets:
+            request.server.messages.show(f'Updated preset {name}')
+        else:
+            request.server.messages.show(f'Created preset {name}')
+        request.store.presets[name] = data
+        return HTTPResponse(
+            request, status_code=HTTPStatus.SEE_OTHER,
+            headers={'Location': '/index.html'})
+
+
 @route('/animation/<name>', 'POST')
-def generate_animation(request, name):
+def get_animation(request, name):
     """
     Calls the named animation function with parameters derived from the JSON
     object in the request body, returning the generated animation frames as a
     JSON array in the body of the response.
     """
     try:
-        anim = request.animations[name]
-        # Convert parameter values from those present in form
-        kwargs = {
-            key: anim.params[key].value(value)
-            for key, value in request.query.items()
-            if key in anim.params
-            and isinstance(anim.params[key], Param)
-        }
-        # Convert None for values missing from the submitted form; this is
-        # principally to support controls like "checkbox" which are absent from
-        # the submitted dataset when unchecked
-        kwargs.update({
-            key: param.value(None)
-            for key, param in anim.params.items()
-            if isinstance(param, Param)
-            and key not in request.query
-        })
-        # Fill out non-form parameters
-        kwargs.update({
-            key: param.value(request)
-            for key, param in anim.params.items()
-            if not isinstance(param, Param)
-        })
-        data = anim.function(**kwargs)
+        data = generate_animation(request, name, request.query)
     except (KeyError, ValueError, TypeError) as e:
         return HTTPResponse(
             request, body=str(e), status_code=HTTPStatus.BAD_REQUEST)

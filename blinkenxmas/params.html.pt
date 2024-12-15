@@ -1,0 +1,46 @@
+<div metal:use-macro="layout">
+  <div tal:omit-tag="1" metal:fill-slot="title">Home</div>
+  <div tal:omit-tag="1" metal:fill-slot="head">
+    <meta name="description" content="Create a new Blinken' Xmas preset" />
+  </div>
+
+  <article metal:fill-slot="content">
+    <form class="grid" method="POST" action="/create"
+        tal:define="animation animations[request.query['animation']]">
+      <label for="name">Name</label>
+      <input type="text" name="name" value="${request.query['name']}"
+        default="${animation.name}" required />
+      <label for="animation">Animation</label>
+      <span>
+        <input type="hidden" name="animation" value="${request.query['animation']}" />
+        ${animation.name}
+      </span>
+      <span class="description">${structure:animation.description}</span>
+      <div tal:omit-tag="1" tal:repeat="(id, param) animation.params.items()">
+        <label for="${id}">${param.label}</label>
+        <select tal:condition="param.input_type == 'select'" id="${id}">
+          <option tal:repeat="(cid, choice) param.choices.items()"
+            value="${cid}">${choice}</option>
+        </select>
+        <input tal:condition="param.input_type == 'checkbox'"
+          id="${id}" name="${id}" type="checkbox"
+          checked="${'checked' if param.default else None}" />
+        <input tal:condition="param.input_type not in ('select', 'checkbox')"
+          id="${id}" name="${id}" type="${param.input_type}"
+          default="${param.default}" min="${param.min}" max="${param.max}" />
+      </div>
+      <div class="buttons">
+        <input type="submit" id="create" value="Create" />
+        <a class="button" href="/">Cancel</a>
+      </div>
+    </form>
+  </article>
+
+  <div tal:omit-tag="1" metal:fill-slot="scripts">
+    <script src="/globals.js"></script>
+    <script src="/messages.js"></script>
+    <script src="/create.js"></script>
+    <script>initCreateForm(document.forms[0]);</script>
+    <script>showMessages();</script>
+  </div>
+</div>

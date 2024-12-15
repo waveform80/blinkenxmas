@@ -5,31 +5,26 @@
   </div>
 
   <article metal:fill-slot="content">
-    <form class="grid">
+    <form class="grid" method="POST" action="/params.html">
       <label for="name">Name</label>
-      <input type="text" name="name" required />
+      <input type="text" id="name" name="name" required />
       <label for="animation">Animation</label>
-      <select name="animation">
-        <option value="">Custom</option>
+      <select name="animation" required>
+        <option value=""></option>
         <option tal:repeat="anim sorted(animations)"
           value="${anim}">${animations[anim].name}</option>
       </select>
       <span hidden class="description"></span>
-      <label for="data">Data</label>
-      <textarea name="data" id="data" rows="5">[]</textarea>
       <div class="buttons">
-        <input type="button" id="preview" value="Preview" />
-        <!-- TODO Implement submit variant for no-js -->
-        <input type="button" id="create" value="Create" />
+        <input type="submit" id="create" value="Create" />
         <a class="button" href="/">Cancel</a>
       </div>
     </form>
   </article>
 
   <div tal:omit-tag="1" metal:fill-slot="scripts">
-    <script>var animations=${structure: json(animations)};</script>
-    <script>var presets=${structure: json(list(store.presets))};</script>
     <script src="/messages.js"></script>
+    <script src="/globals.js"></script>
     <script src="/create.js"></script>
     <script>initCreateForm(document.forms[0]);</script>
     <script>showMessages();</script>

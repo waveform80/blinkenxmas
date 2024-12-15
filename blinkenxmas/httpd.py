@@ -259,13 +259,6 @@ def animation(name, **params):
             html = ''
         func = Function(name, html, f, params)
         HTTPRequestHandler.animations[f.__name__] = func
-        # Sanitized version which can be JSON serialized
-        HTTPRequestHandler.animations_json[f.__name__] = Function(
-            func.name, func.description, None, {
-                pname: param
-                for pname, param in func.params.items()
-                if isinstance(param, Param)
-            })
         return f
     return decorator
 
@@ -330,7 +323,6 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
     }
     routes = {}
     animations = {}
-    animations_json = {}
     calibration = {}
 
     def get_template(self, name):
@@ -362,7 +354,7 @@ class HTTPRequestHandler(BaseHTTPRequestHandler):
             'led_count':      self.server.config.led_count,
             'calibration':    self.server.calibration,
             'store':          self.store,
-            'animations':     self.animations_json,
+            'animations':     self.animations,
         }
         ns.update(kwargs)
         return ns

@@ -3,9 +3,16 @@ import sys
 from queue import Queue
 from pathlib import Path
 
-# NOTE: The routes and animations imports are performed solely to "register"
-# their definitions with the httpd module
-from . import mqtt, httpd, routes, animations
+# NOTE: Remove except when compatibility moves beyond Python 3.10
+try:
+    from importlib.metadata import entry_points
+except ImportError:
+    from importlib_metadata import entry_points
+
+
+# NOTE: The routes imports are performed solely to "register" their definitions
+# with the httpd module
+from . import mqtt, httpd, routes
 from .config import (
     get_config, get_parser,
     resolution, port, rotation, SUPPRESS
@@ -72,6 +79,8 @@ def main(args=None):
         if config.led_count == 0:
             raise RuntimeError(
                 'No LED strips defined; please edit the configuration file')
+        for module in entry_points(group='blinkenxmas_animations'):
+            module.load()
         queue = Queue()
         messages = httpd.Messages()
         with mqtt.MessageThread(config, queue) as message_task, \

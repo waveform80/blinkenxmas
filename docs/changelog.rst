@@ -3,6 +3,16 @@ Changelog
 =========
 
 
+Release 0.6 (2024-12-15)
+========================
+
+* Fixed creation page so it actually creates thing again...
+* Fixed no-JS operation for everything except calibration
+* Improved calibration with alignment line for the preview and better
+  instructions
+* More work on the tutorial
+
+
 Release 0.5 (2024-12-12)
 ========================
 

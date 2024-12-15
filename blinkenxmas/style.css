@@ -55,12 +55,12 @@ input, select, textarea {
 }
 
 input[type=checkbox] {
-  width: auto;
+    width: auto;
 }
 
 label {
-  margin-top: 0;
-  color: var(--label);
+    margin-top: 0;
+    color: var(--label);
 }
 
 a {
@@ -134,10 +134,10 @@ table tbody tr:nth-child(even) td { background-color: var(--row-even); }
 header {
     background: #b3deb1;
     background: linear-gradient(
-        90deg,
-        #b3deb1 0%,
-        #b3deb1 50%,
-        var(--link-hover) 100%
+    90deg,
+    #b3deb1 0%,
+    #b3deb1 50%,
+    var(--link-hover) 100%
     );
 }
 

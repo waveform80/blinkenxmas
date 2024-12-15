@@ -21,3 +21,4 @@ Pi with a camera module for the server to perform calibration on the positions.
     tutorial3
     tutorial4
     tutorial5
+    tutorial6

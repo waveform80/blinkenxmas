@@ -166,33 +166,6 @@ I would recommend the following order for setting up the tree itself:
 #. Place your housing containing the power supply and Pico under the tree, and
    connect the strands to it
 
-#. Plug the housing into the wall socket
-
-#. Watch the status LED and cross your fingers!
-
-
-First boot
-==========
-
-If everything goes correctly, you should see the status :term:`LED` start to
-flash periodically, before eventually staying on. The flashes of the status LED
-indicate the following:
-
-2 flashes
-    Indicates the Pico has booted Micropython and is trying to connect to the
-    wifi AP
-
-3 flashes
-    The Pico has connected to the configured wifi AP and is trying to connect
-    to the MQTT broker
-
-solid
-    The Pico has connected to the broker and is awaiting animations to display
-
-5 flashes
-    The Pico's script has crashed and it is not configured to reset
-    automatically (by default, it will simply restart in this event)
-
 
 .. _Pico Plus 2W: https://shop.pimoroni.com/products/pimoroni-pico-plus-2-w
 .. _pimoroni-pico releases: https://github.com/pimoroni/pimoroni-pico/releases

@@ -48,6 +48,8 @@ function setupCreateForm(form) {
             case 'INPUT':
                 if (elem.type == 'button')
                     continue;
+                if (elem.type == 'submit')
+                    continue;
                 if (elem.name == 'name')
                     continue;
                 break;

@@ -11,6 +11,7 @@ from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from collections import namedtuple, deque
 from threading import Thread, Lock
 from contextlib import suppress
+from inspect import signature
 
 # NOTE: The fallback comes first here as Python 3.7 incorporates
 # importlib.resources but at a version incompatible with our requirements.
@@ -246,11 +247,27 @@ def animation(name, **params):
     * :class:`Param`
     """
     def decorator(f):
-        invalid_names = {'name', 'data', 'animation'} & params.keys()
-        if invalid_names:
+        required_params = {
+            key: param
+            for key, param in signature(f).parameters.items()
+            if param.default is param.empty
+        }
+        if required_params.keys() != params.keys():
+            extra = required_params.keys() - params.keys()
+            if extra:
+                raise ValueError(
+                    f'animation function {f!r} has extra parameter(s) '
+                    f'{", ".join(extra)}')
+            missing = params.keys() - required_params.keys()
+            if missing:
+                raise ValueError(
+                    f'animation function {f!r} is missing parameter(s) '
+                    f'{", ".join(missing)}')
+        invalid_params = {'name', 'data', 'animation'} & params.keys()
+        if invalid_params:
             raise ValueError(
-                f'invalid parameter name(s) in {f!r}: '
-                f'{", ".join(invalid_names)}')
+                f'invalid parameter name(s) in animation function {f!r}: '
+                f'{", ".join(invalid_params)}')
         if f.__doc__:
             overrides = {
                 'input_encoding':       'unicode',

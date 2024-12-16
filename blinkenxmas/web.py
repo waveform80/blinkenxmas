@@ -36,10 +36,10 @@ def get_web_parser():
         '--httpd-port', key='port', type=port, metavar='PORT',
         help="the port to listen for HTTP requests. Default: %(default)s")
     web_section.add_argument(
-        '--no-production', dest='production', section='web', key='production',
+        '--no-production', dest='production', key='production',
         action='store_false')
     web_section.add_argument(
-        '--production', section='web', key='production', action='store_true',
+        '--production', key='production', action='store_true',
         help="if specified, run in production mode where an internal server "
         "error will not terminate the server and will not output a stack "
         "trace (default: no)")

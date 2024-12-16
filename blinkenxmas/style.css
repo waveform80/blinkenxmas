@@ -3,56 +3,77 @@ html { box-sizing: border-box; }
 *, *:before, *:after { box-sizing: inherit; }
 
 :root {
-    --disabled-back: #ddd;
-    --disabled-fore: white;
+    --back: white;
+    --gray: #ddd;
+    --fore: #020202;
+
+    --disabled-back: var(--gray);
+    --disabled-fore: var(--back);
     --link-base:     #c51a4a;
-    --link-fore:     white;
+    --link-fore:     var(--back);
     --link-hover:    #c95777;
     --label:         #333;
-    --message-back:  #ccf;
+    --message-back:  #cfc;
     --message-fore:  #333;
-    --message-x:     #88f;
-    --preset-back:   #ddd;
-    --row-odd:       white;
-    --row-even:      #ddd;
+    --message-x:     #494;
+    --preset-back:   var(--gray);
+    --row-odd:       var(--back);
+    --row-even:      var(--gray);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --back: #222;
+        --gray: #444;
+        --fore: white;
+
+        --link-hover:    #793347;
+        --label:         #999;
+        --message-back:  #353;
+        --message-fore:  #999;
+        --message-x:     #131;
+    }
 }
 
 body {
+    background: var(--back);
+    color: var(--fore);
     font: 1em/1.5 sans-serif;
     font-weight: 400;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     margin: 0;
-    margin-bottom: 1.5rem;
-    color: var(--label);
 }
 
 strong { font-weight: 600; }
 
-h1, h2, h3, h4, h5, h6,
 ul, ol, dl, dt, p, pre, table, hr, form {
     margin-top: 1.5rem;
     margin-bottom: 0;
 }
 
+ul.compact li, ol.compact li, dl.compact dt {
+    margin-top: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--link-base);
+    font-weight: normal;
+    margin-top: 1.75rem;
+    margin-bottom: 0;
+}
+
+h1 { font-size: 2rem; }
+h2 { font-size: 1.75rem; }
+h3 { font-size: 1.5rem; }
+h4 { font-size: 1.25rem; }
+h5 { font-size: 1rem; }
+h6 { font-size: 1rem; }
+
 img, canvas {
     display: block;
     margin: 0 auto;
-}
-
-div#preview-area {
-    grid-column: 1 / span 2;
-    position: relative;
-    overflow: hidden;
-    width: 100%;
-}
-
-img#overlay-image {
-    display: none;
-    position: absolute;
-    top: 0;
-    left: 0;
 }
 
 input, select, textarea {
@@ -81,28 +102,12 @@ a:hover {
     text-decoration: underline;
 }
 
-ul ul, ul ol,
-ol ol, ol ul,
-dd {
+:is(ul, ol) :is(ul, ol), dd {
     margin-top: 0;
 }
 
 dl dt { font-weight: bold; }
-
 dl dd > :first-child { margin-top: 0; }
-
-h1, h2, h3, h4, h5, h6 {
-    color: var(--link-base);
-    font-family: serif;
-    font-weight: normal;
-}
-
-h1 { font-size: 2rem; }
-h2 { font-size: 1.75rem; }
-h3 { font-size: 1.5rem; }
-h4 { font-size: 1.25rem; }
-h5 { font-size: 1rem; }
-h6 { font-size: 1rem; }
 
 pre {
     font: 1rem monospace;
@@ -112,13 +117,17 @@ pre {
 hr {
     width: 100%;
     border: 0;
-    border-bottom: 0.5rem dotted #e69eb2;
+    border-bottom: 0.5rem dotted var(--link-base);
 }
 
 abbr {
     border-bottom: none;
-    text-decoration: none;
+    text-decoration: underline dotted var(--link-base);
 }
+
+abbr .caps { font-variant: small-caps; }
+
+.strike { text-decoration: line-through; }
 
 table {
     border-collapse: separate;
@@ -140,17 +149,23 @@ table thead th:last-child { border-radius: 0 5px 0 0; }
 table tbody tr:nth-child(odd) td { background-color: var(--row-odd); }
 table tbody tr:nth-child(even) td { background-color: var(--row-even); }
 
-header {
+/** PAGE HEADER **************************************************************/
+
+body > header {
     background: #b3deb1;
     background: linear-gradient(
-    90deg,
-    #b3deb1 0%,
-    #b3deb1 50%,
-    var(--link-hover) 100%
+        90deg,
+        #b3deb1 0%,
+        #b3deb1 50%,
+        var(--link-hover) 100%
     );
 }
 
-header h1 { margin: 0.5rem 1rem; }
+body > header h1 { margin: 0.5rem 1rem; }
+
+/** PAGE FOOTER **************************************************************/
+
+/** PAGE CONTENT *************************************************************/
 
 article,
 section#messages {
@@ -197,6 +212,20 @@ ul#presets li a { display: block; }
     ul#presets {
         grid-template-columns: 1fr 1fr;
     }
+}
+
+div#preview-area {
+    grid-column: 1 / span 2;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+}
+
+img#overlay-image {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
 }
 
 form.grid {

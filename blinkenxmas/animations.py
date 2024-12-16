@@ -272,8 +272,8 @@ def flash(led_count, fps, color1, color2, speed):
            led_count=ParamLEDCount(),
            fps=ParamFPS(),
            color=Param('Color', 'color', default='#ffffff'),
-           lit=Param('Lit %', 'range', default=1, min=1, max=10),
-           speed=Param('Speed', 'range', default=1, min=1, max=10))
+           lit=Param('Lit %', 'range', default=10, min=2, max=18),
+           speed=Param('Speed', 'range', default=5, min=1, max=10))
 def twinkle(led_count, fps, color, lit, speed, duration=5):
     """
     Generates a cyclic animation that randomly fades LEDs on the tree from
@@ -284,7 +284,7 @@ def twinkle(led_count, fps, color, lit, speed, duration=5):
     occur.
     """
     frame_count = int(fps * duration)
-    lit = led_count * lit // 50
+    lit = led_count * lit // 20
     fade_frames = fps * (11 - speed) // 20
     fade_frames = (fade_frames * 2) + 1
 

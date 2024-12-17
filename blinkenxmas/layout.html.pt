@@ -22,6 +22,16 @@
       </div>
     </section>
     <article metal:define-slot="content"></article>
+
+    <footer>
+      <p>Copyright &copy; 2022-2024 Dave Jones.
+        <a href="${config.source}">Source code</a> is published under the terms of the
+        <a href="https://www.gnu.org/licenses/gpl-3.0.en.html">GPL v3 or later</a>.
+        Powered by <a href="https://python.org/">Python</a>,
+        <a href="https://www.raspberrypi.com/products/raspberry-pi-pico/">Pico</a>,
+        and <a href="https://www.raspberrypi.com/products/raspberry-pi-3-model-b-plus/">Pi</a>!
+      </p>
+    </footer>
     <div metal:define-slot="scripts" />
     <script src="/messages.js"></script>
   </body>

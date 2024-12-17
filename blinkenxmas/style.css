@@ -35,6 +35,8 @@ html { box-sizing: border-box; }
     }
 }
 
+/** BASIC STYLES *************************************************************/
+
 body {
     background: var(--back);
     color: var(--fore);
@@ -152,20 +154,45 @@ table tbody tr:nth-child(even) td { background-color: var(--row-even); }
 /** PAGE HEADER **************************************************************/
 
 body > header {
-    background: #b3deb1;
-    background: linear-gradient(
-        90deg,
-        #b3deb1 0%,
-        #b3deb1 50%,
-        var(--link-hover) 100%
-    );
+    background: #196415;
 }
 
-body > header h1 { margin: 0.5rem 1rem; }
+body > header h1 {
+    color: #70ea6c;
+    margin: 0.5rem 1rem;
+}
+
+body > header a:hover {
+    text-decoration: none;
+}
 
 /** PAGE FOOTER **************************************************************/
 
+body > footer {
+    background: var(--foot-back);
+    color: var(--foot-fore);
+    padding: 1rem calc(50vw - 35rem);
+}
+
+@media screen and (max-width: 72rem) {
+    body > footer { padding: 1rem; }
+}
+
+body > footer h2 {
+    color: var(--foot-fore);
+    font-size: 1.5rem;
+    margin-top: 0;
+}
+
+body > footer { font-size: 0.8rem; }
+body > footer p { text-align: center; text-justify: left; }
+body > footer a { color: var(--link-base); }
+body > footer a:hover { color: var(--link-base); }
+
+
 /** PAGE CONTENT *************************************************************/
+
+article { flex: 1; }
 
 article,
 section#messages {
@@ -218,8 +245,10 @@ div#preview-area {
     grid-column: 1 / span 2;
     position: relative;
     overflow: hidden;
-    width: 100%;
 }
+
+img#preview-image,
+img#overlay-image { width: 100%; }
 
 img#overlay-image {
     display: none;
@@ -232,11 +261,6 @@ form.grid {
     display: grid;
     grid-gap: 1rem;
     grid-template-columns: auto 1fr;
-}
-
-.buttons {
-    display: flex;
-    justify-content: space-between;
 }
 
 form.grid img,
@@ -265,6 +289,11 @@ form.grid .description .admonition .admonition-title {
 }
 form.grid .description .admonition .admonition-title + * {
     margin-top: 0;
+}
+
+.buttons {
+    display: flex;
+    justify-content: space-between;
 }
 
 .buttons input, .buttons a {

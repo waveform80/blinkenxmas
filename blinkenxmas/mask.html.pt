@@ -17,7 +17,9 @@
 
     <form action="/calibrate.html" method="get" class="grid">
       <!-- TODO: code the non-JS version with img/ismap -->
-      <img id="preview-image" src="/angle${str(angle).rjust(3, '0')}_base.jpg" />
+      <div id="preview-area">
+        <img id="preview-image" src="/angle${str(angle).rjust(3, '0')}_base.jpg?force=1" />
+      </div>
       <label for="angle">Tree Angle</label>
       <input type="number" id="angle" name="angle" value="${angle}" readonly />
       <div class="buttons">

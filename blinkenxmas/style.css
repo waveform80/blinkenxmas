@@ -268,8 +268,6 @@ form.grid {
     grid-template-columns: auto 1fr;
 }
 
-form.grid img,
-form.grid canvas,
 form.grid .description,
 form.grid .buttons {
     grid-column: 1 / span 2;

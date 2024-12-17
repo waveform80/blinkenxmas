@@ -307,6 +307,10 @@ def calibration_base(request, angle):
     except ValueError:
         return HTTPResponse(request, status_code=HTTPStatus.NOT_FOUND)
     try:
+        if int(request.query.get('force', '0')):
+            # This is used in mask.html.pt to guarantee we capture a fresh
+            # image in case the user has re-started this angle for some reason
+            raise ValueError('Forcing scanner reset')
         scanner = scanner_for(request, angle)
     except ValueError:
         scanner = request.server.calibration.scanner = AngleScanner(

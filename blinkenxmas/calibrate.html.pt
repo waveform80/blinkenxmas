@@ -12,7 +12,9 @@
     move the camera or the tree!</p>
 
     <form class="grid">
-      <img id="preview-image" src="/angle${str(angle).rjust(3, '0')}_base.jpg" />
+      <div id="preview-area">
+        <img id="preview-image" src="/angle${str(angle).rjust(3, '0')}_base.jpg" />
+      </div>
       <label for="progress">Progress</label>
       <progress id="progress" value="${calibration.scanner.progress}"></progress>
       <div class="buttons">

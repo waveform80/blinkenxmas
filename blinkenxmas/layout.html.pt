@@ -12,7 +12,7 @@
 
   <body>
     <header>
-      <a class="logo" href="/"><div></div><h1>Blinken' Xmas</h1></a>
+      <a class="logo" href="/"><div><img src="/logo.opt.svg" /></div></a>
     </header>
 
     <section id="messages">

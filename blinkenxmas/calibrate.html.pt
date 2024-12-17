@@ -18,6 +18,8 @@
       <div class="buttons">
         <a class="button" id="refresh" href="/calibrate.html?angle=${angle}">Refresh</a>
         <a class="button" href="/cancel.html?angle=${angle}">Cancel</a>
+        <a class="button" id="help" href="${config.docs}"
+          tal:condition="config.docs">Help</a>
       </div>
     </form>
   </article>

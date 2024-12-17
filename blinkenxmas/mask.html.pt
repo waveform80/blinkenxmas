@@ -24,6 +24,8 @@
         <input type="hidden" id="mask" name="mask" value="" />
         <input type="submit" id="scan" value="Scan" />
         <a class="button" href="/">Cancel</a>
+        <a class="button" id="help" href="${config.docs}"
+          tal:condition="config.docs">Help</a>
       </div>
     </form>
   </article>

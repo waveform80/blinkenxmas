@@ -46,6 +46,14 @@ def get_web_parser():
     web_section.add_argument(
         '--db', metavar='FILE', key='database',
         help="the SQLite database to store presets in. Default: %(default)s")
+    web_section.add_argument(
+        '--docs', metavar='URL/PATH', key='docs',
+        help="the URL or local file-path to the Blinken' Xmas online "
+        "documentation (default: %(default)s)")
+    web_section.add_argument(
+        '--source', metavar='URL/PATH', key='source',
+        help="the URL or local file-path to the Blinken' Xmas source code "
+        "(default: %(default)s)")
 
     camera_section = parser.add_argument_group(section='camera')
     camera_section.add_argument(

@@ -32,6 +32,8 @@
       <div class="buttons">
         <input type="submit" id="create" value="Create" />
         <a class="button" href="/">Cancel</a>
+        <a class="button" id="help" href="${config.docs}"
+          tal:condition="config.docs">Help</a>
       </div>
     </form>
   </article>

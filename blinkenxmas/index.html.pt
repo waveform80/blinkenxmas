@@ -21,6 +21,8 @@
         <a class="button" id="create" href="create.html">Create</a>
         <a class="button" id="manage" href="manage.html">Manage</a>
         <a class="button" id="config" href="config.html">Configuration</a>
+        <a class="button" id="help" href="${config.docs}"
+          tal:condition="config.docs">Help</a>
       </p>
     </form>
   </article>

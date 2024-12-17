@@ -38,10 +38,14 @@
       <div class="buttons">
         <input type="submit" id="capture" value="Capture" />
         <a class="button" tal:condition="not len(calibration.calculator.positions)" href="/">Cancel</a>
+        <a class="button" id="help" href="${config.docs}"
+          tal:condition="config.docs">Help</a>
       </div>
       <div class="buttons" tal:condition="len(calibration.calculator.positions)">
         <a class="button" href="/commit.html">Commit</a>
         <a class="button" href="/">Cancel</a>
+        <a class="button" id="help" href="${config.docs}"
+          tal:condition="config.docs">Help</a>
       </div>
     </form>
 

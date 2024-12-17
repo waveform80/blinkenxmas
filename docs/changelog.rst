@@ -3,6 +3,14 @@ Changelog
 =========
 
 
+Release 0.7 (2024-12-17)
+========================
+
+* Fix width of calibration base capture in mask page
+* Fix reload of mask page; now should re-capture base image
+* Spruced up the logo!
+
+
 Release 0.6 (2024-12-15)
 ========================
 

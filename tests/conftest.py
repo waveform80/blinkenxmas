@@ -42,6 +42,8 @@ def web_config(request, config, tmp_path):
     result.httpd_port = 0
     result.production = False
     result.db = str(tmp_path / 'presets.db')
+    result.docs = 'https://blinkenxmas.readthedocs.io/'
+    result.source = 'https://github.com/waveform80/blinkenxmas/'
 
     result.camera_type = 'none'
     result.camera_path = str(tmp_path)

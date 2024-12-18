@@ -297,8 +297,8 @@ class PositionsCalculator:
                 x2, y2 = self._angles[a2][led]
                 if abs(y1 - y2) > 0.1:
                     self.logger.warning(
-                        f'LED {led} went from ({x1}, {y1}) at {a1}° to '
-                        f'({x2}, {y2}) at {a2}°')
+                        f'LED {led} went from ({x1:.3f}, {y1:.3f}) at {a1}° to '
+                        f'({x2:.3f}, {y2:.3f}) at {a2}°')
                 # This little bit of trigonometric magic is thanks to user KDP
                 # on the math(s) stack-exchange [1]. The question for that
                 # answer is written specifically with this application in mind
@@ -318,7 +318,7 @@ class PositionsCalculator:
                 except ZeroDivisionError:
                     self.logger.warning(
                         f'Bad r-calculation for LED {led} with alpha={alpha}, '
-                        f'x1={x1}, x2={x2}')
+                        f'x1={x1:.3f}, x2={x2:.3f}')
                     continue
 
                 # Because atan only operates from -90° to 90° (-π/2 to π/2 for
@@ -337,7 +337,7 @@ class PositionsCalculator:
                 if not m.isclose(x1, tx1, rel_tol=0.00001):
                     self.logger.warning(
                         f'Test x-calculation for LED {led} is not within '
-                        f'expected tolerance, x1={x1}, tx1={tx1}')
+                        f'expected tolerance, x1={x1:.3f}, tx1={tx1:.3f}')
 
                 # Calculate a confidence score to use as a weighted median on
                 # determining the "real" position. This is heavily biased by
@@ -360,8 +360,8 @@ class PositionsCalculator:
                     ))
                 else:
                     self.logger.warning(
-                        f'Ignoring z={z} for LED {led} with alpha={alpha}, '
-                        f'beta={beta}, x1={x1}, x2={x2}')
+                        f'Ignoring r={r:.3f} for LED {led} with alpha={alpha}, '
+                        f'beta={beta}, x1={x1:.3f}, x2={x2:.3f}')
         if new_positions:
             self._positions = {
                 led: Position.from_polar(*position)

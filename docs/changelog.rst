@@ -3,6 +3,12 @@ Changelog
 =========
 
 
+Release 0.7.2 (2024-12-19)
+==========================
+
+* Fix crash in calibration due to invalid warning message
+
+
 Release 0.7 (2024-12-17)
 ========================
 
